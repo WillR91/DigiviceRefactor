@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"Z:/DigiviceRefactor/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

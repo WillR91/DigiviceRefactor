@@ -1,0 +1,10 @@
+^Z:\DIGIVICEREFACTOR\BUILD\CMAKEFILES\4E055D7DEDC548E58365785727E5D6B1\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SZ:/DigiviceRefactor -BZ:/DigiviceRefactor/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file Z:/DigiviceRefactor/build/DigiviceSim.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
