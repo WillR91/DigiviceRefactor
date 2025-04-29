@@ -1,8 +1,13 @@
-#include "Game.h"
-#include "GameState.h"
-#include "AdventureState.h" // Include the initial state
-#include <SDL_log.h>
-#include <stdexcept> // For runtime_error
+// File: src/Game.cpp
+
+// --- CORRECTED INCLUDES ---
+#include <Core/Game.h>
+#include <States/GameState.h>
+#include <States/AdventureState.h>
+// --------------------------
+
+#include <SDL_log.h>   // External - OK
+#include <stdexcept>   // Standard - OK
 
 
 Game::Game() : is_running(false), last_frame_time(0) {
@@ -12,7 +17,7 @@ Game::Game() : is_running(false), last_frame_time(0) {
 // Destructor automatically calls close() through RAII principles implicitly
 Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
-    close();
+    close(); // Explicit call ensures order if needed, though destructor should be sufficient
 }
 
 bool Game::init(const std::string& title, int width, int height) {
@@ -26,6 +31,7 @@ bool Game::init(const std::string& title, int width, int height) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL Initialized.");
 
     // Initialize the display wrapper (creates window & renderer)
+    // Assumes 'display' member is PCDisplay, defined via include in Game.h
     if (!display.init(title.c_str(), width, height)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay initialization failed!");
         SDL_Quit(); // Clean up SDL if display fails
@@ -35,7 +41,8 @@ bool Game::init(const std::string& title, int width, int height) {
 
     // Set initial state (Adventure State)
     try {
-       current_state = std::make_unique<AdventureState>(this);
+        // std::make_unique requires the full definition of AdventureState (included above)
+        current_state = std::make_unique<AdventureState>(this);
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created.");
     } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what());
@@ -66,26 +73,26 @@ void Game::run() {
             if (event.type == SDL_QUIT) {
                 is_running = false;
             }
-             // Pass other events to the state? (More advanced)
-             // if (current_state) current_state->handle_event(event);
+            // Pass other events to the state? (More advanced)
+            // You would define handle_event(const SDL_Event&) in GameState interface
+            // if (current_state) current_state->handle_event(event);
         }
 
 
         // --- State Logic ---
         if (current_state) {
-            // Handle state-specific input
+            // Handle state-specific input (using SDL_GetKeyboardState for now)
             current_state->handle_input();
 
             // Update state logic
             current_state->update(delta_time);
 
             // Render state graphics
-            // Clear is usually done before state rendering
-            display.clear(0x0000); // Use your clear color
+            display.clear(0x0000); // Use your clear color (e.g., black 0x0000 for RGB565)
 
             current_state->render();
 
-            // Present is usually done after all rendering
+            // Present the final frame
             display.present();
         } else {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No current state to run!");
@@ -107,7 +114,7 @@ void Game::run() {
 
 void Game::change_state(std::unique_ptr<GameState> new_state) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Changing game state.");
-    // unique_ptr automatically handles deletion of the old state
+    // unique_ptr automatically handles deletion of the old state when assigned
     current_state = std::move(new_state);
     if (!current_state) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Changed to a NULL state!");
@@ -120,6 +127,7 @@ void Game::quit_game() {
 }
 
 
+// Requires full definition of PCDisplay (included via Game.h)
 PCDisplay* Game::get_display() {
     return &display;
 }

@@ -1,7 +1,12 @@
-#include "Game.h"
-#include <SDL_log.h> // For logging
+// File: main.cpp
 
-// --- Window Dimensions (Define globally or pass to Game::init) ---
+// --- CORRECTED INCLUDE ---
+#include <Core/Game.h>
+// -----------------------
+
+#include <SDL_log.h> // For logging - OK
+
+// --- Window Dimensions (Consider moving to GameConstants.h) ---
 const int WINDOW_WIDTH = 466;
 const int WINDOW_HEIGHT = 466;
 
@@ -9,7 +14,7 @@ int main(int argc, char* argv[]) {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG); // Enable SDL logging
     SDL_Log("--- Creating Game Instance ---");
 
-    Game digivice_game;
+    Game digivice_game; // Requires full definition of Game (included above)
 
     SDL_Log("--- Initializing Game ---");
     if (digivice_game.init("Digivice Sim - Refactored", WINDOW_WIDTH, WINDOW_HEIGHT)) {
