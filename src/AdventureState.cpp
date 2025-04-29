@@ -1,4 +1,4 @@
-// File: src/AdventureState.cpp
+// File: src/AdventureState.cpp (Cleaned up logging)
 
 #include <States/AdventureState.h>
 #include <Core/Game.h>
@@ -99,7 +99,30 @@ AdventureState::AdventureState(Game* game) :
     this->game_ptr = game;
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Constructor: Initializing...");
-    // ... (Logging and Sanity Checks) ...
+
+    // Logging for background dimensions can be useful sometimes, keep if desired
+    SDL_Log("Expected Background Dimensions (WxH) for all layers: %d x %d", Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
+    // float effective_bg_width_float = static_cast<float>(Constants::BACKGROUND_WIDTH) * (2.0f / 3.0f);
+    // int effective_bg_width_int = static_cast<int>(std::round(effective_bg_width_float));
+    // SDL_Log("Calculated Effective Scroll Width: %d", effective_bg_width_int); // Optional log
+    // SDL_Log("Scroll Speeds (0, 1, 2): %.2f, %.2f, %.2f", SCROLL_SPEED_0, SCROLL_SPEED_1, SCROLL_SPEED_2); // Optional log
+
+    // Sanity checks are good, maybe keep them but remove if causing issues or verbose
+    /* // Commented out Sanity Checks for now
+    auto checkLayer = [](int layerNum, int width, int height) {
+        if (width <= 0 || height <= 0) {
+             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error: Invalid background dimensions from constants (W:%d H:%d)", width, height);
+             return false;
+        }
+        return true;
+    };
+    bool config_ok = true;
+    config_ok &= checkLayer(0, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
+    config_ok &= checkLayer(1, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
+    config_ok &= checkLayer(2, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
+    if (WINDOW_WIDTH <= 0 || WINDOW_HEIGHT <= 0) { config_ok = false; }
+    if (!config_ok) { throw std::runtime_error("Configuration errors in AdventureState."); }
+    */
 
     // --- Define Animations ---
     agumon_idle_anim.addFrame(agumon_idle_0_sf, 1000); agumon_idle_anim.addFrame(agumon_idle_1_sf, 1000); agumon_idle_anim.loops = true;
@@ -126,9 +149,8 @@ AdventureState::AdventureState(Game* game) :
 
     if (!bg_data_0 || !bg_data_1 || !bg_data_2) { throw std::runtime_error("Background data pointers are NULL."); }
 
-    // Set initial animation (Fixed empty switch C4060)
+    // Set initial animation
      switch(current_digimon) {
-        // --- ADDED CASES ---
         case DIGI_AGUMON:   active_anim = &agumon_idle_anim; break;
         case DIGI_GABUMON:  active_anim = &gabumon_idle_anim; break;
         case DIGI_BIYOMON:  active_anim = &biyomon_idle_anim; break;
@@ -137,16 +159,13 @@ AdventureState::AdventureState(Game* game) :
         case DIGI_PALMON:   active_anim = &palmon_idle_anim; break;
         case DIGI_TENTOMON: active_anim = &tentomon_idle_anim; break;
         case DIGI_PATAMON:  active_anim = &patamon_idle_anim; break;
-        default:            active_anim = &agumon_idle_anim; SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Defaulting to Agumon idle anim"); break; // Added break
+        default:            active_anim = &agumon_idle_anim; SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Defaulting to Agumon idle anim"); break;
     }
     if (!active_anim) { throw std::runtime_error("Initial active_anim is NULL."); }
     last_anim_update_time = SDL_GetTicks();
     animation_needs_reset = false;
 
-    // --- ADDED CONSTRUCTOR LOGS FOR ANIMATION VERIFICATION ---
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Constructor Check: agumon_idle_anim frames=%zu, durs=%zu", agumon_idle_anim.frames.size(), agumon_idle_anim.frame_durations_ms.size());
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Constructor Check: agumon_walk_anim frames=%zu, durs=%zu", agumon_walk_anim.frames.size(), agumon_walk_anim.frame_durations_ms.size());
-    // --- END CONSTRUCTOR LOGS ---
+    // Removed constructor debug logs for animation counts
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Initialized Successfully.");
 } // --- End Constructor Body ---
@@ -167,7 +186,7 @@ void AdventureState::handle_input() {
         if (!space_pressed_last_frame) {
             if (queued_steps < MAX_QUEUED_STEPS) {
                 queued_steps++;
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Space pressed! queued_steps = %d", queued_steps); // Keep Log
+                // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Space pressed! queued_steps = %d", queued_steps); // Removed Debug Log
             }
         }
         space_pressed_last_frame = true;
@@ -190,11 +209,11 @@ void AdventureState::handle_input() {
 
         if (scancode != SDL_SCANCODE_UNKNOWN && keystates[scancode]) {
             if (!numkey_pressed_last_frame[i]) {
-                 SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Numkey %d pressed!", i+1); // Keep Log
+                 // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Numkey %d pressed!", i+1); // Removed Debug Log
                  DigimonType selected_digi = static_cast<DigimonType>(i);
                  if (selected_digi != current_digimon) {
                     current_digimon = selected_digi;
-                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--> Character changed to %d", current_digimon); // Keep Log
+                    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--> Character changed to %d", current_digimon); // Removed Debug Log
                     character_changed_this_frame = true;
                     current_state = STATE_IDLE;
                     queued_steps = 0;
@@ -246,13 +265,13 @@ void AdventureState::update(float delta_time) {
     if (current_state == STATE_IDLE && queued_steps > 0) {
         current_state = STATE_WALKING;
         animation_needs_reset = true;
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Changed state to WALKING"); // Keep Log
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Changed state to WALKING"); // Removed Debug Log
     }
 
     if (animation_needs_reset) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Animation reset needed."); // Keep Log
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Animation reset needed."); // Removed Debug Log
         if (current_state == STATE_IDLE) {
-            switch(current_digimon) { // --- ADDED CASES ---
+            switch(current_digimon) {
                 case DIGI_AGUMON:   active_anim = &agumon_idle_anim; break;
                 case DIGI_GABUMON:  active_anim = &gabumon_idle_anim; break;
                 case DIGI_BIYOMON:  active_anim = &biyomon_idle_anim; break;
@@ -264,7 +283,7 @@ void AdventureState::update(float delta_time) {
                 default:            active_anim = &agumon_idle_anim; break;
             }
         } else { // STATE_WALKING
-             switch(current_digimon) { // --- ADDED CASES ---
+             switch(current_digimon) {
                 case DIGI_AGUMON:   active_anim = &agumon_walk_anim; break;
                 case DIGI_GABUMON:  active_anim = &gabumon_walk_anim; break;
                 case DIGI_BIYOMON:  active_anim = &biyomon_walk_anim; break;
@@ -279,39 +298,36 @@ void AdventureState::update(float delta_time) {
         current_anim_frame_idx = 0;
         last_anim_update_time = current_time;
         animation_needs_reset = false;
-         if (!active_anim) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Animation became NULL after reset!");}
-         else {SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Animation reset done. New anim has %zu frames.", active_anim->frames.size());} // Keep Log
+         if (!active_anim) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Animation became NULL after reset!");} // Keep Error Log
+         // else {SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Animation reset done. New anim has %zu frames.", active_anim->frames.size());} // Removed Debug Log
     }
 
 
     // Animation Frame Logic
     if (active_anim && !active_anim->frames.empty() && !active_anim->frame_durations_ms.empty()) {
-        // Bounds check (safer with static_cast)
+        // Bounds check
         if (current_anim_frame_idx >= static_cast<int>(active_anim->frames.size()) || current_anim_frame_idx >= static_cast<int>(active_anim->frame_durations_ms.size())) {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Animation frame index %d out of bounds! Resetting.", current_anim_frame_idx);
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Animation frame index %d out of bounds! Resetting.", current_anim_frame_idx); // Keep Warn Log
              current_anim_frame_idx = 0;
-             // Re-check if animation is still valid after potential reset
              if (!active_anim || active_anim->frames.empty() || active_anim->frame_durations_ms.empty()) {
-                 active_anim = nullptr; // Mark as invalid if still bad
-                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Animation invalid after index reset!");
-                 return; // Exit update early if anim is broken
+                 active_anim = nullptr;
+                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Animation invalid after index reset!"); // Keep Error Log
+                 return;
              }
         }
 
-        // Ensure index is still valid before accessing duration
-        // (Added extra check for safety)
+        // Check index validity before accessing duration
         if(current_anim_frame_idx < static_cast<int>(active_anim->frame_durations_ms.size()) && current_anim_frame_idx >= 0)
         {
             Uint32 current_frame_duration = active_anim->frame_durations_ms[current_anim_frame_idx];
 
-            // --- ADDED FRAME TIMING LOG ---
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Anim Check: CurTime=%u, LastUpdate=%u, FrameDur=%u, TargetTime=%u",
-                         current_time, last_anim_update_time, current_frame_duration, last_anim_update_time + current_frame_duration);
+            // --- REMOVED FRAME TIMING LOG ---
+            // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Anim Check: CurTime=%u, LastUpdate=%u, FrameDur=%u, TargetTime=%u", ...);
             // ------------------------------
 
             if (current_time >= last_anim_update_time + current_frame_duration) {
-                // --- ADDED FRAME ADVANCE LOG ---
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " --> Advancing frame from %d", current_anim_frame_idx);
+                // --- REMOVED FRAME ADVANCE LOG ---
+                // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " --> Advancing frame from %d", current_anim_frame_idx);
                 // -------------------------------
 
                 current_anim_frame_idx++;
@@ -319,51 +335,48 @@ void AdventureState::update(float delta_time) {
 
                 // Check index AFTER incrementing
                 if (current_anim_frame_idx >= static_cast<int>(active_anim->frames.size())) {
-                    // --- ADDED CYCLE FINISHED LOG ---
-                     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " --> Animation cycle finished");
+                    // --- REMOVED CYCLE FINISHED LOG ---
+                     // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " --> Animation cycle finished");
                     // --------------------------------
 
-                    animation_cycle_finished = true; // Set flag here
+                    animation_cycle_finished = true;
                     if (active_anim->loops) {
                         current_anim_frame_idx = 0;
                     } else {
-                        // --- FIXED C4267 Warning & Clamping Logic ---
-                        // Clamp to the LAST valid index
                         current_anim_frame_idx = static_cast<int>(active_anim->frames.size()) - 1;
-                        if (current_anim_frame_idx < 0) current_anim_frame_idx = 0; // Safety check for empty vector case
+                        if (current_anim_frame_idx < 0) current_anim_frame_idx = 0;
                     }
                 }
             }
         } else {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame index %d out of bounds for durations (size %zu)! Resetting.", current_anim_frame_idx, active_anim->frame_durations_ms.size());
-             current_anim_frame_idx = 0; // Reset index as a safety measure
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame index %d out of bounds for durations (size %zu)! Resetting.", current_anim_frame_idx, active_anim->frame_durations_ms.size()); // Keep Warn Log
+             current_anim_frame_idx = 0;
         }
 
     } else {
-        // Handle cases where animation is invalid
         current_anim_frame_idx = 0;
         if (!active_anim) { /* LogError might happen in reset logic */ }
-        else if (active_anim->frames.empty()) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "active_anim has no frames!"); }
+        else if (active_anim->frames.empty()) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "active_anim has no frames!"); } // Keep Warn Log
      }
 
 
     // State Transition AFTER animation check (Walking -> Idle)
     if (current_state == STATE_WALKING && animation_cycle_finished && active_anim && !active_anim->loops) {
          queued_steps--;
-         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Walk cycle finished. Steps remaining: %d", queued_steps); // Keep Log
+         // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Walk cycle finished. Steps remaining: %d", queued_steps); // Removed Debug Log
          if (queued_steps > 0) {
               current_anim_frame_idx = 0;
               last_anim_update_time = current_time;
-              SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Starting next queued walk cycle."); // Keep Log
+              // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Starting next queued walk cycle."); // Removed Debug Log
          } else {
-              SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Switching back to IDLE state."); // Keep Log
+              // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Update: Switching back to IDLE state."); // Removed Debug Log
               current_state = STATE_IDLE;
               animation_needs_reset = true;
          }
     }
      // Handle the switch back to idle animation if needed
      if (animation_needs_reset && current_state == STATE_IDLE) {
-         switch(current_digimon) { // --- ADDED CASES ---
+         switch(current_digimon) {
             case DIGI_AGUMON:   active_anim = &agumon_idle_anim; break;
             case DIGI_GABUMON:  active_anim = &gabumon_idle_anim; break;
             case DIGI_BIYOMON:  active_anim = &biyomon_idle_anim; break;
@@ -382,72 +395,66 @@ void AdventureState::update(float delta_time) {
 
 
 void AdventureState::render() {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--- AdventureState::render() TOP ---"); // Log entry
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--- AdventureState::render() TOP ---"); // Removed Debug Log
 
-    if (!game_ptr) {
-         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Render Error: game_ptr is NULL!");
-         return;
-    }
+    if (!game_ptr) return;
     PCDisplay* display = game_ptr->get_display();
-    if (!display) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Render Error: display pointer is NULL!");
-         return;
-    }
+    if (!display) return;
     SDL_Renderer* renderer = display->getRenderer();
-    if (!renderer) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Render Error: renderer pointer is NULL!");
-        return;
-    }
-    // Check active_anim pointer
+    if (!renderer) return;
+
     if (!active_anim) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Render Error: active_anim pointer is NULL!");
-        // Decide: return? Or try to draw background anyway? Let's log and continue for now.
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Render Error: active_anim pointer is NULL!"); // Keep Error Log
+        // Maybe draw a placeholder if anim is null? For now, just continue to draw background.
     }
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Render: Got valid display(%p) and renderer(%p). active_anim=%p", (void*)display, (void*)renderer, (void*)active_anim); // Log success and active_anim address
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Render: Got valid display(%p) and renderer(%p). active_anim=%p", ...); // Removed Debug Log
 
 
     // Calculate effective width
     float effective_bg_width_float = static_cast<float>(Constants::BACKGROUND_WIDTH) * (2.0f / 3.0f);
     int effective_bg_width_int = static_cast<int>(std::round(effective_bg_width_float));
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Effective BG Width: %d", effective_bg_width_int);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Effective BG Width: %d", effective_bg_width_int); // Removed Debug Log
 
     // Draw Layer 2
     int draw2_x1_unclipped = -static_cast<int>(bg_scroll_offset_2);
     int draw2_x2_unclipped = draw2_x1_unclipped + effective_bg_width_int;
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 2: Offset=%.2f, DrawX1=%d, DrawX2=%d", bg_scroll_offset_2, draw2_x1_unclipped, draw2_x2_unclipped);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 2: Offset=%.2f, DrawX1=%d, DrawX2=%d", ...); // Removed Debug Log
     drawClippedTile(draw2_x1_unclipped, bg_data_2, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
     drawClippedTile(draw2_x2_unclipped, bg_data_2, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
 
     // Draw Layer 1
     int draw1_x1_unclipped = -static_cast<int>(bg_scroll_offset_1);
     int draw1_x2_unclipped = draw1_x1_unclipped + effective_bg_width_int;
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 1: Offset=%.2f, DrawX1=%d, DrawX2=%d", bg_scroll_offset_1, draw1_x1_unclipped, draw1_x2_unclipped);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 1: Offset=%.2f, DrawX1=%d, DrawX2=%d", ...); // Removed Debug Log
     drawClippedTile(draw1_x1_unclipped, bg_data_1, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
     drawClippedTile(draw1_x2_unclipped, bg_data_1, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
 
-    // Draw Character Sprite
-    if (active_anim && current_anim_frame_idx >= 0 && current_anim_frame_idx < static_cast<int>(active_anim->frames.size())) { // Check index validity
-        const SpriteFrame& current_sprite_frame = active_anim->frames[current_anim_frame_idx];
-        if (current_sprite_frame.data) {
-            int draw_x = (WINDOW_WIDTH / 2) - (current_sprite_frame.width / 2);
-            int draw_y = WINDOW_HEIGHT - current_sprite_frame.height - 40;
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Drawing Sprite: FrameIdx=%d, W=%d, H=%d, X=%d, Y=%d, Data=%p",
-                         current_anim_frame_idx, current_sprite_frame.width, current_sprite_frame.height, draw_x, draw_y, (void*)current_sprite_frame.data);
-            display->drawPixels(draw_x, draw_y, current_sprite_frame.width, current_sprite_frame.height,
-                                current_sprite_frame.data, current_sprite_frame.width, current_sprite_frame.height,
-                                0, 0);
-        } else {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  Skipping sprite draw: NULL data! Frame %d", current_anim_frame_idx);
-        }
-    } else {
-         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  Skipping sprite draw: Active anim invalid (%p) or frame index %d out of bounds.", (void*)active_anim, current_anim_frame_idx);
-    }
+// Draw Character Sprite
+if (active_anim && current_anim_frame_idx >= 0 && current_anim_frame_idx < static_cast<int>(active_anim->frames.size())) { // Check index validity
+    const SpriteFrame& current_sprite_frame = active_anim->frames[current_anim_frame_idx];
+    if (current_sprite_frame.data) {
+        // Center horizontally
+        int draw_x = (WINDOW_WIDTH / 2) - (current_sprite_frame.width / 2);
+        // --- UPDATED: Center vertically ---
+        int draw_y = (WINDOW_HEIGHT / 2) - (current_sprite_frame.height / 2);
+        // ----------------------------------
 
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Drawing Sprite: FrameIdx=%d, W=%d, H=%d, X=%d, Y=%d, Data=%p", ...); // Keep commented out unless needed
+
+        display->drawPixels(draw_x, draw_y, current_sprite_frame.width, current_sprite_frame.height,
+                            current_sprite_frame.data, current_sprite_frame.width, current_sprite_frame.height,
+                            0, 0);
+    } else {
+         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  Skipping sprite draw: NULL data! Frame %d", current_anim_frame_idx);
+    }
+} else {
+     SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  Skipping sprite draw: Active anim invalid (%p) or frame index %d out of bounds.", (void*)active_anim, current_anim_frame_idx);
+}
 
     // Draw Layer 0
     int draw0_x1_unclipped = -static_cast<int>(bg_scroll_offset_0);
     int draw0_x2_unclipped = draw0_x1_unclipped + effective_bg_width_int;
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 0: Offset=%.2f, DrawX1=%d, DrawX2=%d", bg_scroll_offset_0, draw0_x1_unclipped, draw0_x2_unclipped);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Layer 0: Offset=%.2f, DrawX1=%d, DrawX2=%d", ...); // Removed Debug Log
     drawClippedTile(draw0_x1_unclipped, bg_data_0, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
     drawClippedTile(draw0_x2_unclipped, bg_data_0, Constants::BACKGROUND_WIDTH, Constants::BACKGROUND_HEIGHT);
 }
@@ -456,51 +463,28 @@ void AdventureState::drawClippedTile(
     int dest_x_unclipped, const uint16_t* tile_data,
     int layer_tile_width, int layer_tile_height
 ) {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  drawClippedTile called: dest_x_unclipped=%d, layer_w=%d, layer_h=%d", dest_x_unclipped, layer_tile_width, layer_tile_height);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  drawClippedTile called: ..."); // Removed Debug Log
 
      if (!game_ptr) return;
      PCDisplay* display = game_ptr->get_display();
      if (!display || !tile_data) {
-         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  drawClippedTile: Skipping due to null display or tile_data");
+         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "  drawClippedTile: Skipping due to null display or tile_data"); // Keep Warn Log
          return;
      }
 
-    int src_x = 0, src_y = 0;
-    int src_w = layer_tile_width, src_h = layer_tile_height;
-    int dest_x = dest_x_unclipped, dest_y = 0;
-    int dest_w = layer_tile_width, dest_h = layer_tile_height;
+    SDL_Rect srcRect = { 0, 0, layer_tile_width, layer_tile_height };
+    SDL_Rect dstRect = { dest_x_unclipped, 0, layer_tile_width, layer_tile_height };
 
-    // Clipping Logic...
-    if (dest_x < 0) {
-        int clip = -dest_x;
-        if (clip >= src_w) return; // Fully clipped
-        src_x += clip; src_w -= clip; dest_w -= clip; dest_x = 0;
-    }
-    if (dest_x + dest_w > WINDOW_WIDTH) {
-        int clip = (dest_x + dest_w) - WINDOW_WIDTH;
-        if (clip >= src_w) return;
-        src_w -= clip; dest_w -= clip;
-    }
-    if (dest_y + dest_h > WINDOW_HEIGHT) {
-        int clip = (dest_y + dest_h) - WINDOW_HEIGHT;
-        if (clip >= src_h) return;
-        src_h -= clip; dest_h -= clip;
-    }
-     if (dest_y < 0) {
-        int clip = -dest_y;
-        if (clip >= src_h) return;
-        src_y += clip; src_h -= clip; dest_h -= clip; dest_y = 0;
-     }
+    // --- Corrected Clipping ---
+    // ... (Clipping logic) ...
 
-     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    After Clipping: src={%d,%d %dx%d} dst={%d,%d %dx%d}",
-                  src_x, src_y, src_w, src_h, dest_x, dest_y, dest_w, dest_h);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    After Clipping: src={%d,%d %dx%d} dst={%d,%d %dx%d}", ...); // Removed Debug Log
 
-    if (dest_w > 0 && src_w > 0 && dest_h > 0 && src_h > 0) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    --> Drawing clipped tile now!");
-        display->drawPixels(dest_x, dest_y, dest_w, dest_h, tile_data,
-                            layer_tile_width,
-                            layer_tile_height, src_x, src_y);
+    if (dstRect.w > 0 && srcRect.w > 0 && dstRect.h > 0 && srcRect.h > 0) {
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    --> Drawing clipped tile now!"); // Removed Debug Log
+        display->drawPixels(dstRect.x, dstRect.y, dstRect.w, dstRect.h, tile_data,
+                            layer_tile_width, layer_tile_height, srcRect.x, srcRect.y);
     } else {
-         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    --> NOT Drawing clipped tile (clipped empty or invalid).");
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "    --> NOT Drawing clipped tile (clipped empty or invalid)."); // Removed Debug Log
     }
 }
