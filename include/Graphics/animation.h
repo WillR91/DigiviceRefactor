@@ -1,27 +1,39 @@
-// File: include/Graphics/Animation.h (Assuming location)
+// File: include/graphics/Animation.h (Assuming location)
 #pragma once
 
-#include <cstdint> // Standard library - OK
-#include <vector>  // Standard library - OK
+#include <SDL.h>     // <<< CORRECTED SDL Include (for SDL_Texture, SDL_Rect, Uint32) >>>
+#include <vector>    // Standard library - OK
+#include <cstdint>   // Standard library - OK
 
-// Holds data for a single sprite frame
+// Represents a single frame using a texture atlas
 struct SpriteFrame {
-    int width = 0;
-    int height = 0;
-    const uint16_t* data = nullptr; // Pointer to pixel data array
+    SDL_Texture* texturePtr = nullptr; // Non-owning pointer to the texture atlas/sheet
+    SDL_Rect sourceRect = {0, 0, 0, 0}; // Defines the frame's location and size on the texture sheet
+
+    SpriteFrame(SDL_Texture* tex = nullptr, SDL_Rect src = {0,0,0,0})
+        : texturePtr(tex), sourceRect(src) {}
 };
 
 // Represents a sequence of frames for an animation
-struct Animation {
+class Animation {
+public:
     std::vector<SpriteFrame> frames;
-    std::vector<uint32_t> frame_durations_ms; // Duration for each frame in milliseconds
+    std::vector<Uint32> frame_durations_ms; // Duration for each frame in milliseconds
     bool loops = true; // Does the animation loop?
-    uint32_t total_duration = 0; // Can be calculated or set manually
 
-    // Helper to add a frame easily
-    void addFrame(const SpriteFrame& frame, uint32_t duration_ms) {
+    void addFrame(const SpriteFrame& frame, Uint32 duration_ms) {
         frames.push_back(frame);
         frame_durations_ms.push_back(duration_ms);
-        total_duration += duration_ms;
     }
+
+    const SpriteFrame* getFrame(size_t frameIndex) const {
+        if (frameIndex < frames.size()) {
+            return &frames[frameIndex];
+        }
+        return nullptr;
+    }
+
+     size_t getFrameCount() const {
+         return frames.size();
+     }
 };

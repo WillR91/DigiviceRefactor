@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Debug/DigiviceSim.exe", // Adjust path to exe if needed
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}", // <<< SET THIS! Points to Z:/DigiviceRefactor/
+            "environment": [],
+            "console": "integratedTerminal" // Or externalTerminal
+        }
+        // Other configurations...
+    ]
+}

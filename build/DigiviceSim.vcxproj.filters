@@ -7,13 +7,16 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\AdventureState.cpp">
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\Animation.cpp">
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,21 +1,15 @@
-// File: include/States/GameState.h
-#pragma once // Use include guards
+// File: include/states/GameState.h
+#pragma once
 #include <memory> // Standard Library - OK
 
-class Game; // Forward declaration - OK
+class Game; // Forward declaration - OK (defined in core/Game.h)
 
 class GameState {
 public:
-    virtual ~GameState() = default; // Virtual destructor is crucial!
+    virtual ~GameState() = default;
 
-    // Called to handle user input for this state
     virtual void handle_input() = 0;
-
-    // Called to update game logic for this state
-    // delta_time is the time elapsed since the last frame in seconds
     virtual void update(float delta_time) = 0;
-
-    // Called to render the graphics for this state
     virtual void render() = 0;
 
 protected:

@@ -1,23 +1,20 @@
-// File: src/Game.cpp
+// File: src/core/Game.cpp
 
-// --- CORRECTED INCLUDES ---
-#include <Core/Game.h>
-#include <States/GameState.h>
-#include <States/AdventureState.h>
-// --------------------------
+#include "core/Game.h"           // Include own header
+#include "states/GameState.h"    // Include base state class
+#include "states/AdventureState.h" // Include the initial state class
+#include <SDL_log.h>             // <<< CORRECTED SDL Include >>>
+#include <stdexcept>             // Standard
 
-#include <SDL_log.h>   // External - OK
-#include <stdexcept>   // Standard - OK
-
+// ... (rest of Game.cpp implementation remains the same as provided before) ...
 
 Game::Game() : is_running(false), last_frame_time(0) {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called.");
 }
 
-// Destructor automatically calls close() through RAII principles implicitly
 Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
-    close(); // Explicit call ensures order if needed, though destructor should be sufficient
+    close(); // Ensure cleanup happens via destructor
 }
 
 bool Game::init(const std::string& title, int width, int height) {
@@ -28,10 +25,16 @@ bool Game::init(const std::string& title, int width, int height) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL could not initialize! SDL_Error: %s", SDL_GetError());
         return false;
     }
+     // <<< ADDED: Set Render Hint for Pixel Art BEFORE creating renderer >>>
+     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0")) { // "0" is nearest pixel sampling
+         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Warning: Nearest pixel sampling hint not enabled!");
+     } else {
+          SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "SDL_HINT_RENDER_SCALE_QUALITY set to 0 (Nearest Neighbor).");
+     }
+
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL Initialized.");
 
     // Initialize the display wrapper (creates window & renderer)
-    // Assumes 'display' member is PCDisplay, defined via include in Game.h
     if (!display.init(title.c_str(), width, height)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay initialization failed!");
         SDL_Quit(); // Clean up SDL if display fails
@@ -39,18 +42,49 @@ bool Game::init(const std::string& title, int width, int height) {
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
 
+    // <<< INITIALIZE ASSET MANAGER (needs renderer from display) >>>
+    if (!assetManager.init(display.getRenderer())) {
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager initialization failed!");
+         display.close();
+         SDL_Quit();
+         return false;
+    }
+     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
+
+     // <<< LOAD INITIAL ASSETS TEST >>>
+     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
+     // Use relative paths from the executable's expected working directory
+     bool assets_ok = true;
+     assets_ok &= assetManager.loadTexture("agumon_sheet", "assets/sprites/agumon_sheet.png");
+     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
+     assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
+     assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
+     // Add loads for other digimon sheets if you have them ready
+     // assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets/sprites/gabumon_sheet.png");
+
+     if (!assets_ok) {
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load!");
+         // Consider cleanup and returning false if loading fails
+         assetManager.shutdown();
+         display.close();
+         SDL_Quit();
+         return false;
+     }
+     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
+
+
     // Set initial state (Adventure State)
     try {
-        // std::make_unique requires the full definition of AdventureState (included above)
-        current_state = std::make_unique<AdventureState>(this);
+        // Pass 'this' (pointer to the Game object) to the state constructor
+       current_state = std::make_unique<AdventureState>(this);
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created.");
     } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what());
+        assetManager.shutdown(); // Cleanup assets if state creation fails
         display.close();
         SDL_Quit();
         return false;
     }
-
 
     is_running = true;
     last_frame_time = SDL_GetTicks(); // Initialize frame timer
@@ -59,62 +93,48 @@ bool Game::init(const std::string& title, int width, int height) {
 }
 
 void Game::run() {
+    if (!is_running) {
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Game::run() called but game is not initialized/running.");
+         return;
+    }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Entering main game loop.");
     while (is_running) {
         // --- Timing ---
         Uint32 current_time = SDL_GetTicks();
-        // Delta time in seconds (float for smoother calculations)
         float delta_time = (current_time - last_frame_time) / 1000.0f;
         last_frame_time = current_time;
 
-        // --- Basic Event Handling (Only Quit for now) ---
+        // --- Event Handling (Basic Quit) ---
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                is_running = false;
+                quit_game(); // Use the quit function
             }
-            // Pass other events to the state? (More advanced)
-            // You would define handle_event(const SDL_Event&) in GameState interface
-            // if (current_state) current_state->handle_event(event);
+             // Later: Pass events to InputHandler or current_state->handle_event(event);
         }
-
 
         // --- State Logic ---
         if (current_state) {
-            // Handle state-specific input (using SDL_GetKeyboardState for now)
-            current_state->handle_input();
+            current_state->handle_input(); // State handles its specific input logic
+            current_state->update(delta_time); // State updates its logic
 
-            // Update state logic
-            current_state->update(delta_time);
+            // --- Rendering ---
+            display.clear(0x0000); // Clear screen (using display wrapper)
+            current_state->render();   // State draws itself
+            display.present(); // Show the rendered frame (using display wrapper)
 
-            // Render state graphics
-            display.clear(0x0000); // Use your clear color (e.g., black 0x0000 for RGB565)
-
-            current_state->render();
-
-            // Present the final frame
-            display.present();
         } else {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No current state to run!");
-             // Optionally handle this case, maybe switch to a default state or quit
-             is_running = false;
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No current state to run! Exiting loop.");
+             is_running = false; // Exit if state becomes null unexpectedly
         }
 
-
-        // --- Frame Limiter (Approx 60 FPS) ---
-        // Calculate time taken and delay if needed
-        Uint32 frame_duration = SDL_GetTicks() - current_time;
-        const Uint32 MIN_FRAME_DURATION_MS = 16; // ~60 FPS
-        if (frame_duration < MIN_FRAME_DURATION_MS) {
-            SDL_Delay(MIN_FRAME_DURATION_MS - frame_duration);
-        }
+        // --- Frame Limiter (Optional) ---
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
 }
 
 void Game::change_state(std::unique_ptr<GameState> new_state) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Changing game state.");
-    // unique_ptr automatically handles deletion of the old state when assigned
     current_state = std::move(new_state);
     if (!current_state) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Changed to a NULL state!");
@@ -122,23 +142,33 @@ void Game::change_state(std::unique_ptr<GameState> new_state) {
 }
 
 void Game::quit_game() {
-     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Quit requested.");
-     is_running = false;
+     if (is_running) { // Prevent multiple quit messages
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Quit requested.");
+        is_running = false;
+     }
 }
 
+// Getter implementations
+AssetManager* Game::getAssetManager() {
+     return &assetManager;
+}
 
-// Requires full definition of PCDisplay (included via Game.h)
 PCDisplay* Game::get_display() {
     return &display;
 }
 
 
 void Game::close() {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Closing game systems...");
-    // Clear the current state ptr *before* closing display/SDL
-    current_state.reset(); // Explicitly destroy the state object
+    // Ensure close is only effective once
+    // Check if display was ever initialized as a proxy for needing cleanup
+    if (display.isInitialized()) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Closing game systems...");
+        current_state.reset(); // Destroy the current state object first
 
-    display.close(); // Close your display wrapper first
-    SDL_Quit(); // Then shutdown SDL subsystems
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Game systems closed.");
+        assetManager.shutdown(); // <<< SHUTDOWN AssetManager >>>
+        display.close();        // <<< CLOSE Display >>>
+
+        SDL_Quit();             // <<< SHUTDOWN SDL >>>
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Game systems closed.");
+    }
 }
