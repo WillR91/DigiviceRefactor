@@ -179,14 +179,8 @@ DigiviceSim_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 DigiviceSim_SOURCE_DIR:STATIC=Z:/DigiviceRefactor
 
-//No help, variable specified on the command line.
-SDL2_DIR:UNINITIALIZED=Z:/Libraries/SDL2-2.32.0/cmake
-
-//The directory containing a CMake configuration file for SDL2_image.
-SDL2_image_DIR:PATH=Z:/Libraries/SDL2_image-2.8.6/cmake
-
-//The directory containing a CMake configuration file for sdl2_image.
-sdl2_image_DIR:PATH=Z:/Libraries/SDL2_image-2.8.6/cmake
+//The directory containing a CMake configuration file for SDL2.
+SDL2_DIR:PATH=Z:/Libraries/SDL2-2.32.0/cmake
 
 
 ########################
