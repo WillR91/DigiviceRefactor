@@ -5,11 +5,12 @@
 #include "core/AssetManager.h"      // To get assets
 #include "platform/pc/pc_display.h" // To draw
 #include "graphics/Animation.h"     // Uses Animation/SpriteFrame
+#include "states/MenuState.h"       // For pushing menu state
 #include <SDL_log.h>                // SDL logging
 #include <stdexcept>                // For exceptions
 #include <fstream>                  // For reading files
 #include "vendor/nlohmann/json.hpp" // Path to JSON library header
-#include <cstddef>                  // Needed for size_t if not implicitly included elsewhere
+#include <cstddef>                  // For size_t
 
 // Use the nlohmann::json namespace
 using json = nlohmann::json;
@@ -19,6 +20,7 @@ using json = nlohmann::json;
 namespace {
 
 // --- Helper Function to Create Animation from Indices ---
+// FIXED: Use explicit SpriteFrame constructor
 Animation createAnimationFromIndices(
     SDL_Texture* texture,
     const std::vector<SDL_Rect>& allFrameRects,
@@ -36,10 +38,12 @@ Animation createAnimationFromIndices(
         int frameIndex = indices[i];
         Uint32 duration = durations[i];
         if (frameIndex >= 0 && static_cast<size_t>(frameIndex) < allFrameRects.size()) {
-            anim.addFrame({texture, allFrameRects[frameIndex]}, duration);
+            // <<< FIXED: Use explicit SpriteFrame constructor >>>
+            anim.addFrame(SpriteFrame(texture, allFrameRects[frameIndex]), duration);
         } else {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Anim Creation: Index %d out of bounds (%zu). Using frame 0.", frameIndex, allFrameRects.size());
-             anim.addFrame({texture, allFrameRects[0]}, duration); // Placeholder on error
+            // <<< FIXED: Use explicit SpriteFrame constructor >>>
+             anim.addFrame(SpriteFrame(texture, allFrameRects[0]), duration); // Placeholder
         }
     }
     return anim;
@@ -75,7 +79,7 @@ AdventureState::AdventureState(Game* game) :
     bgTexture0_ = assets->getTexture("castle_bg_0");
     bgTexture1_ = assets->getTexture("castle_bg_1");
     bgTexture2_ = assets->getTexture("castle_bg_2");
-    if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { /* Log warning */ }
+    if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"AdventureState: Background texture(s) missing!"); }
     initializeAnimations();
     setActiveAnimation();
     if (!active_anim_) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Failed to set initial active animation!"); }
@@ -123,21 +127,19 @@ void AdventureState::initializeAnimations() {
                       for (const auto& frameData : framesNode) {
                           if (frameData.contains("frame")) {
                              const auto& rectData = frameData["frame"];
-                             // Basic check for required keys before accessing
                              if (rectData.contains("x") && rectData.contains("y") && rectData.contains("w") && rectData.contains("h")) {
                                 frameRects.push_back({ rectData["x"].get<int>(), rectData["y"].get<int>(), rectData["w"].get<int>(), rectData["h"].get<int>() });
-                             } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (array item)", jsonPath.c_str()); }
-                          } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (array item)", jsonPath.c_str()); }
+                             } else { /* Log warn */ }
+                          } else { /* Log warn */ }
                       }
                  } else if (framesNode.is_object()) {
                       for (auto& [key, frameData] : framesNode.items()) {
                            if (frameData.contains("frame")) {
                                 const auto& rectData = frameData["frame"];
-                                // Basic check for required keys before accessing
                                 if (rectData.contains("x") && rectData.contains("y") && rectData.contains("w") && rectData.contains("h")) {
                                     frameRects.push_back({ rectData["x"].get<int>(), rectData["y"].get<int>(), rectData["w"].get<int>(), rectData["h"].get<int>() });
-                                } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
-                           } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
+                                } else { /* Log warn */ }
+                           } else { /* Log warn */ }
                       }
                  } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "'frames' not array/object in %s", jsonPath.c_str()); continue; }
              } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Missing 'frames' in %s", jsonPath.c_str()); continue; }
@@ -179,9 +181,27 @@ void AdventureState::setActiveAnimation() {
 void AdventureState::handle_input() {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     bool stateOrDigiChanged = false;
+
+    // --- Menu Activation (Return/Enter) ---
+    static bool menu_key_pressed_last_frame = false;
+    if (keystates[SDL_SCANCODE_RETURN]) {
+        if (!menu_key_pressed_last_frame) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key (Return) pressed, pushing MenuState.");
+            std::vector<std::string> mainMenuOptions = {"DIGIMON", "MAP", "RECOVER", "SETTINGS", "QUIT"};
+            game_ptr->push_state(std::make_unique<MenuState>(game_ptr, mainMenuOptions));
+            return; // Exit input handling for AdventureState
+        }
+        menu_key_pressed_last_frame = true;
+    } else {
+        menu_key_pressed_last_frame = false;
+    }
+
+    // --- Step Input (Spacebar) ---
     static bool space_pressed = false;
     if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) { if(queued_steps_ < MAX_QUEUED_STEPS) queued_steps_++; space_pressed = true; SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);}
     if(!keystates[SDL_SCANCODE_SPACE]) space_pressed = false;
+
+    // --- Switch Digimon (Number keys 1-8) ---
     static bool num_pressed[DIGI_COUNT] = {false};
     for(int i=0; i<DIGI_COUNT; ++i) {
          SDL_Scancode scancode = (SDL_Scancode)(SDL_SCANCODE_1 + i);
@@ -195,7 +215,14 @@ void AdventureState::handle_input() {
          }
          if(!keystates[scancode]) num_pressed[i] = false;
     }
-    if(keystates[SDL_SCANCODE_ESCAPE] && game_ptr) game_ptr->quit_game();
+
+    // --- Quit Input (Escape) ---
+    if(keystates[SDL_SCANCODE_ESCAPE] && game_ptr) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Escape pressed in AdventureState, quitting game.");
+        game_ptr->quit_game();
+    }
+
+    // Update Active Animation if state or digimon changed
     if(stateOrDigiChanged) setActiveAnimation();
 }
 
@@ -256,7 +283,7 @@ void AdventureState::update(float delta_time) {
 
 
 // --- Render ---
-// Draws backgrounds and the current character animation frame, WITH ADDED LOGGING and CORRECTED drawTexture call
+// Draws backgrounds and the current character animation frame.
 void AdventureState::render() {
     if (!game_ptr) return;
     PCDisplay* display = game_ptr->get_display();
@@ -267,26 +294,12 @@ void AdventureState::render() {
     // Draw Backgrounds
     auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth) {
         if (!tex || texW <= 0 || effectiveWidth <= 0) return;
-        // Use fmod on the offset directly for correct wrapping calculation
         int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth));
-        // Ensure the result is negative or zero if offset was positive
         if (drawX1 > 0) drawX1 -= effectiveWidth;
-
-        SDL_Rect dst1 = { drawX1, 0, texW, texH };
-        display->drawTexture(tex, NULL, &dst1); // Draw first tile
-
-        int drawX2 = drawX1 + effectiveWidth; // Position of the second tile
-        SDL_Rect dst2 = { drawX2, 0, texW, texH };
-        display->drawTexture(tex, NULL, &dst2); // Draw second tile
-
-        // Optional: Draw a third tile ONLY if the second tile doesn't fully cover the remaining screen width
-         if (drawX2 + texW < WINDOW_WIDTH) { // Check if the *end* of the second tile is before window edge
-             int drawX3 = drawX2 + effectiveWidth;
-             SDL_Rect dst3 = { drawX3, 0, texW, texH };
-             display->drawTexture(tex, NULL, &dst3);
-         }
+        SDL_Rect dst1 = { drawX1, 0, texW, texH }; display->drawTexture(tex, NULL, &dst1);
+        int drawX2 = drawX1 + effectiveWidth; SDL_Rect dst2 = { drawX2, 0, texW, texH }; display->drawTexture(tex, NULL, &dst2);
+        if (drawX2 + texW < WINDOW_WIDTH) { int drawX3 = drawX2 + effectiveWidth; SDL_Rect dst3 = { drawX3, 0, texW, texH }; display->drawTexture(tex, NULL, &dst3); }
     };
-    // Get dimensions and draw backgrounds
     int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
     if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
     if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
@@ -306,11 +319,11 @@ void AdventureState::render() {
         if (currentFrame && currentFrame->texturePtr && currentFrame->sourceRect.w > 0 && currentFrame->sourceRect.h > 0) {
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: Frame Tex=%p, SrcRect={%d,%d,%d,%d}", currentFrame->texturePtr, currentFrame->sourceRect.x, currentFrame->sourceRect.y, currentFrame->sourceRect.w, currentFrame->sourceRect.h);
             int drawX = (WINDOW_WIDTH / 2) - (currentFrame->sourceRect.w / 2);
-            int drawY = (WINDOW_HEIGHT / 2) - (currentFrame->sourceRect.h / 2);
-                        SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
+            int drawY = (WINDOW_HEIGHT / 2) - (currentFrame->sourceRect.h / 2); // Centered Y
+            SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: DstRect={%d,%d,%d,%d}", dstRect.x, dstRect.y, dstRect.w, dstRect.h);
 
-            // <<< --- THIS IS THE CORRECTED LINE --- >>>
+            // <<< --- FINAL CORRECTED LINE --- >>>
             display->drawTexture(currentFrame->texturePtr,
                                  &currentFrame->sourceRect, // Address of source rect
                                  &dstRect);                 // Address of destination rect
@@ -327,4 +340,4 @@ void AdventureState::render() {
 
     // Draw Foreground
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0);
-} // <-- Make sure this closing brace is the end of the function
+} // End of AdventureState::render() function

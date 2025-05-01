@@ -29,6 +29,7 @@ add_executable(${PROJECT_NAME}
     src/platform/pc/pc_display.cpp
     src/graphics/Animation.cpp
     src/core/AssetManager.cpp
+    src/states/MenuState.cpp
 )
 
 # --- Include Directories VIA COMPILER OPTIONS ---

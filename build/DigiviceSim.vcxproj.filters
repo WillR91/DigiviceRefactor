@@ -19,6 +19,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Z:\DigiviceRefactor\CMakeLists.txt" />
