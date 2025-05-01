@@ -2,14 +2,12 @@
 #pragma once
 
 #include <string>
-#include <memory> // For std::unique_ptr
-#include <vector> // For state stack vector
-#include <SDL.h>  // For SDL types like Uint32
-#include "platform/pc/pc_display.h" // Your display abstraction
-#include "core/AssetManager.h"      // Your asset manager
-#include "states/GameState.h"       // <<< ADDED: Include full definition for unique_ptr >>>
-
-// class GameState; // <<< REMOVED: Forward declaration no longer needed here >>>
+#include <memory>
+#include <vector>
+#include <SDL.h>
+#include "platform/pc/pc_display.h"
+#include "core/AssetManager.h"
+#include "states/GameState.h" // Include full definition
 
 class Game {
 public:
@@ -21,25 +19,35 @@ public:
     bool init(const std::string& title, int width, int height);
     void run();
 
-    // --- State Management ---
-    void push_state(std::unique_ptr<GameState> new_state); // Add state to top
-    void pop_state();                                      // Remove top state
-    GameState* getCurrentState();                         // Get pointer to top state (doesn't change ownership)
-    // void change_state(std::unique_ptr<GameState> new_state); // Can add later if needed (pop + push)
+    // --- State Management Requests (Called by States) ---
+    void requestPushState(std::unique_ptr<GameState> state);
+    void requestPopState();
+    // void requestChangeState(std::unique_ptr<GameState> state); // Add later if needed
 
     // Other Public Methods
-    void quit_game(); // Signal the game loop to stop
-    PCDisplay* get_display(); // Access display system (non-owning pointer)
-    AssetManager* getAssetManager(); // Access asset manager (non-owning pointer)
+    void quit_game();
+    PCDisplay* get_display();
+    AssetManager* getAssetManager();
+    GameState* getCurrentState(); // Keep public if states need to query top state?
 
 private:
     // Private Helper Functions
-    void close(); // Cleanup resources
+    void close();
+    // --- State Management (Internal - Called by run loop) ---
+    void push_state(std::unique_ptr<GameState> new_state);
+    void pop_state();
+    void applyStateChanges(); // Apply queued requests
 
     // Member Variables
-    PCDisplay display;          // Owns the display object
-    AssetManager assetManager;    // Owns the asset manager object
-    bool is_running = false;    // Flag for main loop
-    std::vector<std::unique_ptr<GameState>> states_; // State stack (owns the states)
-    Uint32 last_frame_time = 0; // For delta time calculation
+    PCDisplay display;
+    AssetManager assetManager;
+    bool is_running = false;
+    std::vector<std::unique_ptr<GameState>> states_; // State stack
+    Uint32 last_frame_time = 0;
+
+    // --- State Change Request Flags/Data ---
+    bool request_pop_ = false;
+    std::unique_ptr<GameState> request_push_ = nullptr;
+    // bool request_change_ = false;
+    // std::unique_ptr<GameState> request_change_to_ = nullptr;
 };

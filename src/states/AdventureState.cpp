@@ -5,7 +5,7 @@
 #include "core/AssetManager.h"      // To get assets
 #include "platform/pc/pc_display.h" // To draw
 #include "graphics/Animation.h"     // Uses Animation/SpriteFrame
-#include "states/MenuState.h"       // For pushing menu state
+#include "states/MenuState.h"       // Needed for creating MenuState instance
 #include <SDL_log.h>                // SDL logging
 #include <stdexcept>                // For exceptions
 #include <fstream>                  // For reading files
@@ -20,7 +20,6 @@ using json = nlohmann::json;
 namespace {
 
 // --- Helper Function to Create Animation from Indices ---
-// FIXED: Use explicit SpriteFrame constructor
 Animation createAnimationFromIndices(
     SDL_Texture* texture,
     const std::vector<SDL_Rect>& allFrameRects,
@@ -38,12 +37,10 @@ Animation createAnimationFromIndices(
         int frameIndex = indices[i];
         Uint32 duration = durations[i];
         if (frameIndex >= 0 && static_cast<size_t>(frameIndex) < allFrameRects.size()) {
-            // <<< FIXED: Use explicit SpriteFrame constructor >>>
             anim.addFrame(SpriteFrame(texture, allFrameRects[frameIndex]), duration);
         } else {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Anim Creation: Index %d out of bounds (%zu). Using frame 0.", frameIndex, allFrameRects.size());
-            // <<< FIXED: Use explicit SpriteFrame constructor >>>
-             anim.addFrame(SpriteFrame(texture, allFrameRects[0]), duration); // Placeholder
+            anim.addFrame(SpriteFrame(texture, allFrameRects[0]), duration); // Placeholder
         }
     }
     return anim;
@@ -70,29 +67,25 @@ AdventureState::AdventureState(Game* game) :
     queued_steps_(0)
 {
     this->game_ptr = game;
-    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) {
-        throw std::runtime_error("AdventureState requires valid Game pointer with initialized systems!");
-    }
+    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) { throw std::runtime_error("AdventureState requires valid Game pointer..."); }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Constructor: Initializing...");
-
     AssetManager* assets = game_ptr->getAssetManager();
     bgTexture0_ = assets->getTexture("castle_bg_0");
     bgTexture1_ = assets->getTexture("castle_bg_1");
     bgTexture2_ = assets->getTexture("castle_bg_2");
     if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"AdventureState: Background texture(s) missing!"); }
-    initializeAnimations();
-    setActiveAnimation();
+    initializeAnimations(); // Load animation data
+    setActiveAnimation(); // Set the initial animation based on default state/digimon
     if (!active_anim_) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Failed to set initial active animation!"); }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Initialized Successfully.");
 }
 
 // --- Destructor ---
-AdventureState::~AdventureState() {
-     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Destructor called.");
-}
+AdventureState::~AdventureState() { SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Destructor called."); }
 
 
 // --- Initialize Animations ---
+// Loads frame data from JSON and creates Animation objects using templates.
 void AdventureState::initializeAnimations() {
     AssetManager* assets = game_ptr->getAssetManager();
     if (!assets) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot init anims: AssetManager null"); return; }
@@ -129,8 +122,8 @@ void AdventureState::initializeAnimations() {
                              const auto& rectData = frameData["frame"];
                              if (rectData.contains("x") && rectData.contains("y") && rectData.contains("w") && rectData.contains("h")) {
                                 frameRects.push_back({ rectData["x"].get<int>(), rectData["y"].get<int>(), rectData["w"].get<int>(), rectData["h"].get<int>() });
-                             } else { /* Log warn */ }
-                          } else { /* Log warn */ }
+                             } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (array item)", jsonPath.c_str()); }
+                          } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (array item)", jsonPath.c_str()); }
                       }
                  } else if (framesNode.is_object()) {
                       for (auto& [key, frameData] : framesNode.items()) {
@@ -138,8 +131,8 @@ void AdventureState::initializeAnimations() {
                                 const auto& rectData = frameData["frame"];
                                 if (rectData.contains("x") && rectData.contains("y") && rectData.contains("w") && rectData.contains("h")) {
                                     frameRects.push_back({ rectData["x"].get<int>(), rectData["y"].get<int>(), rectData["w"].get<int>(), rectData["h"].get<int>() });
-                                } else { /* Log warn */ }
-                           } else { /* Log warn */ }
+                                } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
+                           } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
                       }
                  } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "'frames' not array/object in %s", jsonPath.c_str()); continue; }
              } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Missing 'frames' in %s", jsonPath.c_str()); continue; }
@@ -177,23 +170,26 @@ void AdventureState::setActiveAnimation() {
      if (!active_anim_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "setActiveAnimation: Could not find animation for state %d, digi %d", current_state_, current_digimon_); }
 }
 
+
 // --- Handle Input ---
+// Uses State Change Requests
 void AdventureState::handle_input() {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     bool stateOrDigiChanged = false;
 
-    // --- Menu Activation (Return/Enter) ---
+    // --- Menu Activation (Return/Enter OR Escape key) ---
     static bool menu_key_pressed_last_frame = false;
-    if (keystates[SDL_SCANCODE_RETURN]) {
-        if (!menu_key_pressed_last_frame) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key (Return) pressed, pushing MenuState.");
-            std::vector<std::string> mainMenuOptions = {"DIGIMON", "MAP", "RECOVER", "SETTINGS", "QUIT"};
-            game_ptr->push_state(std::make_unique<MenuState>(game_ptr, mainMenuOptions));
-            return; // Exit input handling for AdventureState
-        }
+    bool menu_requested_this_frame = false;
+    if (keystates[SDL_SCANCODE_RETURN] || keystates[SDL_SCANCODE_ESCAPE]) {
+        if (!menu_key_pressed_last_frame) { menu_requested_this_frame = true; }
         menu_key_pressed_last_frame = true;
-    } else {
-        menu_key_pressed_last_frame = false;
+    } else { menu_key_pressed_last_frame = false; }
+
+    if (menu_requested_this_frame && game_ptr) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, requesting MenuState push.");
+        std::vector<std::string> mainMenuOptions = {"DIGIMON", "MAP", "RECOVER", "SETTINGS", "QUIT"};
+        auto menuState = std::make_unique<MenuState>(game_ptr, mainMenuOptions);
+        game_ptr->requestPushState(std::move(menuState));
     }
 
     // --- Step Input (Spacebar) ---
@@ -216,17 +212,13 @@ void AdventureState::handle_input() {
          if(!keystates[scancode]) num_pressed[i] = false;
     }
 
-    // --- Quit Input (Escape) ---
-    if(keystates[SDL_SCANCODE_ESCAPE] && game_ptr) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Escape pressed in AdventureState, quitting game.");
-        game_ptr->quit_game();
-    }
-
     // Update Active Animation if state or digimon changed
     if(stateOrDigiChanged) setActiveAnimation();
 }
 
+
 // --- Update ---
+// Uses delta_time for animation timing and scrolling
 void AdventureState::update(float delta_time) {
     bool stateNeedsAnimUpdate = false;
     // Scroll Background
@@ -283,17 +275,23 @@ void AdventureState::update(float delta_time) {
 
 
 // --- Render ---
-// Draws backgrounds and the current character animation frame.
+// Draws backgrounds and the current character animation frame, WITH ADDED LOGGING
 void AdventureState::render() {
-    if (!game_ptr) return;
-    PCDisplay* display = game_ptr->get_display();
-    if (!display) return;
-    SDL_Renderer* renderer = display->getRenderer();
-    if (!renderer) return;
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render START ---"); // Mark start
 
-    // Draw Backgrounds
-    auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth) {
-        if (!tex || texW <= 0 || effectiveWidth <= 0) return;
+    if (!game_ptr) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: game_ptr null"); return; }
+    PCDisplay* display = game_ptr->get_display();
+    if (!display) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: display null"); return; }
+    SDL_Renderer* renderer = display->getRenderer();
+    if (!renderer) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: renderer null"); return; }
+
+    // --- Draw Backgrounds ---
+    auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) {
+        if (!tex || texW <= 0 || effectiveWidth <= 0) {
+             SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Skipping drawTiledBg for %s (Tex: %p, W: %d, effW: %d)", layerName, tex, texW, effectiveWidth);
+             return;
+        }
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing Tiled BG for %s", layerName);
         int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth));
         if (drawX1 > 0) drawX1 -= effectiveWidth;
         SDL_Rect dst1 = { drawX1, 0, texW, texH }; display->drawTexture(tex, NULL, &dst1);
@@ -301,43 +299,48 @@ void AdventureState::render() {
         if (drawX2 + texW < WINDOW_WIDTH) { int drawX3 = drawX2 + effectiveWidth; SDL_Rect dst3 = { drawX3, 0, texW, texH }; display->drawTexture(tex, NULL, &dst3); }
     };
     int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 0: %p", bgTexture0_);
     if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 1: %p", bgTexture1_);
     if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 2: %p", bgTexture2_);
     if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
-    drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2);
-    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1);
 
-    // Logging block
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: Current Digi=%d, State=%d, FrameIdx=%zu", current_digimon_, current_state_, current_anim_frame_idx_);
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: Active Anim Ptr = %p", active_anim_);
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 2 (Tex %p, W%d H%d, effW%d)", bgTexture2_, bgW2, bgH2, effW2);
+    drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 1 (Tex %p, W%d H%d, effW%d)", bgTexture1_, bgW1, bgH1, effW1);
+    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
 
-    // *** Draw Character Sprite using Texture ***
+
+    // --- Draw Character ---
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Current Digi=%d, State=%d, FrameIdx=%zu", current_digimon_, current_state_, current_anim_frame_idx_);
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Active Anim Ptr = %p", active_anim_);
     if (active_anim_) {
         const SpriteFrame* currentFrame = active_anim_->getFrame(current_anim_frame_idx_);
-        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: Current Frame Ptr = %p", currentFrame);
-
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Current Frame Ptr = %p", currentFrame);
         if (currentFrame && currentFrame->texturePtr && currentFrame->sourceRect.w > 0 && currentFrame->sourceRect.h > 0) {
-            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: Frame Tex=%p, SrcRect={%d,%d,%d,%d}", currentFrame->texturePtr, currentFrame->sourceRect.x, currentFrame->sourceRect.y, currentFrame->sourceRect.w, currentFrame->sourceRect.h);
+            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Frame Tex=%p, SrcRect={%d,%d,%d,%d}", currentFrame->texturePtr, currentFrame->sourceRect.x, currentFrame->sourceRect.y, currentFrame->sourceRect.w, currentFrame->sourceRect.h);
             int drawX = (WINDOW_WIDTH / 2) - (currentFrame->sourceRect.w / 2);
             int drawY = (WINDOW_HEIGHT / 2) - (currentFrame->sourceRect.h / 2); // Centered Y
             SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
-            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Render: DstRect={%d,%d,%d,%d}", dstRect.x, dstRect.y, dstRect.w, dstRect.h);
-
-            // <<< --- FINAL CORRECTED LINE --- >>>
-            display->drawTexture(currentFrame->texturePtr,
-                                 &currentFrame->sourceRect, // Address of source rect
-                                 &dstRect);                 // Address of destination rect
-            // <<< --- END CORRECTION --- >>>
-
-        } else { // Log failure details
-             if (!currentFrame) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Render FAIL: Current animation frame %zu is null for anim %p", current_anim_frame_idx_, active_anim_);
-             else if (!currentFrame->texturePtr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Render FAIL: Current frame %zu has null texture for anim %p", current_anim_frame_idx_, active_anim_);
-             else SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Render FAIL: Current frame %zu has zero width/height (%d, %d) for anim %p", current_anim_frame_idx_, currentFrame->sourceRect.w, currentFrame->sourceRect.h, active_anim_);
+            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: DstRect={%d,%d,%d,%d}", dstRect.x, dstRect.y, dstRect.w, dstRect.h);
+            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Calling display->drawTexture for Character...");
+            // Using the corrected drawTexture call from the last fix
+            display->drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect);
+            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Finished display->drawTexture for Character.");
+        } else { // Log failure details more granularly
+             if (!currentFrame) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: CurrentFrame is null!");
+             else if (!currentFrame->texturePtr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame TexPtr is null!");
+             else SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame SrcRect has zero W/H (%d, %d)!", currentFrame->sourceRect.w, currentFrame->sourceRect.h);
         }
-    } else {
-         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Render: No active animation set!");
-    }
+    } else { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render: No active animation set!"); }
+    // --- End Character ---
 
-    // Draw Foreground
-    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0);
+
+    // --- Draw Foreground ---
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 0 (Tex %p, W%d H%d, effW%d)", bgTexture0_, bgW0, bgH0, effW0);
+    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+    // --- End Foreground ---
+
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render END ---"); // Mark end
 } // End of AdventureState::render() function
