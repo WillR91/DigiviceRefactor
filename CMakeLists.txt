@@ -30,6 +30,7 @@ add_executable(${PROJECT_NAME}
     src/graphics/Animation.cpp
     src/core/AssetManager.cpp
     src/states/MenuState.cpp
+    src/states/TransitionState.cpp
 )
 
 # --- Include Directories VIA COMPILER OPTIONS ---

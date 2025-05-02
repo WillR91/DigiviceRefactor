@@ -6,11 +6,16 @@
 #include "platform/pc/pc_display.h" // To draw
 #include "graphics/Animation.h"     // Uses Animation/SpriteFrame
 #include "states/MenuState.h"       // Needed for creating MenuState instance
+#include "states/TransitionState.h" // Needed for creating TransitionState instance
 #include <SDL_log.h>                // SDL logging
 #include <stdexcept>                // For exceptions
 #include <fstream>                  // For reading files
 #include "vendor/nlohmann/json.hpp" // Path to JSON library header
 #include <cstddef>                  // For size_t
+#include <vector>
+#include <string>
+#include <map>
+#include <cmath>                    // For std::fmod
 
 // Use the nlohmann::json namespace
 using json = nlohmann::json;
@@ -54,31 +59,55 @@ const std::vector<Uint32> WALK_DURATIONS = {300, 300, 300, 300};
 const std::vector<int> ATTACK_INDICES = {1, 0, 3, 8};
 const std::vector<Uint32> ATTACK_DURATIONS = {200, 150, 150, 400};
 
+// TEMP Constants
+const int WINDOW_WIDTH = 466;
+const int WINDOW_HEIGHT = 466;
+
 } // end anonymous namespace
 
 
 // --- Constructor ---
+// <<< Corrected Initializer List & Added Logging Block >>>
 AdventureState::AdventureState(Game* game) :
-    bgTexture0_(nullptr), bgTexture1_(nullptr), bgTexture2_(nullptr),
+    bgTexture0_(nullptr),           // Initializer list separated by commas
+    bgTexture1_(nullptr),
+    bgTexture2_(nullptr),
     active_anim_(nullptr),
-    current_digimon_(DIGI_AGUMON), current_state_(STATE_IDLE),
-    current_anim_frame_idx_(0), // Initialized as size_t
+    current_digimon_(DIGI_AGUMON),
+    current_state_(STATE_IDLE),
+    current_anim_frame_idx_(0),
     current_frame_elapsed_time_(0.0f),
-    queued_steps_(0)
-{
+    queued_steps_(0),
+    transitioningToMenu_(false)
+{                                   // <<< Opening Brace for function body >>>
     this->game_ptr = game;
-    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) { throw std::runtime_error("AdventureState requires valid Game pointer..."); }
+    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) {
+        throw std::runtime_error("AdventureState requires valid Game pointer with initialized systems!");
+    }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Constructor: Initializing...");
+
     AssetManager* assets = game_ptr->getAssetManager();
     bgTexture0_ = assets->getTexture("castle_bg_0");
     bgTexture1_ = assets->getTexture("castle_bg_1");
     bgTexture2_ = assets->getTexture("castle_bg_2");
     if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"AdventureState: Background texture(s) missing!"); }
+
     initializeAnimations(); // Load animation data
-    setActiveAnimation(); // Set the initial animation based on default state/digimon
-    if (!active_anim_) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Failed to set initial active animation!"); }
+    setActiveAnimation(); // Set the initial animation
+
+    // <<< --- ADDED LOGGING BLOCK HERE --- >>>
+    if (!active_anim_) {
+        // This error means setActiveAnimation failed to find the initial anim
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR FAIL: Failed to set initial active animation! active_anim_ is NULL.");
+    } else {
+        // This confirms setActiveAnimation worked initially
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR OK: Initial active_anim_ set in constructor: %p", active_anim_);
+    }
+    // <<< --- END LOGGING BLOCK --- >>>
+
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Initialized Successfully.");
-}
+} // <<< Closing Brace for constructor >>>
+
 
 // --- Destructor ---
 AdventureState::~AdventureState() { SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Destructor called."); }
@@ -172,30 +201,48 @@ void AdventureState::setActiveAnimation() {
 
 
 // --- Handle Input ---
-// Uses State Change Requests
+// MODIFIED: Initiates transition, ignores input during transition
 void AdventureState::handle_input() {
+    // --- Ignore most input if transitioning out ---
+    if (transitioningToMenu_) {
+        return; // Don't process regular AdventureState input
+    }
+    // --- End transition check ---
+
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     bool stateOrDigiChanged = false;
 
     // --- Menu Activation (Return/Enter OR Escape key) ---
     static bool menu_key_pressed_last_frame = false;
     bool menu_requested_this_frame = false;
-    if (keystates[SDL_SCANCODE_RETURN] || keystates[SDL_SCANCODE_ESCAPE]) {
-        if (!menu_key_pressed_last_frame) { menu_requested_this_frame = true; }
-        menu_key_pressed_last_frame = true;
-    } else { menu_key_pressed_last_frame = false; }
 
-    if (menu_requested_this_frame && game_ptr) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, requesting MenuState push.");
-        std::vector<std::string> mainMenuOptions = {"DIGIMON", "MAP", "RECOVER", "SETTINGS", "QUIT"};
-        auto menuState = std::make_unique<MenuState>(game_ptr, mainMenuOptions);
-        game_ptr->requestPushState(std::move(menuState));
+    if (keystates[SDL_SCANCODE_RETURN] || keystates[SDL_SCANCODE_ESCAPE]) { // Check both keys
+        if (!menu_key_pressed_last_frame) {
+             menu_requested_this_frame = true; // Flag the request on initial press
+        }
+        menu_key_pressed_last_frame = true; // Mark key as down
+    } else {
+        menu_key_pressed_last_frame = false; // Mark key as up
     }
+
+    // If menu was requested this frame AND we aren't already transitioning
+    if (menu_requested_this_frame && game_ptr && !transitioningToMenu_) { // Check flag again
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, starting transition...");
+        transitioningToMenu_ = true; // Set flag to indicate transition started
+        // Push the transition state ON TOP of this AdventureState
+        // Pass 'this' so TransitionState can render AdventureState underneath
+        // Pass the duration defined in the header (Ensure MENU_TRANSITION_DURATION is defined in AdventureState.h)
+        game_ptr->requestPushState(std::make_unique<TransitionState>(game_ptr, this, MENU_TRANSITION_DURATION, TransitionType::BOX_IN_TO_MENU));
+        // No return needed here, state change is deferred
+    }
+    // --- END MENU ACTIVATION ---
+
 
     // --- Step Input (Spacebar) ---
     static bool space_pressed = false;
     if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) { if(queued_steps_ < MAX_QUEUED_STEPS) queued_steps_++; space_pressed = true; SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);}
     if(!keystates[SDL_SCANCODE_SPACE]) space_pressed = false;
+
 
     // --- Switch Digimon (Number keys 1-8) ---
     static bool num_pressed[DIGI_COUNT] = {false};
@@ -212,14 +259,33 @@ void AdventureState::handle_input() {
          if(!keystates[scancode]) num_pressed[i] = false;
     }
 
+
     // Update Active Animation if state or digimon changed
     if(stateOrDigiChanged) setActiveAnimation();
 }
 
 
 // --- Update ---
-// Uses delta_time for animation timing and scrolling
+// MODIFIED: Handles transition completion, gates normal update logic
 void AdventureState::update(float delta_time) {
+
+    // --- Check if returning from menu transition ---
+    if (transitioningToMenu_) {
+        // If the flag is set, check if we are the current top state again.
+        if (game_ptr && game_ptr->getCurrentState() == this) {
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Transition finished, requesting MenuState push.");
+             transitioningToMenu_ = false; // Reset the flag
+             // Now request the push of the actual MenuState
+             std::vector<std::string> mainMenuOptions = {"DIGIMON", "MAP", "RECOVER", "SETTINGS", "QUIT"};
+             game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuOptions));
+        }
+        // Don't run normal update while transitioning
+        return; // Exit early
+    }
+    // --- END Transition Check ---
+
+
+    // --- Normal Adventure Update Logic (Only run if not transitioning) ---
     bool stateNeedsAnimUpdate = false;
     // Scroll Background
     if (current_state_ == STATE_WALKING) {
@@ -233,7 +299,7 @@ void AdventureState::update(float delta_time) {
         if(effW2 > 0) { bg_scroll_offset_2_ -= scrollAmount2; bg_scroll_offset_2_ = std::fmod(bg_scroll_offset_2_ + effW2, (float)effW2); }
      }
     // State Change: Idle -> Walking
-    if (current_state_ == STATE_IDLE && queued_steps_ > 0) { current_state_ = STATE_WALKING; stateNeedsAnimUpdate = true; SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "State changed to WALKING"); }
+    if (current_state_ == STATE_IDLE && queued_steps_ > 0) { current_state_ = STATE_WALKING; stateNeedsAnimUpdate = true; /* SDL_LogDebug(...) */ }
     // Advance Animation Frame
     bool animation_cycle_finished = false;
     if (active_anim_ && active_anim_->getFrameCount() > 0) {
@@ -266,16 +332,17 @@ void AdventureState::update(float delta_time) {
     }
     // State Change: Walking -> Idle
     if (current_state_ == STATE_WALKING && animation_cycle_finished && active_anim_ && !active_anim_->loops) {
-         queued_steps_--; SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Walk cycle finished. Steps remaining: %d", queued_steps_);
-         if (queued_steps_ > 0) { current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Starting next queued walk cycle."); }
-         else { current_state_ = STATE_IDLE; stateNeedsAnimUpdate = true; SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Finished walking, switching to IDLE state."); }
+         queued_steps_--; /* SDL_LogDebug */
+         if (queued_steps_ > 0) { current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; /* SDL_LogDebug */ }
+         else { current_state_ = STATE_IDLE; stateNeedsAnimUpdate = true; /* SDL_LogDebug */ }
     }
     if (stateNeedsAnimUpdate) setActiveAnimation();
+    // --- END Normal Logic ---
 }
 
 
 // --- Render ---
-// Draws backgrounds and the current character animation frame, WITH ADDED LOGGING
+// Added detailed logging back for debugging rendering issues. Corrected drawTexture call.
 void AdventureState::render() {
     SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render START ---"); // Mark start
 
@@ -291,7 +358,7 @@ void AdventureState::render() {
              SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Skipping drawTiledBg for %s (Tex: %p, W: %d, effW: %d)", layerName, tex, texW, effectiveWidth);
              return;
         }
-        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing Tiled BG for %s", layerName);
+        // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing Tiled BG for %s", layerName); // Keep commented for now
         int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth));
         if (drawX1 > 0) drawX1 -= effectiveWidth;
         SDL_Rect dst1 = { drawX1, 0, texW, texH }; display->drawTexture(tex, NULL, &dst1);
@@ -299,16 +366,16 @@ void AdventureState::render() {
         if (drawX2 + texW < WINDOW_WIDTH) { int drawX3 = drawX2 + effectiveWidth; SDL_Rect dst3 = { drawX3, 0, texW, texH }; display->drawTexture(tex, NULL, &dst3); }
     };
     int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 0: %p", bgTexture0_);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 0: %p", bgTexture0_); // Keep commented
     if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 1: %p", bgTexture1_);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 1: %p", bgTexture1_); // Keep commented
     if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 2: %p", bgTexture2_);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Querying BG Texture 2: %p", bgTexture2_); // Keep commented
     if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
 
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 2 (Tex %p, W%d H%d, effW%d)", bgTexture2_, bgW2, bgH2, effW2);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 2 ..."); // Keep commented
     drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 1 (Tex %p, W%d H%d, effW%d)", bgTexture1_, bgW1, bgH1, effW1);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 1 ..."); // Keep commented
     drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
 
 
@@ -325,10 +392,11 @@ void AdventureState::render() {
             SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: DstRect={%d,%d,%d,%d}", dstRect.x, dstRect.y, dstRect.w, dstRect.h);
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Calling display->drawTexture for Character...");
-            // Using the corrected drawTexture call from the last fix
+            // --- Ensure this line is EXACTLY correct ---
             display->drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect);
+            // -------------------------------------------
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "AS Render: Finished display->drawTexture for Character.");
-        } else { // Log failure details more granularly
+        } else { // Keep Logs for render failures
              if (!currentFrame) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: CurrentFrame is null!");
              else if (!currentFrame->texturePtr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame TexPtr is null!");
              else SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame SrcRect has zero W/H (%d, %d)!", currentFrame->sourceRect.w, currentFrame->sourceRect.h);
@@ -338,9 +406,9 @@ void AdventureState::render() {
 
 
     // --- Draw Foreground ---
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 0 (Tex %p, W%d H%d, effW%d)", bgTexture0_, bgW0, bgH0, effW0);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Drawing BG Layer 0 ..."); // Commented out
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
     // --- End Foreground ---
 
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render END ---"); // Mark end
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render END ---"); // Commented out
 } // End of AdventureState::render() function

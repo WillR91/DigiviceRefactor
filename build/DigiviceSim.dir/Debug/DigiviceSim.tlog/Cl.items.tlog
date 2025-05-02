@@ -5,3 +5,4 @@ Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp;Z:\DigiviceRefactor\build\Dig
 Z:\DigiviceRefactor\src\graphics\Animation.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Animation.obj
 Z:\DigiviceRefactor\src\core\AssetManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AssetManager.obj
 Z:\DigiviceRefactor\src\states\MenuState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MenuState.obj
+Z:\DigiviceRefactor\src\states\TransitionState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\TransitionState.obj

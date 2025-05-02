@@ -28,7 +28,7 @@ public:
     void quit_game();
     PCDisplay* get_display();
     AssetManager* getAssetManager();
-    GameState* getCurrentState(); // Keep public if states need to query top state?
+    GameState* getCurrentState();
 
 private:
     // Private Helper Functions

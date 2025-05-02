@@ -393,6 +393,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\TransitionState.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
