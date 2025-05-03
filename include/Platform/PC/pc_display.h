@@ -32,6 +32,11 @@ public:
     bool isInitialized() const;
     SDL_Window* getWindow() const;
 
+    // --- ADDED Declaration for getWindowSize ---
+    // Gets the current width and height of the SDL window.
+    void getWindowSize(int& width, int& height) const;
+    // --- END Added Declaration ---
+
 
 private:
     SDL_Window* window_ = nullptr;

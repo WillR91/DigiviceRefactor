@@ -99,6 +99,7 @@ void Game::run() {
         // --- Apply Pending State Changes ---
         // Keep logs for state changes as they are important events
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Before applyStateChanges. Stack size = %zu", states_.size());
+
         applyStateChanges();
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: After applyStateChanges. Stack size = %zu", states_.size());
 

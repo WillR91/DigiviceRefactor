@@ -3,14 +3,14 @@
 #include "states/MenuState.h"
 #include "core/Game.h"
 #include "core/AssetManager.h"
-#include "platform/pc/pc_display.h"
+#include "platform/pc/pc_display.h" // Needed for display->drawTexture
 #include <SDL_log.h>
-#include <SDL.h>
+#include <SDL.h>                    // Included for SDL_SCANCODEs etc.
 #include <stdexcept>
 
-// TEMP Constants - TODO: Get from display object or GameConstants later
-const int WINDOW_WIDTH = 466;
-const int WINDOW_HEIGHT = 466;
+// TEMP Constants - Can likely be removed if window size is fetched correctly
+// const int WINDOW_WIDTH = 466;
+// const int WINDOW_HEIGHT = 466;
 
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
@@ -23,16 +23,17 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
     this->game_ptr = game;
     if (!game_ptr || !game_ptr->getAssetManager()) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MenuState Error: Game or AssetManager pointer is null!");
-        throw std::runtime_error("MenuState requires Game with AssetManager");
+        // Consider throwing an exception or handling this error more gracefully
+        // For now, we log and proceed, but background might be null.
+    } else {
+        AssetManager* assets = game_ptr->getAssetManager();
+        backgroundTexture_ = assets->getTexture("menu_bg_blue"); // ID used to load the asset
+        if (!backgroundTexture_) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Background texture 'menu_bg_blue' not found!");
+        }
+        // TODO: Load font/cursor textures using assets->getTexture(...)
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState Created with %zu options.", options.size());
-
-    AssetManager* assets = game_ptr->getAssetManager();
-    backgroundTexture_ = assets->getTexture("menu_bg_blue");
-    if (!backgroundTexture_) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Background texture 'menu_bg_blue' not found!");
-    }
-    // TODO: Load font/cursor textures
 }
 
 MenuState::~MenuState() {
@@ -40,18 +41,27 @@ MenuState::~MenuState() {
 }
 
 void MenuState::handle_input() {
+    // Prevent input handling if not the top state
+    if (game_ptr && game_ptr->getCurrentState() != this) {
+        return;
+    }
+
     const Uint8* keys = SDL_GetKeyboardState(NULL);
     static bool esc_pressed_last_frame = false;
     static bool up_pressed_last_frame = false;
     static bool down_pressed_last_frame = false;
+    static bool select_pressed_last_frame = false; // Added for selection
 
     // Exit Menu (Escape or Backspace)
     if (keys[SDL_SCANCODE_ESCAPE] || keys[SDL_SCANCODE_BACKSPACE]) {
         if (!esc_pressed_last_frame) {
             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Exit key pressed in MenuState, requesting pop.");
-            if(game_ptr) { game_ptr->requestPopState(); return; } // Request pop
+            if(game_ptr) {
+                game_ptr->requestPopState();
+                esc_pressed_last_frame = true; // Prevent re-triggering if pop is delayed
+                return; // Exit input handling for this frame after requesting pop
+            }
         }
-        esc_pressed_last_frame = true;
     } else {
         esc_pressed_last_frame = false;
     }
@@ -78,63 +88,84 @@ void MenuState::handle_input() {
         down_pressed_last_frame = false;
     }
 
-    // TODO: Handle Selection with Enter/Space Keys
+    // --- Handle Selection (Enter key) ---
+    if (keys[SDL_SCANCODE_RETURN]) { // Or SDL_SCANCODE_SPACE maybe?
+        if (!select_pressed_last_frame && !menuOptions_.empty()) {
+            const std::string& selectedOption = menuOptions_[currentSelection_];
+            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu: Selected '%s'", selectedOption.c_str());
+            // TODO: Implement actions based on selectedOption
+            // Example:
+            // if (selectedOption == "QUIT") { game_ptr->quit(); }
+            // else if (selectedOption == "DIGIMON") { /* request push PartnerSelectState */ }
+            // etc.
+            select_pressed_last_frame = true; // Mark as pressed
+        }
+    } else {
+        select_pressed_last_frame = false;
+    }
 }
 
 void MenuState::update(float delta_time) {
-    // Nothing to update yet
+    // Usually empty unless menu has animations or timed elements
 }
 
-// <<< --- RESTORED RENDER FUNCTION --- >>>
-// Draws the menu background and logs placeholder text
+
+// --- Render Function ---
+// <<< MODIFIED: UNCOMMENTED background drawing >>>
 void MenuState::render() {
-    // Get necessary pointers (with checks)
     if (!game_ptr) return;
     PCDisplay* display = game_ptr->get_display();
     if (!display) return;
-    // Renderer might be needed for fallback color
-    SDL_Renderer* renderer = display->getRenderer();
-    // if (!renderer) return; // Only needed for fallback
 
-    // --- Draw the Menu Background ---
+    // --- 1. Draw the Background --- <<< UNCOMMENTED >>>
+
     if (backgroundTexture_) {
-        int texW, texH;
-        // Query the texture's dimensions to draw it correctly
-        SDL_QueryTexture(backgroundTexture_, NULL, NULL, &texW, &texH);
-
-        // Calculate destination rectangle (e.g., centered)
-        // Using the temporary WINDOW_ constants defined at top of file
-        int drawX = (WINDOW_WIDTH / 2) - (texW / 2);
-        int drawY = (WINDOW_HEIGHT / 2) - (texH / 2);
-        SDL_Rect dstRect = { drawX, drawY, texW, texH };
-
-        // Use display wrapper to draw the texture
-        // NULL for srcRect draws the entire texture
-        display->drawTexture(backgroundTexture_, NULL, &dstRect);
+        // Use NULL for the destination SDL_Rect to draw the texture
+        // stretched to the entire rendering target (the window).
+        display->drawTexture(backgroundTexture_, NULL, NULL);
     } else {
-        // Fallback: Draw a solid dark blue rectangle if texture is missing
-        if(renderer){ // Check renderer validity before using it
+        // Fallback: Clear the screen with a solid color if texture is missing
+        SDL_Renderer* renderer = display->getRenderer();
+        if (renderer) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 50, 255); // Dark blue fallback
-            SDL_RenderClear(renderer); // Clear whole screen with this color
+            SDL_RenderClear(renderer);
+        } else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "MenuState Render: Cannot draw fallback color - renderer is null.");
         }
-         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "MenuState Render: Drawing fallback color - backgroundTexture_ is null.");
+         // Log only once if fallback is used
+         static bool logged_fallback = false;
+         if (!logged_fallback) {
+             SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "MenuState Render: Drawing fallback color - backgroundTexture_ is null or renderer missing.");
+             logged_fallback = true;
+         }
     }
 
-    // --- Log placeholder options ---
-    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- Menu Render (Selection: %zu) ---", currentSelection_);
-    for(size_t i = 0; i < menuOptions_.size(); ++i) {
-        if (i == currentSelection_) { SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "> %s", menuOptions_[i].c_str()); }
-        else { SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "  %s", menuOptions_[i].c_str()); }
+    // --- <<< END OF BLOCK TO UNCOMMENT >>> ---
+
+
+    // --- 2. Draw Menu Options (Placeholder - Requires Font Rendering) ---
+    // Logging for now, replace with drawText calls later
+    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- Menu Render (Selection: %zu) ---", currentSelection_);
+    for (size_t i = 0; i < menuOptions_.size(); ++i) {
+         // TODO: Replace logging with actual text rendering + cursor logic
+         if (i == currentSelection_) {
+              SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "> %s at (%d, %d)", menuOptions_[i].c_str(), MENU_START_X, MENU_START_Y + (int)(i * MENU_ITEM_HEIGHT));
+             // drawText(">" + menuOptions_[i], MENU_START_X - 20, MENU_START_Y + i * MENU_ITEM_HEIGHT); // Example with cursor ">"
+             // Draw cursor texture here
+         } else {
+              SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "  %s at (%d, %d)", menuOptions_[i].c_str(), MENU_START_X, MENU_START_Y + (int)(i * MENU_ITEM_HEIGHT));
+             // drawText(menuOptions_[i], MENU_START_X, MENU_START_Y + i * MENU_ITEM_HEIGHT);
+         }
     }
-    // --- TODO later: Draw actual text using drawText ---
-    // --- TODO later: Draw selection cursor ---
+
+    // --- 3. TODO: Draw Cursor Texture at selected position ---
 
 }
-// <<< --- END RESTORED RENDER FUNCTION --- >>>
 
-
-// Placeholder text drawing function
+// Placeholder text drawing function (Implementation still needed)
 void MenuState::drawText(const std::string& text, int x, int y) {
      // TODO: Implement using bitmap font atlas later
+     // This function will need access to the font texture, font metadata (char rects),
+     // and the display/renderer to draw characters one by one.
      SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "drawText not implemented! Text: '%s' at (%d,%d)", text.c_str(), x, y);
 }

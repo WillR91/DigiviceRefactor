@@ -22,7 +22,7 @@ private:
     const int MENU_START_X = 50;
     const int MENU_START_Y = 100;
     const int MENU_ITEM_HEIGHT = 30; // Spacing between items
-    SDL_Texture* backgroundTexture_ = nullptr;
+    SDL_Texture* backgroundTexture_ = nullptr; // Already declared correctly
 
     // Menu data
     std::vector<std::string> menuOptions_;

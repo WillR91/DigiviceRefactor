@@ -2,12 +2,12 @@
 #pragma once
 
 #include "states/GameState.h"
-#include <SDL.h>
-#include <string>
-#include <algorithm> // For std::min
-#include <map>       // For storing rects loaded from json
+#include <SDL.h>     // Needed for SDL_Rect, SDL_Texture*
+#include <string>    // Needed for std::string used in helper function prototype
 
-class Game; // Forward declare
+// Forward declarations
+class Game;
+// No need to forward declare nlohmann::json here
 
 // Enum to define different transition types
 enum class TransitionType {
@@ -40,10 +40,10 @@ private:
     SDL_Rect borderRightSrcRect_ = {0,0,0,0};
     // --- End Atlas Data ---
 
-    // TEMP Constants - TODO: Get from game/display later
-    const int WINDOW_WIDTH = 466;
-    const int WINDOW_HEIGHT = 466;
+    // --- State Variable for Completion ---
+    bool transition_complete_requested_ = false; // Tracks if pop/push has been requested for this instance
 
-    // Helper function to load rects from JSON
+    // Helper function prototype
     bool loadBorderRectsFromJson(const std::string& jsonPath);
-};
+
+}; // End TransitionState class

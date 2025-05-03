@@ -58,10 +58,10 @@ private:
     float bg_scroll_offset_1_ = 0.0f;
     float bg_scroll_offset_2_ = 0.0f;
 
-    // --- Transition Logic Members --- <<< ADDED >>>
-    bool transitioningToMenu_ = false;      // Flag: True if currently doing the BoxInToMenu transition
-    const float MENU_TRANSITION_DURATION = 0.3f; // Duration of the transition in seconds
-    // --- END ADDED ---
+    // --- Transition Logic Members --- <<< REMOVED >>>
+    // bool transitioningToMenu_ = false;      // REMOVED
+    // const float MENU_TRANSITION_DURATION = 1.0f; // REMOVED (Will be passed to TransitionState constructor)
+    // --- END REMOVED ---
 
     // --- Constants --- (Consider moving to a separate constants file/namespace later)
     const int MAX_QUEUED_STEPS = 2;
@@ -70,6 +70,7 @@ private:
     const float SCROLL_SPEED_1 = 1.0f * 60.0f; // ~60 pixels/sec
     const float SCROLL_SPEED_2 = 0.5f * 60.0f; // ~30 pixels/sec
     // Window dimensions (Temporary - get from Game/Display later)
+    // NOTE: These should ideally come from the display/game config
     const int WINDOW_WIDTH = 466;
     const int WINDOW_HEIGHT = 466;
     // --- End Constants ---

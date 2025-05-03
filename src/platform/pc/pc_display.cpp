@@ -76,6 +76,17 @@ bool PCDisplay::isInitialized() const {
 SDL_Window* PCDisplay::getWindow() const {
     return window_;
 }
+// --- ADDED to get window dimensions ---
+void PCDisplay::getWindowSize(int& width, int& height) const { // Added const here too
+    if (window_) { // Make sure the window pointer is valid
+        SDL_GetWindowSize(window_, &width, &height);
+    } else {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay::getWindowSize called when window_ is null!");
+        width = 0; // Indicate error or default
+        height = 0;
+    }
+}
+// --- END Added Method ---
 
 SDL_Color PCDisplay::convert_rgb565_to_sdl_color(uint16_t color565) {
     SDL_Color color; // Calculation is correct

@@ -1,115 +1,111 @@
 {
-  "frames": [
-    {
-      "filename": "border_bottom",
+  "frames": {
+    "border_bottom": {
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "sourceSize": {
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "pivot": {
         "x": 0.5,
         "y": 0.5
       }
     },
-    {
-      "filename": "border_left",
+    "border_left": {
       "frame": {
         "x": 0,
-        "y": 480,
-        "w": 480,
-        "h": 480
+        "y": 466,
+        "w": 466,
+        "h": 466
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "sourceSize": {
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "pivot": {
         "x": 0.5,
         "y": 0.5
       }
     },
-    {
-      "filename": "border_right",
+    "border_right": {
       "frame": {
         "x": 0,
-        "y": 960,
-        "w": 480,
-        "h": 480
+        "y": 932,
+        "w": 466,
+        "h": 466
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "sourceSize": {
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "pivot": {
         "x": 0.5,
         "y": 0.5
       }
     },
-    {
-      "filename": "border_top",
+    "border_top": {
       "frame": {
         "x": 0,
-        "y": 1440,
-        "w": 480,
-        "h": 480
+        "y": 1398,
+        "w": 466,
+        "h": 466
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "sourceSize": {
-        "w": 480,
-        "h": 480
+        "w": 466,
+        "h": 466
       },
       "pivot": {
         "x": 0.5,
         "y": 0.5
       }
     }
-  ],
+  },
   "meta": {
     "app": "http://free-tex-packer.com",
     "version": "0.6.7",
     "image": "transition_borders.png",
     "format": "RGBA8888",
     "size": {
-      "w": 480,
-      "h": 1920
+      "w": 466,
+      "h": 1864
     },
-    "scale": 3.75
+    "scale": 3.640625
   }
 }
