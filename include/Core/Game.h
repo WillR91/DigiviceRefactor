@@ -30,6 +30,13 @@ public:
     AssetManager* getAssetManager();
     GameState* getCurrentState();
 
+    // <<< --- ADDED HELPER to access stack (temporary/debug) --- >>>
+    // Provides access to the state stack, primarily for MenuState to find TransitionState.
+    // Note: Exposing the stack directly isn't ideal encapsulation long-term.
+    std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
+    // <<< ------------------------------------------------------- >>>
+
+
 private:
     // Private Helper Functions
     void close();

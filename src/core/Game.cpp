@@ -1,10 +1,16 @@
 // File: src/core/Game.cpp
 
 #include "core/Game.h"
-#include "states/AdventureState.h"
+#include "states/AdventureState.h" // Needed for initial state push
 #include <SDL_log.h>
 #include <stdexcept>
-#include <filesystem>
+#include <filesystem> // For CWD logging
+
+// Include standard library headers needed by this file
+#include <vector>
+#include <memory>
+#include <string>
+
 
 Game::Game() : is_running(false), last_frame_time(0), request_pop_(false) {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called.");
@@ -12,31 +18,34 @@ Game::Game() : is_running(false), last_frame_time(0), request_pop_(false) {
 
 Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
+    // Cleanup happens in close()
 }
 
 bool Game::init(const std::string& title, int width, int height) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing Game systems...");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL Init Error: %s", SDL_GetError()); return false; }
+    // Set texture filtering to nearest neighbor
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0")) { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Hint Warning: %s", SDL_GetError()); }
     else { SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "SDL_HINT_RENDER_SCALE_QUALITY set to 0 (Nearest Neighbor)."); }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL Initialized.");
 
+    // Initialize display (window and renderer)
     if (!display.init(title.c_str(), width, height)) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); SDL_Quit(); return false; }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
 
+    // Initialize asset manager
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
 
-    // --- CWD LOGGING (Keep this info) ---
+    // Log Current Working Directory
     try {
         std::filesystem::path cwd = std::filesystem::current_path();
          SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Current Working Directory: %s", cwd.string().c_str());
     } catch (const std::filesystem::filesystem_error& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error getting CWD using std::filesystem: %s", e.what()); }
-    // --- END CWD LOGGING ---
 
+    // Load initial assets
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
      bool assets_ok = true;
-     // Keep logs for loading success/failure (using INFO/DEBUG/ERROR levels helps)
      assets_ok &= assetManager.loadTexture("agumon_sheet", "assets\\sprites\\agumon_sheet.png");
      assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets\\sprites\\gabumon_sheet.png");
      assets_ok &= assetManager.loadTexture("biyomon_sheet", "assets\\sprites\\biyomon_sheet.png");
@@ -58,81 +67,107 @@ bool Game::init(const std::string& title, int width, int height) {
      }
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
 
-    // Push initial state directly
+    // Push initial state (AdventureState)
     try {
        states_.push_back(std::make_unique<AdventureState>(this));
        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
-    } catch (const std::exception& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what()); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what());
+        assetManager.shutdown(); display.close(); SDL_Quit(); return false;
+    }
 
     is_running = true;
-    last_frame_time = SDL_GetTicks();
+    last_frame_time = SDL_GetTicks(); // Initialize frame timer
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Game Initialization Successful.");
     return true;
 }
 
-// --- Run Loop (Reduced Logging) ---
+// --- Run Loop ---
 void Game::run() {
-    if (!is_running || states_.empty()) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Game::run() called in invalid state."); return; }
+    if (!is_running || states_.empty()) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Game::run() called in invalid state (not initialized or no initial state).");
+        return;
+    }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Entering main game loop.");
-    last_frame_time = SDL_GetTicks();
+    last_frame_time = SDL_GetTicks(); // Ensure timer starts correctly
 
     while (is_running) {
+        // Calculate delta time
         Uint32 current_time = SDL_GetTicks();
         float delta_time = (current_time - last_frame_time) / 1000.0f;
+        // Clamp delta time to prevent large jumps if debugging/pausing
         if (delta_time > 0.1f) delta_time = 0.1f;
         last_frame_time = current_time;
 
         // --- Process OS Events ---
         SDL_Event event;
-        while (SDL_PollEvent(&event)) { if (event.type == SDL_QUIT) { quit_game(); } }
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                quit_game(); // Request quit
+            }
+            // TODO: Pass relevant events down to current state's handle_input if needed
+        }
 
         // --- Update Top State (if any) ---
         if (!states_.empty()) {
             GameState* currentStatePtr = states_.back().get();
             if (currentStatePtr) {
-                // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Updating state %p", currentStatePtr); // <<< COMMENTED OUT >>>
-                currentStatePtr->handle_input();
+                currentStatePtr->handle_input(); // State handles direct polling for now
                 currentStatePtr->update(delta_time);
-            } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!"); is_running = false; }
-        } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack unexpectedly empty."); is_running = false; }
+            } else {
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
+                is_running = false; // Treat as critical error
+            }
+        } else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack unexpectedly empty.");
+            is_running = false; // No states left, stop running
+        }
 
         // --- Apply Pending State Changes ---
-        // Keep logs for state changes as they are important events
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Before applyStateChanges. Stack size = %zu", states_.size());
-
         applyStateChanges();
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: After applyStateChanges. Stack size = %zu", states_.size());
 
         // --- Render Top State (if any) ---
-        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Preparing to render."); // <<< COMMENTED OUT >>>
         if (!states_.empty()) {
-             GameState* currentStateForRender = getCurrentState(); // Calls function which no longer logs frequently
-             // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Got currentStateForRender = %p.", currentStateForRender); // <<< COMMENTED OUT >>>
+             GameState* currentStateForRender = getCurrentState();
              if (currentStateForRender) {
-                 // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Calling render() for state %p...", currentStateForRender); // <<< COMMENTED OUT >>>
-                 display.clear(0x0000);
-                 currentStateForRender->render(); // This might still have its own logs
-                 display.present();
-                 // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Finished render() for state %p.", currentStateForRender); // <<< COMMENTED OUT >>>
-             } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Render phase - getCurrentState returned NULL despite non-empty stack?"); }
+                 display.clear(0x0000); // Clear screen (to black)
+                 currentStateForRender->render(); // Render the current state
+                 display.present(); // Show the result on screen
+             } else {
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Render phase - getCurrentState returned NULL despite non-empty stack?");
+             }
         } else {
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"RunLoop: Render phase - State stack empty, skipping render.");
+             // If stack becomes empty after state changes, maybe log info and stop
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"RunLoop: Render phase - State stack empty, skipping render and stopping.");
              is_running = false;
         }
 
         // --- Check Running Flag ---
-        if (!is_running) { /* SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: is_running is false, breaking loop."); // <<< COMMENTED OUT >>> */ break; }
+        if (!is_running) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: is_running is false, breaking loop.");
+            break;
+        }
 
-        // --- Frame Limiter (Optional) ---
-        // SDL_Delay(...);
+        // --- Frame Limiter (Optional but recommended) ---
+        // A simple delay to aim for ~60 FPS
+        // Uint32 frame_duration = SDL_GetTicks() - current_time;
+        // if (frame_duration < 16) { // Roughly 16ms per frame for 60 FPS
+        //     SDL_Delay(16 - frame_duration);
+        // }
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
+    close(); // Perform cleanup after loop ends
 }
 
 // --- State Management - Actual Push/Pop ---
-// Keep INFO logs for these
 void Game::push_state(std::unique_ptr<GameState> new_state) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing push_state for state %p...", new_state.get());
+    if (!new_state) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "push_state called with null state!");
+        return;
+    }
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing push_state for state %p...", (void*)new_state.get());
     states_.push_back(std::move(new_state));
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "push_state complete. New stack size: %zu", states_.size());
 }
@@ -140,46 +175,87 @@ void Game::push_state(std::unique_ptr<GameState> new_state) {
 void Game::pop_state() {
     if (!states_.empty()) {
          GameState* stateToPop = states_.back().get();
-         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing pop_state for state %p...", stateToPop);
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing pop_state for state %p...", (void*)stateToPop);
+         // unique_ptr handles destruction when popped
          states_.pop_back();
          SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "pop_state complete. New stack size: %zu", states_.size());
-    } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "pop_state called on empty stack!"); }
+    } else {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "pop_state called on empty stack!");
+    }
 }
 
 // --- State Management - Requests ---
-// Keep DEBUG logs for requests
 void Game::requestPushState(std::unique_ptr<GameState> state) {
     if (!state) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Attempted to request push of NULL state!"); return; }
+    // If a push is already pending, the new one replaces it
     if (request_push_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Overwriting previous push request."); }
     request_push_ = std::move(state);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Push requested.");
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Push requested for state %p.", (void*)request_push_.get());
 }
 
 void Game::requestPopState() {
-    if(request_pop_) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Multiple pop requests made in one frame.");
+    // Only log warning if multiple pops requested *before* applyStateChanges runs
+    if(request_pop_) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Multiple pop requests made before applyStateChanges.");
     request_pop_ = true;
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Pop requested.");
 }
 
 // --- Helper to apply queued changes ---
-// Keep DEBUG logs here
 void Game::applyStateChanges() {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Start. RequestPop=%d, RequestPush=%p", request_pop_, request_push_.get());
-    if (request_pop_) { SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Pop request."); pop_state(); request_pop_ = false; }
-    if (request_push_) { SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Push request for state %p.", request_push_.get()); push_state(std::move(request_push_)); request_push_.reset(); }
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Start. RequestPop=%d, RequestPush=%p", request_pop_, (void*)request_push_.get());
+    // Process pop first, then push for this cycle
+    if (request_pop_) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Pop request.");
+        pop_state();
+        request_pop_ = false; // Reset flag after processing
+    }
+    if (request_push_) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Push request for state %p.", (void*)request_push_.get());
+        push_state(std::move(request_push_)); // push_state moves ownership
+        request_push_.reset(); // Clear the pending request unique_ptr
+    }
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: End. Stack size = %zu", states_.size());
 }
 
 // --- getCurrentState ---
-// Removed frequent logging from here
 GameState* Game::getCurrentState() {
+    // Returns nullptr if stack is empty
     GameState* topState = states_.empty() ? nullptr : states_.back().get();
     return topState;
 }
 
-// --- Other functions ---
-// Keep INFO logs
-void Game::quit_game() { /* ... */ }
-PCDisplay* Game::get_display() { return &display; }
-AssetManager* Game::getAssetManager() { return &assetManager; }
-void Game::close() { /* ... */ }
+// --- quit_game ---
+void Game::quit_game() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Quit requested.");
+    is_running = false; // Set flag to end the run loop
+}
+
+// --- Getters ---
+PCDisplay* Game::get_display() {
+    return &display;
+}
+
+AssetManager* Game::getAssetManager() {
+    return &assetManager;
+}
+
+// --- close ---
+void Game::close() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Shutting down Game systems...");
+    // Clear state stack (unique_ptrs handle deletion)
+    states_.clear();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
+    // Shutdown subsystems
+    assetManager.shutdown();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager shutdown.");
+    display.close();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay closed.");
+    SDL_Quit();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL quit.");
+}
+
+// <<< --- ADDED IMPLEMENTATION for stack access --- >>>
+std::vector<std::unique_ptr<GameState>>& Game::DEBUG_getStack() {
+    return states_; // Return reference to the stack
+}
+// <<< --------------------------------------------- >>>
