@@ -25,16 +25,16 @@ using json = nlohmann::json;
 namespace {
 
 // --- Helper Function to Create Animation from Indices ---
-// (This function remains unchanged)
+// <<< ENSURE ALL 5 ARGUMENTS ARE PRESENT >>>
 Animation createAnimationFromIndices(
     SDL_Texture* texture,
     const std::vector<SDL_Rect>& allFrameRects,
     const std::vector<int>& indices,
     const std::vector<Uint32>& durations,
-    bool loops)
+    bool loops) // <<< This 'loops' argument is essential
 {
     Animation anim;
-    anim.loops = loops;
+    anim.loops = loops; // Assign loops parameter
     if (!texture) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot create animation: Null texture provided."); return anim; }
     if (indices.size() != durations.size()) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Animation creation error: Indices count (%zu) does not match durations count (%zu).", indices.size(), durations.size()); return anim; }
     if (allFrameRects.empty()) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot create animation: Provided frame rectangle list is empty."); return anim; }
@@ -53,19 +53,28 @@ Animation createAnimationFromIndices(
 }
 
 // --- Animation Sequence Templates ---
-// (These remain unchanged)
 const std::vector<int> IDLE_INDICES = {0, 1};
 const std::vector<Uint32> IDLE_DURATIONS = {1000, 1000};
 const std::vector<int> WALK_INDICES = {2, 3, 2, 3};
 const std::vector<Uint32> WALK_DURATIONS = {300, 300, 300, 300};
-const std::vector<int> ATTACK_INDICES = {1, 0, 3, 8};
-const std::vector<Uint32> ATTACK_DURATIONS = {200, 150, 150, 400};
+const std::vector<int> ATTACK_INDICES = {1, 0, 3, 8}; // Example, indices likely need adjustment
+const std::vector<Uint32> ATTACK_DURATIONS = {200, 150, 150, 400}; // Example
+
+// Constants (consider moving some later)
+const int MAX_QUEUED_STEPS = 2;
+// Scroll speeds defined in Pixels Per Second
+const float SCROLL_SPEED_0 = 3.0f * 60.0f; // ~180 pixels/sec
+const float SCROLL_SPEED_1 = 1.0f * 60.0f; // ~60 pixels/sec
+const float SCROLL_SPEED_2 = 0.5f * 60.0f; // ~30 pixels/sec
+// Window dimensions (Temporary - get from Game/Display later)
+const int WINDOW_WIDTH = 466;
+const int WINDOW_HEIGHT = 466;
+
 
 } // end anonymous namespace
 
 
 // --- Constructor ---
-// (Remains unchanged from previous correction)
 AdventureState::AdventureState(Game* game) :
     bgTexture0_(nullptr),
     bgTexture1_(nullptr),
@@ -76,6 +85,7 @@ AdventureState::AdventureState(Game* game) :
     current_anim_frame_idx_(0),
     current_frame_elapsed_time_(0.0f),
     queued_steps_(0)
+    // Removed transitioningToMenu_ initializer
 {
     this->game_ptr = game;
     if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) {
@@ -89,13 +99,13 @@ AdventureState::AdventureState(Game* game) :
     bgTexture2_ = assets->getTexture("castle_bg_2");
     if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"AdventureState: Background texture(s) missing!"); }
 
-    initializeAnimations();
-    setActiveAnimation();
+    initializeAnimations(); // Load animation data
+    setActiveAnimation(); // Set the initial animation
 
     if (!active_anim_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR FAIL: Failed to set initial active animation! active_anim_ is NULL.");
     } else {
-         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR OK: Initial active_anim_ set in constructor: %p", active_anim_);
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR OK: Initial active_anim_ set in constructor: %p", (void*)active_anim_);
     }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Initialized Successfully.");
@@ -103,12 +113,10 @@ AdventureState::AdventureState(Game* game) :
 
 
 // --- Destructor ---
-// (Remains unchanged)
 AdventureState::~AdventureState() { SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Destructor called."); }
 
 
 // --- Initialize Animations ---
-// (Remains unchanged)
 void AdventureState::initializeAnimations() {
     AssetManager* assets = game_ptr->getAssetManager();
     if (!assets) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot init anims: AssetManager null"); return; }
@@ -139,7 +147,9 @@ void AdventureState::initializeAnimations() {
              jsonFile.close();
              if (data.contains("frames")) {
                  const auto& framesNode = data["frames"];
+                 // --- Handle BOTH Array and Object formats ---
                  if (framesNode.is_array()) {
+                      SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,"  Parsing '%s' as ARRAY", jsonPath.c_str());
                       for (const auto& frameData : framesNode) {
                           if (frameData.contains("frame")) {
                              const auto& rectData = frameData["frame"];
@@ -149,25 +159,24 @@ void AdventureState::initializeAnimations() {
                           } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (array item)", jsonPath.c_str()); }
                       }
                  } else if (framesNode.is_object()) {
-                      for (auto& [key, frameData] : framesNode.items()) {
+                      SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,"  Parsing '%s' as OBJECT", jsonPath.c_str());
+                      for (auto it = framesNode.begin(); it != framesNode.end(); ++it) {
+                           const auto& frameData = it.value();
                            if (frameData.contains("frame")) {
                                 const auto& rectData = frameData["frame"];
                                 if (rectData.contains("x") && rectData.contains("y") && rectData.contains("w") && rectData.contains("h")) {
                                     frameRects.push_back({ rectData["x"].get<int>(), rectData["y"].get<int>(), rectData["w"].get<int>(), rectData["h"].get<int>() });
-                                } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
-                           } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (object key: %s)", jsonPath.c_str(), key.c_str()); }
+                                } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing x,y,w, or h in %s (object key: %s)", jsonPath.c_str(), it.key().c_str()); }
+                           } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "JSON frame missing 'frame' object in %s (object key: %s)", jsonPath.c_str(), it.key().c_str()); }
                       }
                  } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "'frames' not array/object in %s", jsonPath.c_str()); continue; }
              } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Missing 'frames' in %s", jsonPath.c_str()); continue; }
-        } catch (json::parse_error& e) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to parse JSON file '%s': %s (at byte %zu)", jsonPath.c_str(), e.what(), e.byte);
-            continue;
-        } catch (std::exception& e) {
-             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error reading/processing JSON file '%s': %s", jsonPath.c_str(), e.what());
-             continue;
-        }
+        } catch (json::parse_error& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to parse JSON file '%s': %s (at byte %zu)", jsonPath.c_str(), e.what(), e.byte); (void)e; continue; } // Mark e as unused
+          catch (const std::exception& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error reading/processing JSON file '%s': %s", jsonPath.c_str(), e.what()); (void)e; continue; } // Mark e as unused
+
         if (frameRects.empty()) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No frames loaded from %s.", jsonPath.c_str()); continue; }
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Loaded %zu frame rectangles for %s.", frameRects.size(), textureId.c_str());
+        // <<< Ensure 5th argument (loops) is passed >>>
         idleAnimations_[type] = createAnimationFromIndices(texture, frameRects, IDLE_INDICES, IDLE_DURATIONS, true);
         walkAnimations_[type] = createAnimationFromIndices(texture, frameRects, WALK_INDICES, WALK_DURATIONS, false);
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Created animations for type %d.", type);
@@ -177,7 +186,6 @@ void AdventureState::initializeAnimations() {
 
 
 // --- Set Active Animation ---
-// (Remains unchanged)
 void AdventureState::setActiveAnimation() {
      Animation* previous_anim = active_anim_;
      if (current_state_ == STATE_IDLE) {
@@ -187,21 +195,21 @@ void AdventureState::setActiveAnimation() {
          auto it = walkAnimations_.find(current_digimon_);
          active_anim_ = (it != walkAnimations_.end()) ? &(it->second) : nullptr;
      }
-     if (active_anim_ != previous_anim || (active_anim_ && current_anim_frame_idx_ != 0)) {
+     if (active_anim_ != previous_anim) {
         current_anim_frame_idx_ = 0;
         current_frame_elapsed_time_ = 0.0f;
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Animation changed, reset frame index/timer.");
      }
      if (!active_anim_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "setActiveAnimation: Could not find animation for state %d, digi %d", current_state_, current_digimon_); }
+     else { SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Set active animation to %p", (void*)active_anim_); }
 }
 
 
 // --- Handle Input ---
-// (Remains unchanged from previous correction)
 void AdventureState::handle_input() {
     if (game_ptr && game_ptr->getCurrentState() != this) {
         return;
     }
-
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     bool stateOrDigiChanged = false;
 
@@ -215,38 +223,51 @@ void AdventureState::handle_input() {
 
     if (menu_requested_this_frame && game_ptr) {
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, requesting transition...");
-        const float desired_transition_duration = 0.75f; // Adjust duration as needed
+        const float desired_transition_duration = 0.75f;
         game_ptr->requestPushState(std::make_unique<TransitionState>(game_ptr, this, desired_transition_duration, TransitionType::BOX_IN_TO_MENU));
     }
 
     // Step Input
-    static bool space_pressed = false;
-    if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) { if(queued_steps_ < MAX_QUEUED_STEPS) queued_steps_++; space_pressed = true; SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);}
-    if(!keystates[SDL_SCANCODE_SPACE]) space_pressed = false;
-
-    // Switch Digimon
-    static bool num_pressed[DIGI_COUNT] = {false};
-    for(int i=0; i<DIGI_COUNT; ++i) {
-         SDL_Scancode scancode = (SDL_Scancode)(SDL_SCANCODE_1 + i);
-         if(keystates[scancode] && !num_pressed[i]) {
-             DigimonType selected = static_cast<DigimonType>(i);
-             if (selected != current_digimon_) {
-                 current_digimon_ = selected; current_state_ = STATE_IDLE; queued_steps_ = 0; stateOrDigiChanged = true;
-                 SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d", current_digimon_);
-             }
-             num_pressed[i] = true;
-         }
-         if(!keystates[scancode]) num_pressed[i] = false;
+    static bool space_pressed_last_frame = false;
+    if(keystates[SDL_SCANCODE_SPACE]) {
+        if (!space_pressed_last_frame && queued_steps_ < MAX_QUEUED_STEPS) {
+            queued_steps_++;
+            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);
+        }
+        space_pressed_last_frame = true;
+    } else {
+        space_pressed_last_frame = false;
     }
 
-    if(stateOrDigiChanged) setActiveAnimation();
+    // Switch Digimon
+    static bool num_pressed_last_frame[DIGI_COUNT] = {false};
+    for(int i=0; i<DIGI_COUNT; ++i) {
+         SDL_Scancode scancode = (SDL_Scancode)(SDL_SCANCODE_1 + i);
+         if(keystates[scancode]) {
+             if (!num_pressed_last_frame[i]) {
+                 DigimonType selected = static_cast<DigimonType>(i);
+                 if (selected != current_digimon_) {
+                     current_digimon_ = selected;
+                     current_state_ = STATE_IDLE;
+                     queued_steps_ = 0;
+                     stateOrDigiChanged = true;
+                     SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d", current_digimon_);
+                 }
+                 num_pressed_last_frame[i] = true;
+             }
+         } else {
+             num_pressed_last_frame[i] = false;
+         }
+    }
+
+    if(stateOrDigiChanged) {
+        setActiveAnimation();
+    }
 }
 
 
 // --- Update ---
-// (Remains unchanged from previous correction - only normal logic)
 void AdventureState::update(float delta_time) {
-    // --- Normal Adventure Update Logic ---
     bool stateNeedsAnimUpdate = false;
     // Scroll Background
     if (current_state_ == STATE_WALKING) {
@@ -260,64 +281,70 @@ void AdventureState::update(float delta_time) {
         if(effW2 > 0) { bg_scroll_offset_2_ -= scrollAmount2; bg_scroll_offset_2_ = std::fmod(bg_scroll_offset_2_ + effW2, (float)effW2); }
      }
     // State Change: Idle -> Walking
-    if (current_state_ == STATE_IDLE && queued_steps_ > 0) { current_state_ = STATE_WALKING; stateNeedsAnimUpdate = true; /* SDL_LogDebug(...) */ }
+    if (current_state_ == STATE_IDLE && queued_steps_ > 0) {
+        current_state_ = STATE_WALKING; stateNeedsAnimUpdate = true;
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "State -> WALKING (Steps queued: %d)", queued_steps_);
+    }
     // Advance Animation Frame
     bool animation_cycle_finished = false;
     if (active_anim_ && active_anim_->getFrameCount() > 0) {
          size_t frameCount = active_anim_->getFrameCount();
-         if (current_anim_frame_idx_ >= frameCount) current_anim_frame_idx_ = 0;
+         if (current_anim_frame_idx_ >= frameCount) { current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Animation frame index OOB, reset."); }
+
          if (current_anim_frame_idx_ < active_anim_->frame_durations_ms.size()) {
             float duration_sec = active_anim_->frame_durations_ms[current_anim_frame_idx_] / 1000.0f;
-            current_frame_elapsed_time_ += delta_time;
-            while (current_frame_elapsed_time_ >= duration_sec && frameCount > 0) {
-                current_frame_elapsed_time_ -= duration_sec; current_anim_frame_idx_++;
-                if (current_anim_frame_idx_ >= frameCount) {
-                    animation_cycle_finished = true;
-                    current_anim_frame_idx_ = active_anim_->loops ? 0 : frameCount - 1;
-                    if (!active_anim_->loops) { current_frame_elapsed_time_ = 0.0f; break; }
+            if (duration_sec <= 0.0f) {
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Zero duration found for frame %zu, skipping.", current_anim_frame_idx_);
+                 current_anim_frame_idx_++; current_frame_elapsed_time_ = 0.0f;
+                 if (current_anim_frame_idx_ >= frameCount) { animation_cycle_finished = true; current_anim_frame_idx_ = active_anim_->loops ? 0 : frameCount - 1; }
+            } else {
+                current_frame_elapsed_time_ += delta_time;
+                while (current_frame_elapsed_time_ >= duration_sec) {
+                    current_frame_elapsed_time_ -= duration_sec; current_anim_frame_idx_++;
+                    if (current_anim_frame_idx_ >= frameCount) {
+                        animation_cycle_finished = true;
+                        if (active_anim_->loops) { current_anim_frame_idx_ = 0; }
+                        else { current_anim_frame_idx_ = frameCount - 1; current_frame_elapsed_time_ = duration_sec; break; }
+                    }
+                    if (current_anim_frame_idx_ < active_anim_->frame_durations_ms.size()) {
+                        duration_sec = active_anim_->frame_durations_ms[current_anim_frame_idx_] / 1000.0f;
+                        if (duration_sec <= 0.0f) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Zero duration frame %zu encountered during step.", current_anim_frame_idx_); continue; }
+                    } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Anim index OOB during step!"); current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; break; }
                 }
-                 if (current_anim_frame_idx_ < active_anim_->frame_durations_ms.size()) {
-                    duration_sec = active_anim_->frame_durations_ms[current_anim_frame_idx_] / 1000.0f;
-                 } else { current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; break; }
-                 if (duration_sec <= 0.0f) {
-                      current_anim_frame_idx_++;
-                       if (current_anim_frame_idx_ >= frameCount) {
-                            animation_cycle_finished = true; current_anim_frame_idx_ = active_anim_->loops ? 0 : frameCount - 1;
-                            if (!active_anim_->loops) current_frame_elapsed_time_ = 0.0f;
-                       }
-                       if (!active_anim_->loops && animation_cycle_finished) break;
-                       if(current_anim_frame_idx_ == 0 && active_anim_->loops) break;
-                 }
             }
-         } else { current_anim_frame_idx_ = 0; }
+         } else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Anim index OOB of durations!"); current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; }
     }
     // State Change: Walking -> Idle
     if (current_state_ == STATE_WALKING && animation_cycle_finished && active_anim_ && !active_anim_->loops) {
-         queued_steps_--; /* SDL_LogDebug */
-         if (queued_steps_ > 0) { current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f; /* SDL_LogDebug */ }
-         else { current_state_ = STATE_IDLE; stateNeedsAnimUpdate = true; /* SDL_LogDebug */ }
+         queued_steps_--;
+         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Walk cycle finished. Steps remaining: %d", queued_steps_);
+         if (queued_steps_ <= 0) {
+             queued_steps_ = 0; current_state_ = STATE_IDLE; stateNeedsAnimUpdate = true;
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "State -> IDLE (Walk finished, no steps left)");
+         } else {
+             current_anim_frame_idx_ = 0; current_frame_elapsed_time_ = 0.0f;
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Restarting walk cycle for next step.");
+         }
     }
-    if (stateNeedsAnimUpdate) setActiveAnimation();
-    // --- END Normal Logic ---
+    if (stateNeedsAnimUpdate) {
+        setActiveAnimation();
+    }
 }
 
 
 // --- Render ---
-// <<< MODIFIED: Added verticalOffset to character drawing >>>
+// <<< Includes verticalOffset fix AND corrected drawTexture call >>>
 void AdventureState::render() {
-    // Reduce log spamming unless debugging render issues
-    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render START ---");
-
     if (!game_ptr) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: game_ptr null"); return; }
     PCDisplay* display = game_ptr->get_display();
     if (!display) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: display null"); return; }
 
-    // --- Get Window Dimensions ---
-    // Using constants from header for now, fetch dynamically if needed
-    const int windowW = WINDOW_WIDTH;
-    const int windowH = WINDOW_HEIGHT;
+    // Get Window Dimensions
+    int windowW = 0; int windowH = 0;
+    display->getWindowSize(windowW, windowH);
+    if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; /* Fallback */ }
 
-    // --- Draw Backgrounds ---
+    // Draw Backgrounds
     auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) {
         if (!tex || texW <= 0 || effectiveWidth <= 0) { return; }
         int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth));
@@ -334,28 +361,30 @@ void AdventureState::render() {
     drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
     drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
 
-
-    // --- Draw Character ---
+    // Draw Character
     if (active_anim_) {
         const SpriteFrame* currentFrame = active_anim_->getFrame(current_anim_frame_idx_);
         if (currentFrame && currentFrame->texturePtr && currentFrame->sourceRect.w > 0 && currentFrame->sourceRect.h > 0) {
-            int drawX = (windowW / 2) - (currentFrame->sourceRect.w / 2); // Keep centered horizontally
-
-            // <<< --- APPLY VERTICAL OFFSET --- >>>
-            int verticalOffset = 30; // Pixels to shift upwards (adjust as needed)
-            int drawY = (windowH / 2) - (currentFrame->sourceRect.h / 2) - verticalOffset; // Subtract offset
-            // <<< --------------------------- >>>
-
+            int drawX = (windowW / 2) - (currentFrame->sourceRect.w / 2);
+            // Apply vertical offset
+            int verticalOffset = 30; // Adjust as needed
+            int drawY = (windowH / 2) - (currentFrame->sourceRect.h / 2) - verticalOffset;
             SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
-            display->drawTexture(currentFrame->texturePtr, ¤tFrame->sourceRect, &dstRect);
 
-        } else { /* ... Error logging ... */ }
-    } else { /* ... Error logging ... */ }
-    // --- End Character ---
+            // --- <<< CORRECTED drawTexture CALL >>> ---
+            display->drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect);
+            // --- <<< ---------------------------- >>>
 
+        } else {
+             if (!currentFrame) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: CurrentFrame is null for anim frame index %zu!", current_anim_frame_idx_);
+             else if (!currentFrame->texturePtr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame TexPtr is null for anim frame index %zu!", current_anim_frame_idx_);
+             else SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render FAIL: Frame SrcRect has zero W/H (%d, %d) for anim frame index %zu!", currentFrame->sourceRect.w, currentFrame->sourceRect.h, current_anim_frame_idx_);
+        }
+    } else {
+        static bool logged_no_anim = false; if (!logged_no_anim) { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "AS Render: No active animation set!"); logged_no_anim = true; }
+     }
 
-    // --- Draw Foreground ---
+    // Draw Foreground
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
-    // --- End Foreground ---
 
 } // End of AdventureState::render() function
