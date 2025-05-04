@@ -8,6 +8,7 @@
 #include "platform/pc/pc_display.h"
 #include "core/AssetManager.h"
 #include "states/GameState.h" // Include full definition
+#include "core/InputManager.h" // <<< ADDED InputManager include >>>
 
 class Game {
 public:
@@ -22,20 +23,16 @@ public:
     // --- State Management Requests (Called by States) ---
     void requestPushState(std::unique_ptr<GameState> state);
     void requestPopState();
-    // void requestChangeState(std::unique_ptr<GameState> state); // Add later if needed
 
     // Other Public Methods
     void quit_game();
     PCDisplay* get_display();
     AssetManager* getAssetManager();
     GameState* getCurrentState();
+    InputManager* getInputManager(); // <<< ADDED Getter Declaration >>>
 
-    // <<< --- ADDED HELPER to access stack (temporary/debug) --- >>>
-    // Provides access to the state stack, primarily for MenuState to find TransitionState.
-    // Note: Exposing the stack directly isn't ideal encapsulation long-term.
+    // Debug helper (Keep or remove as needed)
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
-    // <<< ------------------------------------------------------- >>>
-
 
 private:
     // Private Helper Functions
@@ -48,6 +45,7 @@ private:
     // Member Variables
     PCDisplay display;
     AssetManager assetManager;
+    InputManager inputManager; // <<< ADDED InputManager Member >>>
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_; // State stack
     Uint32 last_frame_time = 0;
@@ -55,6 +53,4 @@ private:
     // --- State Change Request Flags/Data ---
     bool request_pop_ = false;
     std::unique_ptr<GameState> request_push_ = nullptr;
-    // bool request_change_ = false;
-    // std::unique_ptr<GameState> request_change_to_ = nullptr;
 };

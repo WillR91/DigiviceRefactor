@@ -25,6 +25,7 @@ message(STATUS "SDL2 Libraries Found (Used by find_package): ${SDL2_LIBRARIES}")
 add_executable(${PROJECT_NAME}
     main.cpp
     src/core/Game.cpp # Assuming location src/Game.cpp
+    src/core/InputManager.cpp
     src/states/AdventureState.cpp
     src/platform/pc/pc_display.cpp
     src/graphics/Animation.cpp
