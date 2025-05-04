@@ -6,6 +6,8 @@
 #include "platform/pc/pc_display.h" // To draw
 #include "graphics/Animation.h"     // Uses Animation/SpriteFrame
 #include "states/MenuState.h"       // Needed for creating MenuState instance directly
+#include "core/InputManager.h"      // <<< ADDED for InputManager >>>
+#include "core/GameAction.h"        // <<< ADDED for GameAction >>>
 // #include "states/TransitionState.h" // No longer needed here
 #include <SDL_log.h>                // SDL logging
 #include <stdexcept>                // For exceptions
@@ -66,7 +68,7 @@ const std::vector<Uint32> ATTACK_DURATIONS = {200, 150, 150, 400};
 
 
 // --- Constructor ---
-// (Remains unchanged from previous correction)
+// (Remains unchanged)
 AdventureState::AdventureState(Game* game) :
     bgTexture0_(nullptr),
     bgTexture1_(nullptr),
@@ -196,82 +198,97 @@ void AdventureState::setActiveAnimation() {
 }
 
 
-// --- Handle Input ---
-// (Remains unchanged from previous version - pushes MenuState directly)
+// <<< *** REFACTORED handle_input using InputManager *** >>>
 void AdventureState::handle_input() {
     // Only handle input if this state is the current active one
-    if (game_ptr && game_ptr->getCurrentState() != this) {
+    if (!game_ptr || game_ptr->getCurrentState() != this) {
         return;
     }
 
-    const Uint8* keystates = SDL_GetKeyboardState(NULL);
-    bool stateOrDigiChanged = false;
+    // Get the Input Manager instance
+    InputManager* inputManager = game_ptr->getInputManager();
+    if (!inputManager) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::handle_input - InputManager is null!");
+        return;
+    }
+
+    bool stateOrDigiChanged = false; // Flag to check if we need to update animation
 
     // --- Menu Activation ---
-    static bool menu_key_pressed_last_frame = false;
-    bool menu_requested_this_frame = false;
-
-    // Check if Return (Enter) is pressed
-    if (keystates[SDL_SCANCODE_RETURN]) {
-        if (!menu_key_pressed_last_frame) {
-            menu_requested_this_frame = true;
-        }
-        menu_key_pressed_last_frame = true;
-    } else {
-        menu_key_pressed_last_frame = false;
+    // Using CONFIRM action (e.g., Enter). Add CANCEL (e.g. Escape) if desired.
+    // Decide if CANCEL should also open the menu, or do nothing in this state.
+    // For now, let's use CONFIRM only.
+    if (inputManager->isActionJustPressed(GameAction::CONFIRM)) {
+        // Optional: Check state below to prevent accidental reopen (Requires Game.h exposing stack)
+        // GameState* stateBelow = nullptr;
+        // auto& stack = game_ptr->DEBUG_getStack();
+        // if(stack.size() >= 2) { stateBelow = stack[stack.size()-2].get(); }
+        // if(!dynamic_cast<MenuState*>(stateBelow) || stack.size() < 2) {
+             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Confirm action in AdventureState, pushing MenuState.");
+             std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
+             game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
+             return; // Exit input handling immediately after pushing menu
+        // } else { SDL_LogDebug(SDL_LOG_CATEGORY_INPUT,"Confirm pressed but state below is MenuState, ignoring."); }
     }
+    // Example: if CANCEL should also open menu:
+    // else if (inputManager->isActionJustPressed(GameAction::CANCEL)) {
+    //      SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Cancel action in AdventureState, pushing MenuState.");
+    //      std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
+    //      game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
+    //      return;
+    // }
 
-    // If menu requested this frame, push the MenuState directly
-    if (menu_requested_this_frame && game_ptr) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, pushing MenuState directly.");
-        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
-        game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
-        return; // Exit handle_input early
-    }
-    // --- End Menu Activation ---
 
-    // Step Input (Spacebar)
-    static bool space_pressed = false;
-    if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) {
-        if(queued_steps_ < MAX_QUEUED_STEPS) {
+    // --- Step Input ---
+    // Check for the STEP action (e.g., Spacebar)
+    // Note: Spacebar might also be mapped to CONFIRM. isActionJustPressed ensures
+    // only one is triggered per frame (likely CONFIRM due to order above),
+    // unless you press *another* key mapped only to STEP.
+    // Consider separate keys or context-sensitive mapping later if needed.
+    if (inputManager->isActionJustPressed(GameAction::STEP)) {
+        if (queued_steps_ < MAX_QUEUED_STEPS) {
             queued_steps_++;
-            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);
+            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected. Queued: %d", queued_steps_);
+        } else {
+             SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected, but queue is full (%d).", queued_steps_);
         }
-        space_pressed = true;
-    }
-    if(!keystates[SDL_SCANCODE_SPACE]) {
-        space_pressed = false;
     }
 
-    // Switch Digimon (Keys 1-8)
-    static bool num_pressed[DIGI_COUNT] = {false};
-    for(int i=0; i<DIGI_COUNT; ++i) {
-         SDL_Scancode scancode = (SDL_Scancode)(SDL_SCANCODE_1 + i);
-         if(keystates[scancode] && !num_pressed[i]) {
-             DigimonType selected = static_cast<DigimonType>(i);
-             if (selected != current_digimon_) {
-                 current_digimon_ = selected;
-                 current_state_ = STATE_IDLE;
-                 queued_steps_ = 0;
-                 stateOrDigiChanged = true;
-                 SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d", current_digimon_);
-             }
-             num_pressed[i] = true;
-         }
-         if(!keystates[scancode]) {
-             num_pressed[i] = false;
-         }
+    // --- Switch Digimon ---
+    // Use else-if chain to process only one selection per frame
+    if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_1)) {
+        if (current_digimon_ != DIGI_AGUMON) { current_digimon_ = DIGI_AGUMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_2)) {
+        if (current_digimon_ != DIGI_GABUMON) { current_digimon_ = DIGI_GABUMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_3)) {
+        if (current_digimon_ != DIGI_BIYOMON) { current_digimon_ = DIGI_BIYOMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_4)) {
+        if (current_digimon_ != DIGI_GATOMON) { current_digimon_ = DIGI_GATOMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_5)) {
+        if (current_digimon_ != DIGI_GOMAMON) { current_digimon_ = DIGI_GOMAMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_6)) {
+        if (current_digimon_ != DIGI_PALMON) { current_digimon_ = DIGI_PALMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_7)) {
+        if (current_digimon_ != DIGI_TENTOMON) { current_digimon_ = DIGI_TENTOMON; stateOrDigiChanged = true; }
+    } else if (inputManager->isActionJustPressed(GameAction::SELECT_DIGI_8)) {
+        if (current_digimon_ != DIGI_PATAMON) { current_digimon_ = DIGI_PATAMON; stateOrDigiChanged = true; }
     }
 
-    // Update animation if state or digimon changed
-    if(stateOrDigiChanged) {
-        setActiveAnimation();
+    // If Digimon was changed, reset state and clear steps
+    if (stateOrDigiChanged) {
+        current_state_ = STATE_IDLE; // Reset to idle animation
+        queued_steps_ = 0;           // Clear any pending steps
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d", current_digimon_);
+        setActiveAnimation(); // Update the displayed animation immediately
     }
+
+    // Removed all static bool ..._pressed_last_frame flags and keystates checks
 }
+// <<< *** END REFACTORED handle_input *** >>>
 
 
 // --- Update ---
-// (Remains unchanged from previous correction - only normal logic)
+// (Remains unchanged)
 void AdventureState::update(float delta_time) {
     // --- Normal Adventure Update Logic ---
     bool stateNeedsAnimUpdate = false;
@@ -330,7 +347,7 @@ void AdventureState::update(float delta_time) {
 
 
 // --- Render ---
-// (Remains unchanged - includes verticalOffset change from previous version)
+// (Remains unchanged)
 void AdventureState::render() {
     if (!game_ptr) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: game_ptr null"); return; }
     PCDisplay* display = game_ptr->get_display();
@@ -367,17 +384,11 @@ void AdventureState::render() {
             int drawY = (windowH / 2) - (currentFrame->sourceRect.h / 2) - verticalOffset; // Subtract offset
             SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
 
-            // --- Line 382: Ensure this line is correct ---
+            // Ensure no '¤' symbol crept in here!
             display->drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect);
-            // --------------------------------------------
 
-        } else {
-            // Log if frame data is invalid (optional, can be spammy)
-            // SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: Invalid SpriteFrame data (null tex or zero w/h) at index %zu", current_anim_frame_idx_);
-        }
-    } else {
-         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: active_anim_ is null!");
-    }
+        } else { /* Log */ }
+    } else { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: active_anim_ is null!"); }
     // --- End Character ---
 
 

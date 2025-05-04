@@ -83,7 +83,7 @@ void MenuState::render() {
     if (fontTexture_ && !fontCharMap_.empty() && !menuOptions_.empty()) {
         SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Assets OK (Texture: %p, Map size: %zu, Options size: %zu)", (void*)fontTexture_, fontCharMap_.size(), menuOptions_.size());
 
-        const float textScale = 0.9f; const int kerning = -10;
+        const float textScale = 0.9f; const int kerning = -15s;
         const std::string& selectedText = menuOptions_[currentSelection_];
         SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Selected Text: '%s'", selectedText.c_str());
 
