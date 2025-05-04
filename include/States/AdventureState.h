@@ -9,6 +9,7 @@
 #include <cstdint>                  // Standard library integer types
 #include <map>                      // Standard library map container
 #include <cstddef>                  // For size_t type
+// Removed forward declaration for TransitionState as it's no longer directly pushed
 
 // Forward declaration for Game pointer
 class Game;
@@ -57,11 +58,6 @@ private:
     float bg_scroll_offset_0_ = 0.0f;
     float bg_scroll_offset_1_ = 0.0f;
     float bg_scroll_offset_2_ = 0.0f;
-
-    // --- Transition Logic Members --- <<< REMOVED >>>
-    // bool transitioningToMenu_ = false;      // REMOVED
-    // const float MENU_TRANSITION_DURATION = 1.0f; // REMOVED (Will be passed to TransitionState constructor)
-    // --- END REMOVED ---
 
     // --- Constants --- (Consider moving to a separate constants file/namespace later)
     const int MAX_QUEUED_STEPS = 2;

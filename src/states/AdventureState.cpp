@@ -5,8 +5,8 @@
 #include "core/AssetManager.h"      // To get assets
 #include "platform/pc/pc_display.h" // To draw
 #include "graphics/Animation.h"     // Uses Animation/SpriteFrame
-#include "states/MenuState.h"       // Needed for creating MenuState instance (for menu options, maybe remove later)
-#include "states/TransitionState.h" // Needed for creating TransitionState instance
+#include "states/MenuState.h"       // Needed for creating MenuState instance directly
+// #include "states/TransitionState.h" // No longer needed here
 #include <SDL_log.h>                // SDL logging
 #include <stdexcept>                // For exceptions
 #include <fstream>                  // For reading files
@@ -16,6 +16,7 @@
 #include <string>
 #include <map>
 #include <cmath>                    // For std::fmod
+#include <memory>                   // For std::make_unique
 
 // Use the nlohmann::json namespace
 using json = nlohmann::json;
@@ -196,8 +197,9 @@ void AdventureState::setActiveAnimation() {
 
 
 // --- Handle Input ---
-// (Remains unchanged from previous correction)
+// (Remains unchanged from previous version - pushes MenuState directly)
 void AdventureState::handle_input() {
+    // Only handle input if this state is the current active one
     if (game_ptr && game_ptr->getCurrentState() != this) {
         return;
     }
@@ -205,41 +207,66 @@ void AdventureState::handle_input() {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     bool stateOrDigiChanged = false;
 
-    // Menu Activation
+    // --- Menu Activation ---
     static bool menu_key_pressed_last_frame = false;
     bool menu_requested_this_frame = false;
-    if (keystates[SDL_SCANCODE_RETURN] || keystates[SDL_SCANCODE_ESCAPE]) {
-        if (!menu_key_pressed_last_frame) { menu_requested_this_frame = true; }
-        menu_key_pressed_last_frame = true;
-    } else { menu_key_pressed_last_frame = false; }
 
-    if (menu_requested_this_frame && game_ptr) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, requesting transition...");
-        const float desired_transition_duration = 0.75f; // Adjust duration as needed
-        game_ptr->requestPushState(std::make_unique<TransitionState>(game_ptr, this, desired_transition_duration, TransitionType::BOX_IN_TO_MENU));
+    // Check if Return (Enter) is pressed
+    if (keystates[SDL_SCANCODE_RETURN]) {
+        if (!menu_key_pressed_last_frame) {
+            menu_requested_this_frame = true;
+        }
+        menu_key_pressed_last_frame = true;
+    } else {
+        menu_key_pressed_last_frame = false;
     }
 
-    // Step Input
-    static bool space_pressed = false;
-    if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) { if(queued_steps_ < MAX_QUEUED_STEPS) queued_steps_++; space_pressed = true; SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);}
-    if(!keystates[SDL_SCANCODE_SPACE]) space_pressed = false;
+    // If menu requested this frame, push the MenuState directly
+    if (menu_requested_this_frame && game_ptr) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu key pressed, pushing MenuState directly.");
+        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
+        game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
+        return; // Exit handle_input early
+    }
+    // --- End Menu Activation ---
 
-    // Switch Digimon
+    // Step Input (Spacebar)
+    static bool space_pressed = false;
+    if(keystates[SDL_SCANCODE_SPACE] && !space_pressed) {
+        if(queued_steps_ < MAX_QUEUED_STEPS) {
+            queued_steps_++;
+            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step added. Queued: %d", queued_steps_);
+        }
+        space_pressed = true;
+    }
+    if(!keystates[SDL_SCANCODE_SPACE]) {
+        space_pressed = false;
+    }
+
+    // Switch Digimon (Keys 1-8)
     static bool num_pressed[DIGI_COUNT] = {false};
     for(int i=0; i<DIGI_COUNT; ++i) {
          SDL_Scancode scancode = (SDL_Scancode)(SDL_SCANCODE_1 + i);
          if(keystates[scancode] && !num_pressed[i]) {
              DigimonType selected = static_cast<DigimonType>(i);
              if (selected != current_digimon_) {
-                 current_digimon_ = selected; current_state_ = STATE_IDLE; queued_steps_ = 0; stateOrDigiChanged = true;
+                 current_digimon_ = selected;
+                 current_state_ = STATE_IDLE;
+                 queued_steps_ = 0;
+                 stateOrDigiChanged = true;
                  SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d", current_digimon_);
              }
              num_pressed[i] = true;
          }
-         if(!keystates[scancode]) num_pressed[i] = false;
+         if(!keystates[scancode]) {
+             num_pressed[i] = false;
+         }
     }
 
-    if(stateOrDigiChanged) setActiveAnimation();
+    // Update animation if state or digimon changed
+    if(stateOrDigiChanged) {
+        setActiveAnimation();
+    }
 }
 
 
@@ -303,17 +330,13 @@ void AdventureState::update(float delta_time) {
 
 
 // --- Render ---
-// <<< MODIFIED: Added verticalOffset to character drawing >>>
+// (Remains unchanged - includes verticalOffset change from previous version)
 void AdventureState::render() {
-    // Reduce log spamming unless debugging render issues
-    // SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- AdventureState Render START ---");
-
     if (!game_ptr) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: game_ptr null"); return; }
     PCDisplay* display = game_ptr->get_display();
     if (!display) { SDL_LogError(SDL_LOG_CATEGORY_RENDER,"AS Render Error: display null"); return; }
 
     // --- Get Window Dimensions ---
-    // Using constants from header for now, fetch dynamically if needed
     const int windowW = WINDOW_WIDTH;
     const int windowH = WINDOW_HEIGHT;
 
@@ -340,17 +363,21 @@ void AdventureState::render() {
         const SpriteFrame* currentFrame = active_anim_->getFrame(current_anim_frame_idx_);
         if (currentFrame && currentFrame->texturePtr && currentFrame->sourceRect.w > 0 && currentFrame->sourceRect.h > 0) {
             int drawX = (windowW / 2) - (currentFrame->sourceRect.w / 2); // Keep centered horizontally
-
-            // <<< --- APPLY VERTICAL OFFSET --- >>>
-            int verticalOffset = 30; // Pixels to shift upwards (adjust as needed)
+            int verticalOffset = 7; // Pixels to shift upwards
             int drawY = (windowH / 2) - (currentFrame->sourceRect.h / 2) - verticalOffset; // Subtract offset
-            // <<< --------------------------- >>>
-
             SDL_Rect dstRect = { drawX, drawY, currentFrame->sourceRect.w, currentFrame->sourceRect.h };
-            display->drawTexture(currentFrame->texturePtr, ¤tFrame->sourceRect, &dstRect);
 
-        } else { /* ... Error logging ... */ }
-    } else { /* ... Error logging ... */ }
+            // --- Line 382: Ensure this line is correct ---
+            display->drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect);
+            // --------------------------------------------
+
+        } else {
+            // Log if frame data is invalid (optional, can be spammy)
+            // SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: Invalid SpriteFrame data (null tex or zero w/h) at index %zu", current_anim_frame_idx_);
+        }
+    } else {
+         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: active_anim_ is null!");
+    }
     // --- End Character ---
 
 

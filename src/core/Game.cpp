@@ -12,7 +12,7 @@
 #include <string>
 
 
-Game::Game() : is_running(false), last_frame_time(0), request_pop_(false) {
+Game::Game() : is_running(false), last_frame_time(0), request_pop_(false), request_push_(nullptr) { // <<< Initialized request_push_ >>>
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called.");
 }
 
@@ -46,6 +46,8 @@ bool Game::init(const std::string& title, int width, int height) {
     // Load initial assets
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
      bool assets_ok = true;
+
+     // --- Digimon Sprites ---
      assets_ok &= assetManager.loadTexture("agumon_sheet", "assets\\sprites\\agumon_sheet.png");
      assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets\\sprites\\gabumon_sheet.png");
      assets_ok &= assetManager.loadTexture("biyomon_sheet", "assets\\sprites\\biyomon_sheet.png");
@@ -54,14 +56,26 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("palmon_sheet", "assets\\sprites\\palmon_sheet.png");
      assets_ok &= assetManager.loadTexture("tentomon_sheet", "assets\\sprites\\tentomon_sheet.png");
      assets_ok &= assetManager.loadTexture("patamon_sheet", "assets\\sprites\\patamon_sheet.png");
+
+     // --- Backgrounds ---
      assets_ok &= assetManager.loadTexture("castle_bg_0", "assets\\backgrounds\\castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets\\backgrounds\\castlebackground1.png");
      assets_ok &= assetManager.loadTexture("castle_bg_2", "assets\\backgrounds\\castlebackground2.png");
+
+     // --- UI Assets ---
      assets_ok &= assetManager.loadTexture("menu_bg_blue", "assets\\ui\\backgrounds\\menu_base_blue.png");
-     assets_ok &= assetManager.loadTexture("transition_borders", "assets\\ui\\transition\\transition_borders.png");
+     assets_ok &= assetManager.loadTexture("transition_borders", "assets\\ui\\transition\\transition_borders.png"); // Keep if used elsewhere
+
+     // <<< --- ADDED UI FONT LOADING --- >>>
+     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading UI font...");
+     // Use forward slashes for better cross-platform compatibility
+     assets_ok &= assetManager.loadTexture("ui_font_atlas", "assets/ui/fonts/bluewhitefont.png"); // Use the specified font path
+     // Cursor loading removed as per clarification
+     // <<< ----------------------------- >>>
+
 
      if (!assets_ok) {
-         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load!");
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load! Check paths and file existence.");
          assetManager.shutdown(); display.close(); SDL_Quit();
          return false;
      }
@@ -124,9 +138,7 @@ void Game::run() {
         }
 
         // --- Apply Pending State Changes ---
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: Before applyStateChanges. Stack size = %zu", states_.size());
         applyStateChanges();
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "RunLoop: After applyStateChanges. Stack size = %zu", states_.size());
 
         // --- Render Top State (if any) ---
         if (!states_.empty()) {
@@ -151,7 +163,6 @@ void Game::run() {
         }
 
         // --- Frame Limiter (Optional but recommended) ---
-        // A simple delay to aim for ~60 FPS
         // Uint32 frame_duration = SDL_GetTicks() - current_time;
         // if (frame_duration < 16) { // Roughly 16ms per frame for 60 FPS
         //     SDL_Delay(16 - frame_duration);
@@ -202,7 +213,6 @@ void Game::requestPopState() {
 
 // --- Helper to apply queued changes ---
 void Game::applyStateChanges() {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Start. RequestPop=%d, RequestPush=%p", request_pop_, (void*)request_push_.get());
     // Process pop first, then push for this cycle
     if (request_pop_) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Pop request.");
@@ -214,7 +224,6 @@ void Game::applyStateChanges() {
         push_state(std::move(request_push_)); // push_state moves ownership
         request_push_.reset(); // Clear the pending request unique_ptr
     }
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: End. Stack size = %zu", states_.size());
 }
 
 // --- getCurrentState ---
@@ -254,8 +263,7 @@ void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL quit.");
 }
 
-// <<< --- ADDED IMPLEMENTATION for stack access --- >>>
+// --- DEBUG_getStack Implementation ---
 std::vector<std::unique_ptr<GameState>>& Game::DEBUG_getStack() {
     return states_; // Return reference to the stack
 }
-// <<< --------------------------------------------- >>>

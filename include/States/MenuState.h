@@ -1,11 +1,17 @@
 #pragma once
 
 #include "states/GameState.h"
-#include <vector>
-#include <string>
-#include <SDL.h> // For rendering types
+#include <vector>           // Needed for std::vector
+#include <string>           // Needed for std::string
+#include <map>              // Needed for fontCharMap_
+#include <SDL.h>            // For SDL_Texture*, SDL_Rect, SDL_Renderer*, SDL_Point
 
-class Game; // Forward declare
+// Forward declarations
+class Game;
+struct SDL_Texture;
+struct SDL_Rect;
+struct SDL_Renderer;
+// SDL_Point is usually defined in SDL_rect.h which is included by SDL.h
 
 class MenuState : public GameState {
 public:
@@ -18,21 +24,31 @@ public:
     void render() override;
 
 private:
-    // Menu drawing parameters (customize later)
-    const int MENU_START_X = 50;
-    const int MENU_START_Y = 100;
-    const int MENU_ITEM_HEIGHT = 30; // Spacing between items
-    SDL_Texture* backgroundTexture_ = nullptr; // Already declared correctly
+    // --- Helper Functions ---
+    // Helper for drawing text
+    // <<< UPDATED signature to include scale >>>
+    void drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale = 1.0f, int kerning = 1);
+    // Helper for loading font data
+    bool loadFontDataFromJson(const std::string& jsonPath);
+    // <<< ADDED declaration for text dimension calculation >>>
+    SDL_Point getTextDimensions(const std::string& text, int kerning = 1);
 
+    // --- Data Members ---
     // Menu data
     std::vector<std::string> menuOptions_;
     size_t currentSelection_ = 0; // Index of the currently selected item
 
-    // Assets (need font later)
-    SDL_Texture* fontTexture_ = nullptr; // Placeholder for bitmap font
-    SDL_Texture* cursorTexture_ = nullptr; // Placeholder for selection cursor
-    // Need to load these via AssetManager...
+    // Assets (Non-owning pointers)
+    SDL_Texture* backgroundTexture_ = nullptr;
+    SDL_Texture* fontTexture_ = nullptr;
+    SDL_Texture* cursorTexture_ = nullptr; // Kept for potential future use? Set to nullptr in constructor.
+    std::map<char, SDL_Rect> fontCharMap_;
 
-    // Helper for drawing text (to be implemented later)
-    void drawText(const std::string& text, int x, int y);
-};
+    // --- Constants ---
+    // Menu drawing parameters (customize later)
+    // These might become less relevant if centering everything
+    const int MENU_START_X = 50; // Example X position for menu items
+    const int MENU_START_Y = 100; // Example Y position for the first menu item
+    const int MENU_ITEM_HEIGHT = 30; // Vertical spacing between items
+
+}; // End of MenuState class definition
