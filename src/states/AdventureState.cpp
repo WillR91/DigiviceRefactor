@@ -28,7 +28,7 @@ using json = nlohmann::json;
 namespace {
 
 // --- Helper Function to Create Animation from Indices ---
-// (Remains unchanged)
+// (Unchanged from your version)
 Animation createAnimationFromIndices(
     SDL_Texture* texture,
     const std::vector<SDL_Rect>& allFrameRects,
@@ -56,7 +56,7 @@ Animation createAnimationFromIndices(
 }
 
 // --- Animation Sequence Templates ---
-// (Remain unchanged)
+// (Unchanged from your version)
 const std::vector<int> IDLE_INDICES = {0, 1};
 const std::vector<Uint32> IDLE_DURATIONS = {1000, 1000};
 const std::vector<int> WALK_INDICES = {2, 3, 2, 3};
@@ -69,24 +69,27 @@ const std::vector<Uint32> ATTACK_DURATIONS = {200, 150, 150, 400};
 
 // --- Constructor ---
 AdventureState::AdventureState(Game* game) :
-    GameState(game), // <<< --- ADDED Base class constructor call --- >>>
+    GameState(game), // Call base constructor
     bgTexture0_(nullptr),
     bgTexture1_(nullptr),
     bgTexture2_(nullptr),
     active_anim_(nullptr),
-    current_digimon_(DIGI_AGUMON), // <<<--- TODO: Read initial partner from PlayerData?
+    // current_digimon_ initialized below <<< MODIFIED
     current_state_(STATE_IDLE),
     current_anim_frame_idx_(0),
     current_frame_elapsed_time_(0.0f),
     queued_steps_(0)
 {
-    // game_ptr is initialized by GameState(game) call above
-    // this->game_ptr = game; // No longer needed
-
-    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display()) {
-        throw std::runtime_error("AdventureState requires valid Game pointer with initialized systems!");
+    if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display() || !game_ptr->getPlayerData()) { // Check PlayerData too
+        throw std::runtime_error("AdventureState requires valid Game pointer with initialized systems (Assets, Display, PlayerData)!");
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Constructor: Initializing...");
+
+    // --- Set Initial Partner from PlayerData --- <<< ADDED
+    PlayerData* pd = game_ptr->getPlayerData();
+    current_digimon_ = pd->currentPartner; // Read from PlayerData
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Initial partner set to %d from PlayerData.", static_cast<int>(current_digimon_));
+    // ---
 
     AssetManager* assets = game_ptr->getAssetManager();
     bgTexture0_ = assets->getTexture("castle_bg_0");
@@ -94,18 +97,14 @@ AdventureState::AdventureState(Game* game) :
     bgTexture2_ = assets->getTexture("castle_bg_2");
     if (!bgTexture0_ || !bgTexture1_ || !bgTexture2_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"AdventureState: Background texture(s) missing!"); }
 
-    initializeAnimations();
+    initializeAnimations(); // Load all animations
 
-    // TODO: Consider getting initial Digimon from PlayerData instead of default
-    // PlayerData* pd = game_ptr->getPlayerData();
-    // if (pd) { current_digimon_ = pd->currentPartner; }
-
-    setActiveAnimation(); // Call after current_digimon_ is potentially set from PlayerData
+    setActiveAnimation(); // Call AFTER current_digimon_ is set
 
     if (!active_anim_) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR FAIL: Failed to set initial active animation! active_anim_ is NULL.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR FAIL: Failed to set initial active animation for partner %d! active_anim_ is NULL.", static_cast<int>(current_digimon_));
     } else {
-         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR OK: Initial active_anim_ set in constructor: %p", active_anim_);
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"CONSTRUCTOR OK: Initial active_anim_ set in constructor: %p", (void*)active_anim_);
     }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Initialized Successfully.");
@@ -113,12 +112,12 @@ AdventureState::AdventureState(Game* game) :
 
 
 // --- Destructor ---
-// (Remains unchanged)
+// (Unchanged from your version)
 AdventureState::~AdventureState() { SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState Destructor called."); }
 
 
 // --- Initialize Animations ---
-// (Remains unchanged)
+// (Unchanged from your version - FULL BODY RESTORED)
 void AdventureState::initializeAnimations() {
     AssetManager* assets = game_ptr->getAssetManager();
     if (!assets) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot init anims: AssetManager null"); return; }
@@ -187,7 +186,7 @@ void AdventureState::initializeAnimations() {
 
 
 // --- Set Active Animation ---
-// (Remains unchanged)
+// (Unchanged from your version)
 void AdventureState::setActiveAnimation() {
      Animation* previous_anim = active_anim_;
      if (current_state_ == STATE_IDLE) {
@@ -205,120 +204,96 @@ void AdventureState::setActiveAnimation() {
 }
 
 
-// <<< --- MODIFIED handle_input Signature --- >>>
+// --- handle_input ---
+// (Signature updated, PlayerData step logic added)
 void AdventureState::handle_input(InputManager& inputManager, PlayerData* playerData) {
-    // Only handle input if this state is the current active one
-    if (!game_ptr || game_ptr->getCurrentState() != this) {
-        return; // Should not happen if called correctly by Game loop
-    }
+    if (!game_ptr || game_ptr->getCurrentState() != this) { return; }
+    if (!playerData) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::handle_input - PlayerData pointer is null!"); }
 
-    // InputManager is now passed in, no need to get it from game_ptr
-    // InputManager* inputManagerPtr = game_ptr->getInputManager(); // No longer needed
-    // if (!inputManagerPtr) { /* ... */ } // No longer needed
+    bool stateOrDigiChanged = false; // Flag needed locally
 
-    // We receive playerData, but don't use it in this specific input logic yet
-    // (We will use it later for checking conditions, inventory etc.)
-    if (!playerData) {
-         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::handle_input - PlayerData pointer is null!");
-         // Decide how to handle this - maybe return, maybe proceed cautiously?
-         // For now, let's proceed as input doesn't depend on it yet.
-    }
-
-
-    bool stateOrDigiChanged = false; // Flag to check if we need to update animation
-
-    // --- Menu Activation ---
-    // Using CONFIRM action
+    // Menu Activation
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
          SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Confirm action in AdventureState, pushing MenuState.");
          std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
-         // <<< TODO: Need to create PartnerSelectState from DIGIMON option later >>>
          game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
-         return; // Exit input handling immediately after pushing menu
+         return;
     }
 
-    // --- Step Input ---
-    // Using STEP action
+    // Step Input
     if (inputManager.isActionJustPressed(GameAction::STEP)) {
         if (queued_steps_ < MAX_QUEUED_STEPS) {
             queued_steps_++;
             SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected. Queued: %d", queued_steps_);
 
-            // <<< --- TODO: Update PlayerData with step --- >>>
-            // if (playerData) {
-            //     playerData->stepsTakenThisChapter++;
-            //     playerData->totalSteps++;
-            //     // Maybe add D-Power logic here or in update based on steps
-            // }
+            // <<< --- Update PlayerData with step --- >>>
+            if (playerData) {
+                playerData->stepsTakenThisChapter++;
+                playerData->totalSteps++;
+                SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "PlayerData updated: ChapterSteps=%d, TotalSteps=%d", playerData->stepsTakenThisChapter, playerData->totalSteps);
+            }
 
         } else {
              SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected, but queue is full (%d).", queued_steps_);
         }
     }
 
-    // --- Switch Digimon (Temporary Debug/Testing Input) ---
-    DigimonType previousDigimon = current_digimon_;
-    if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_1)) {
-        current_digimon_ = DIGI_AGUMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_2)) {
-        current_digimon_ = DIGI_GABUMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_3)) {
-        current_digimon_ = DIGI_BIYOMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_4)) {
-        current_digimon_ = DIGI_GATOMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_5)) {
-        current_digimon_ = DIGI_GOMAMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_6)) {
-        current_digimon_ = DIGI_PALMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_7)) {
-        current_digimon_ = DIGI_TENTOMON;
-    } else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_8)) {
-        current_digimon_ = DIGI_PATAMON;
-    }
+    // Switch Digimon (Temporary Debug/Testing Input)
+    DigimonType previousDigimon = current_digimon_; // Need local copy to check if changed
+    DigimonType keySelectedDigimon = previousDigimon; // Start with current
 
-    // If Digimon was changed by the above keys
-    if (current_digimon_ != previousDigimon) {
+    if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_1)) { keySelectedDigimon = DIGI_AGUMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_2)) { keySelectedDigimon = DIGI_GABUMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_3)) { keySelectedDigimon = DIGI_BIYOMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_4)) { keySelectedDigimon = DIGI_GATOMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_5)) { keySelectedDigimon = DIGI_GOMAMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_6)) { keySelectedDigimon = DIGI_PALMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_7)) { keySelectedDigimon = DIGI_TENTOMON; }
+    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_8)) { keySelectedDigimon = DIGI_PATAMON; }
+
+    // If a debug key was pressed AND it changed the Digimon
+    if (keySelectedDigimon != previousDigimon) {
+         current_digimon_ = keySelectedDigimon; // Update internal member
          stateOrDigiChanged = true;
-        // <<< --- TODO: Update PlayerData with new partner --- >>>
-        // if (playerData) {
-        //      playerData->currentPartner = current_digimon_;
-        // }
+         // <<< --- Update PlayerData too, so it's consistent --- >>>
+         if (playerData) {
+              playerData->currentPartner = current_digimon_;
+              SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Updated PlayerData partner to %d via debug key.", static_cast<int>(current_digimon_));
+         }
     }
 
-
-    // If Digimon was changed, reset state and clear steps
+    // If Digimon was changed (by debug key), reset local state/anim
     if (stateOrDigiChanged) {
         current_state_ = STATE_IDLE; // Reset to idle animation
         queued_steps_ = 0;           // Clear any pending steps
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d via debug key.", current_digimon_);
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d via debug key.", static_cast<int>(current_digimon_));
         setActiveAnimation(); // Update the displayed animation immediately
     }
 }
-// <<< --- END MODIFIED handle_input --- >>>
 
 
-// <<< --- MODIFIED update Signature --- >>>
+// --- update ---
+// (Signature updated, PlayerData check added)
 void AdventureState::update(float delta_time, PlayerData* playerData) {
 
-    // We receive playerData, but don't use it *yet* in this update logic
-    // (Will be used for checking steps for encounters, goals etc.)
     if (!playerData) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update - PlayerData pointer is null!");
     }
-    // <<< --- TODO: Read current partner from PlayerData --- >>>
-    // This ensures changes from PartnerSelectState are reflected visually
-    // if (playerData && current_digimon_ != playerData->currentPartner) {
-    //     current_digimon_ = playerData->currentPartner;
-    //     current_state_ = STATE_IDLE; // Reset animation state on partner change
-    //     queued_steps_ = 0;
-    //     setActiveAnimation();
-    //     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update detected partner change from PlayerData to %d.", current_digimon_);
-    // }
+
+    // <<< --- Check if partner changed in PlayerData (e.g., by PartnerSelectState) --- >>> <<< IMPLEMENTED
+    if (playerData && current_digimon_ != playerData->currentPartner) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update detected partner change in PlayerData (from %d to %d).", static_cast<int>(current_digimon_), static_cast<int>(playerData->currentPartner));
+        current_digimon_ = playerData->currentPartner; // Update internal state
+        current_state_ = STATE_IDLE;               // Reset animation state
+        queued_steps_ = 0;                         // Clear steps
+        setActiveAnimation();                      // Switch animation
+    }
+    // <<< -------------------------------------------------------------------------- >>>
 
 
     // --- Normal Adventure Update Logic ---
     bool stateNeedsAnimUpdate = false;
-    // Scroll Background
+    // Scroll Background (Unchanged from your version)
     if (current_state_ == STATE_WALKING) {
         float scrollAmount0 = SCROLL_SPEED_0 * delta_time; float scrollAmount1 = SCROLL_SPEED_1 * delta_time; float scrollAmount2 = SCROLL_SPEED_2 * delta_time;
         int effW0=0, effW1=0, effW2=0;
@@ -329,9 +304,9 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         if(effW1 > 0) { bg_scroll_offset_1_ -= scrollAmount1; bg_scroll_offset_1_ = std::fmod(bg_scroll_offset_1_ + effW1, (float)effW1); }
         if(effW2 > 0) { bg_scroll_offset_2_ -= scrollAmount2; bg_scroll_offset_2_ = std::fmod(bg_scroll_offset_2_ + effW2, (float)effW2); }
      }
-    // State Change: Idle -> Walking
+    // State Change: Idle -> Walking (Unchanged from your version)
     if (current_state_ == STATE_IDLE && queued_steps_ > 0) { current_state_ = STATE_WALKING; stateNeedsAnimUpdate = true; /* SDL_LogDebug(...) */ }
-    // Advance Animation Frame
+    // Advance Animation Frame (Unchanged from your version)
     bool animation_cycle_finished = false;
     if (active_anim_ && active_anim_->getFrameCount() > 0) {
          size_t frameCount = active_anim_->getFrameCount();
@@ -361,7 +336,7 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
             }
          } else { current_anim_frame_idx_ = 0; }
     }
-    // State Change: Walking -> Idle
+    // State Change: Walking -> Idle (Unchanged from your version)
     if (current_state_ == STATE_WALKING && animation_cycle_finished && active_anim_ && !active_anim_->loops) {
          queued_steps_--; /* SDL_LogDebug */
 
@@ -380,20 +355,14 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     if (stateNeedsAnimUpdate) setActiveAnimation();
     // --- END Normal Logic ---
 }
-// <<< --- END MODIFIED update --- >>>
 
 
-// <<< --- MODIFIED render Signature --- >>>
+// --- render ---
+// (Signature updated, uses passed-in display - FULL BODY RESTORED)
 void AdventureState::render(PCDisplay& display) {
     // Display is now passed in by reference
-    // PCDisplay* displayPtr = game_ptr->get_display(); // No longer needed
-    // if (!displayPtr) { /* ... */ } // No longer needed
 
     // --- Get Window Dimensions ---
-    // TODO: Get dimensions from the passed-in display object if needed,
-    // or continue using constants for now if the display wrapper doesn't expose size easily.
-    // int windowW = 0, windowH = 0;
-    // display.getWindowSize(windowW, windowH); // Example if method exists
     const int windowW = WINDOW_WIDTH;  // Using constants for now
     const int windowH = WINDOW_HEIGHT; // Using constants for now
 
@@ -432,7 +401,7 @@ void AdventureState::render(PCDisplay& display) {
             display.drawTexture(currentFrame->texturePtr, &currentFrame->sourceRect, &dstRect); // Use display reference directly
 
         } else { /* Log */ }
-    } else { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: active_anim_ is null!"); }
+    } else { SDL_LogWarn(SDL_LOG_CATEGORY_RENDER,"AS Render: active_anim_ is null for partner %d!", static_cast<int>(current_digimon_)); }
     // --- End Character ---
 
 
@@ -441,4 +410,3 @@ void AdventureState::render(PCDisplay& display) {
     // --- End Foreground ---
 
 } // End of AdventureState::render() function
-// <<< --- END MODIFIED render --- >>>
