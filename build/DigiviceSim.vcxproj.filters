@@ -10,22 +10,25 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
+    <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\TransitionState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

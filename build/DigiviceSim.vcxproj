@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "Z:/Libraries/SDL2-2.32.0/cmake/../include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -109,10 +109,10 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;DEBUG;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -147,7 +147,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "Z:/Libraries/SDL2-2.32.0/cmake/../include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -170,10 +170,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEBUG;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -208,7 +208,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "Z:/Libraries/SDL2-2.32.0/cmake/../include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -231,10 +231,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEBUG;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -269,7 +269,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions) /external:I "Z:/Libraries/SDL2-2.32.0/cmake/../include"</AdditionalOptions>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -292,10 +292,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;DEBUG;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Z:\DigiviceRefactor\include;Z:\Libraries\SDL2_image-2.8.6\include;Z:\Libraries\SDL2-2.32.0\cmake\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -389,12 +389,13 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\TransitionState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

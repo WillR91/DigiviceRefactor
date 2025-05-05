@@ -8,7 +8,11 @@
 #include "platform/pc/pc_display.h"
 #include "core/AssetManager.h"
 #include "states/GameState.h" // Include full definition
-#include "core/InputManager.h" // <<< ADDED InputManager include >>>
+#include "core/InputManager.h"
+#include "core/PlayerData.h" // <<< --- ADDED: Include PlayerData header --- >>>
+
+// Forward declaration (optional but good practice if PlayerData was only used as pointer/ref here)
+// class PlayerData;
 
 class Game {
 public:
@@ -24,12 +28,14 @@ public:
     void requestPushState(std::unique_ptr<GameState> state);
     void requestPopState();
 
-    // Other Public Methods
+    // --- Getters for Core Systems/Data ---
     void quit_game();
     PCDisplay* get_display();
     AssetManager* getAssetManager();
     GameState* getCurrentState();
-    InputManager* getInputManager(); // <<< ADDED Getter Declaration >>>
+    InputManager* getInputManager();
+    PlayerData* getPlayerData(); // <<< --- ADDED: Getter for PlayerData --- >>>
+
 
     // Debug helper (Keep or remove as needed)
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
@@ -45,7 +51,8 @@ private:
     // Member Variables
     PCDisplay display;
     AssetManager assetManager;
-    InputManager inputManager; // <<< ADDED InputManager Member >>>
+    InputManager inputManager;
+    PlayerData playerData_; // <<< --- ADDED: PlayerData member variable --- >>>
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_; // State stack
     Uint32 last_frame_time = 0;

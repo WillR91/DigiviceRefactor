@@ -1,7 +1,10 @@
 // File: src/core/Game.cpp
 
 #include "core/Game.h"
-#include "states/AdventureState.h" // Needed for initial state push
+#include "states/AdventureState.h"   // Needed for initial state push
+#include "core/PlayerData.h"         // Included - OK
+#include "core/InputManager.h"     // <<<--- ADDED Include (needed for handle_input call)
+#include "platform/pc/pc_display.h"  // <<<--- ADDED Include (needed for render call)
 #include <SDL_log.h>
 #include <stdexcept>
 #include <filesystem> // For CWD logging
@@ -12,13 +15,15 @@
 #include <string>
 
 
-Game::Game() : is_running(false), last_frame_time(0), request_pop_(false), request_push_(nullptr) { // <<< Initialized request_push_ >>>
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called.");
+Game::Game() : is_running(false), last_frame_time(0), request_pop_(false), request_push_(nullptr) {
+    // Note: playerData_ is automatically default-constructed here using PlayerData::PlayerData()
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called. PlayerData implicitly constructed.");
 }
 
 Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
     // Cleanup happens in close()
+    // playerData_ is automatically destructed when Game object goes out of scope
 }
 
 bool Game::init(const std::string& title, int width, int height) {
@@ -35,6 +40,7 @@ bool Game::init(const std::string& title, int width, int height) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
 
     // InputManager is initialized by its own constructor when Game is created
+    // PlayerData is initialized by its own constructor when Game is created
 
     try {
         std::filesystem::path cwd = std::filesystem::current_path();
@@ -61,8 +67,12 @@ bool Game::init(const std::string& title, int width, int height) {
      if (!assets_ok) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load! Check paths and file existence."); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
 
+    // <<<--- IMPORTANT NOTE about Base Constructor --->>>
+    // Make sure your AdventureState constructor calls the GameState base constructor:
+    // Example in AdventureState.cpp:
+    // AdventureState::AdventureState(Game* game) : GameState(game), /* other members... */ { ... }
     try {
-       states_.push_back(std::make_unique<AdventureState>(this));
+       states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
     } catch (const std::exception& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what()); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
 
@@ -73,7 +83,6 @@ bool Game::init(const std::string& title, int width, int height) {
 }
 
 // --- Run Loop ---
-// <<< *** MODIFIED Run Loop - handle_input restored *** >>>
 void Game::run() {
     if (!is_running || states_.empty()) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Game::run() called in invalid state (not initialized or no initial state).");
@@ -90,73 +99,58 @@ void Game::run() {
         last_frame_time = current_time;
 
         // --- Input Processing ---
-        // 1. Prepare Input Manager for the new frame (copies current state to previous)
         inputManager.prepareNewFrame();
-
-        // 2. Process all pending SDL events (updates InputManager's current state)
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            // Check for quit event first
             if (event.type == SDL_QUIT) {
-                quit_game(); // Request quit
+                quit_game();
             }
-            // Pass other events to the Input Manager to update action states
             inputManager.processEvent(event);
-
-            // TODO: Pass events to Dear ImGui if/when integrated
         }
-        // Now InputManager knows which actions are pressed/held/released this frame
 
         // --- State Logic ---
-        // 1. Apply Pending State Changes (Pop/Push requested from previous frame)
-        applyStateChanges(); // Do this BEFORE update/render
+        applyStateChanges(); // Apply Pop/Push requested from previous frame
 
-        // 2. Update Top State (if any exists after potential changes)
         if (!states_.empty()) {
-            GameState* currentStatePtr = states_.back().get(); // Get potentially new top state
+            GameState* currentStatePtr = states_.back().get();
             if (currentStatePtr) {
-                // <<< --- RESTORED CALL TO STATE'S INPUT HANDLING --- >>>
-                // Let the current state query the InputManager and react.
-                currentStatePtr->handle_input();
-                // <<< --------------------------------------------- >>>
+                // <<< --- MODIFIED Calls to pass arguments --- >>>
+                PlayerData* pd = getPlayerData(); // Get pointer to PlayerData
 
-                // Update the state's logic (e.g., animations, timers)
-                currentStatePtr->update(delta_time);
+                // Pass InputManager ref and PlayerData pointer to handle_input
+                currentStatePtr->handle_input(inputManager, pd); // Pass inputManager and pd
+
+                // Pass delta_time and PlayerData pointer to update
+                currentStatePtr->update(delta_time, pd); // Pass delta_time and pd
+                // <<< ---------------------------------------- >>>
             } else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
                 is_running = false; // Treat as critical error
             }
         } else {
-             // If stack becomes empty after state changes
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges.");
              is_running = false; // Stop running if no states left
         }
 
 
         // --- Rendering ---
-        // Render only if the game is still running and has states
         if (is_running && !states_.empty()) {
-             GameState* currentStateForRender = getCurrentState(); // Get the current top state
+             GameState* currentStateForRender = getCurrentState();
              if (currentStateForRender) {
                  display.clear(0x0000); // Clear screen (to black)
-                 currentStateForRender->render(); // Render the current state
+
+                 // <<<--- MODIFIED Call to pass display --->>>
+                 currentStateForRender->render(display); // Pass PCDisplay object by reference
+
                  display.present(); // Show the result on screen
              }
-             // No need for error log here, handled if currentStatePtr was null in update phase
         }
-
-
-        // --- Frame Limiter (Optional) ---
-        // Uint32 frame_duration = SDL_GetTicks() - current_time;
-        // if (frame_duration < 16) { SDL_Delay(16 - frame_duration); }
 
     } // End while(is_running)
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
     close(); // Perform cleanup after loop ends
 }
-// <<< *** END MODIFIED Run Loop *** >>>
-
 
 // --- State Management - Actual Push/Pop ---
 void Game::push_state(std::unique_ptr<GameState> new_state) {
@@ -199,14 +193,13 @@ void Game::applyStateChanges() {
     if (request_push_) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Push request for state %p.", (void*)request_push_.get());
         push_state(std::move(request_push_));
-        request_push_.reset();
+        request_push_.reset(); // Use reset() to clear the unique_ptr after moving
     }
 }
 
 // --- getCurrentState ---
 GameState* Game::getCurrentState() {
-    GameState* topState = states_.empty() ? nullptr : states_.back().get();
-    return topState;
+    return states_.empty() ? nullptr : states_.back().get();
 }
 
 // --- quit_game ---
@@ -218,12 +211,14 @@ void Game::quit_game() {
 // --- Getters ---
 PCDisplay* Game::get_display() { return &display; }
 AssetManager* Game::getAssetManager() { return &assetManager; }
-InputManager* Game::getInputManager() { return &inputManager; } // Already added
+InputManager* Game::getInputManager() { return &inputManager; }
+PlayerData* Game::getPlayerData() { return &playerData_; } // Already implemented
+
 
 // --- close ---
 void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Shutting down Game systems...");
-    states_.clear();
+    states_.clear(); // Destroys GameState objects managed by unique_ptr
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
     assetManager.shutdown();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager shutdown.");
@@ -231,6 +226,7 @@ void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay closed.");
     SDL_Quit();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL quit.");
+    // Note: playerData_ is automatically destructed here
 }
 
 // --- DEBUG_getStack Implementation ---
