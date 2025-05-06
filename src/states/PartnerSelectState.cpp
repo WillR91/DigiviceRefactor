@@ -1,53 +1,35 @@
 // File: src/states/PartnerSelectState.cpp
 
 #include "states/PartnerSelectState.h" // Include own header
-#include "core/Game.h"                 // For game_ptr, state changes, getTextRenderer
+#include "core/Game.h"                 // For game_ptr, state changes, managers
 #include "ui/TextRenderer.h"           // For TextRenderer class
 #include "core/AssetManager.h"         // For assets
 #include "core/InputManager.h"         // For InputManager&
 #include "core/GameAction.h"           // For GameAction enum
 #include "core/PlayerData.h"           // For PlayerData*
 #include "platform/pc/pc_display.h"    // For PCDisplay& and rendering
-#include "graphics/Animation.h"        // Include if storing Animation objects directly
+#include "graphics/Animator.h"       // For digimonAnimator_
+#include "graphics/AnimationData.h"    // For AnimationData struct
+#include "core/AnimationManager.h"   // To get AnimationData
 #include <SDL_log.h>
 #include <stdexcept>                   // For runtime_error
-// #include "vendor/nlohmann/json.hpp" // No longer needed for local font loading
-// #include <fstream>                 // No longer needed for local font loading
-// #include <map>                     // No longer needed for local fontCharMap_
+// Removed fstream, map, nlohmann/json as they are not used directly for font loading anymore
 
-// Use the nlohmann::json namespace
-// using json = nlohmann::json; // No longer needed directly here
-
-namespace { // Use anonymous namespace for file-local helpers if needed
-    // TODO: Move animation creation helper to a shared utility or AnimationManager later
-    // --- Animation Helper (Copied from AdventureState - NEEDS REFACTORING) ---
-    Animation createAnimationFromIndices( SDL_Texture* texture, const std::vector<SDL_Rect>& allFrameRects,
-                                          const std::vector<int>& indices, const std::vector<Uint32>& durations, bool loops)
-    {
-        Animation anim; anim.loops = loops;
-        if (!texture) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "createAnimationFromIndices Error: Null texture."); return anim; }
-        if (indices.size() != durations.size()) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "createAnimationFromIndices Error: Index/duration mismatch."); return anim; }
-        if (allFrameRects.empty()) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "createAnimationFromIndices Error: Empty frame rects."); return anim; }
-        for (size_t i = 0; i < indices.size(); ++i) {
-            int frameIndex = indices[i]; Uint32 duration = durations[i];
-            if (frameIndex >= 0 && static_cast<size_t>(frameIndex) < allFrameRects.size()) { anim.addFrame(SpriteFrame(texture, allFrameRects[frameIndex]), duration); }
-            else { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "createAnimationFromIndices Error: Index %d out of bounds (%zu). Using frame 0.", frameIndex, allFrameRects.size()); anim.addFrame(SpriteFrame(texture, allFrameRects[0]), duration); }
-        } return anim;
-    }
-    // --- Idle Animation Data (Copied from AdventureState - NEEDS REFACTORING) ---
-    const std::vector<int> IDLE_INDICES = {0, 1};
-    const std::vector<Uint32> IDLE_DURATIONS = {1000, 1000}; // Slow idle
-
-} // end anonymous namespace
+// <<< REMOVE Anonymous Namespace with old animation helpers if it only contained them >>>
+// namespace { ... }
 
 
 PartnerSelectState::PartnerSelectState(Game* game) :
-    GameState(game),
+    GameState(game), // <<< ADDED Base class constructor call
     currentSelectionIndex_(0),
-    backgroundTexture_(nullptr)
+    backgroundTexture_(nullptr),
+    digimonAnimator_() // Default construct the animator
 {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState Constructor Called.");
     if (!game_ptr) { throw std::runtime_error("PartnerSelectState requires a valid Game pointer!"); }
+    if (!game_ptr->getAnimationManager()) { throw std::runtime_error("PartnerSelectState requires AnimationManager!");}
+    if (!game_ptr->getTextRenderer()) { throw std::runtime_error("PartnerSelectState requires TextRenderer!");}
+
 
     availablePartners_ = {
         DIGI_AGUMON, DIGI_GABUMON, DIGI_BIYOMON, DIGI_GATOMON,
@@ -61,9 +43,13 @@ PartnerSelectState::PartnerSelectState(Game* game) :
     if (!assets) { throw std::runtime_error("PartnerSelectState requires a valid AssetManager!"); }
 
     backgroundTexture_ = assets->getTexture("menu_bg_blue");
-
     if (!backgroundTexture_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelectState: Background texture not found!"); }
-    
+
+    // Font texture is no longer managed here, TextRenderer handles it.
+    // if (!game_ptr->getTextRenderer()) { // This check might be redundant if constructor threw
+    //     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelectState: TextRenderer is not available!");
+    // }
+
     PlayerData* pd = game_ptr->getPlayerData();
     if (pd) {
         DigimonType currentPartner = pd->currentPartner;
@@ -79,11 +65,21 @@ PartnerSelectState::PartnerSelectState(Game* game) :
         currentSelectionIndex_ = 0;
     }
 
+    // Set the initially displayed Digimon animation
+    updateDisplayedDigimon();
+
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState Initialized.");
 }
 
 PartnerSelectState::~PartnerSelectState() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState Destructor Called.");
+}
+
+// <<< ADDED enter() method (empty for now, override is in header) >>>
+void PartnerSelectState::enter() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "--- PartnerSelectState enter() CALLED ---");
+    // Could re-check PlayerData here if needed, or ensure animator is set
+    updateDisplayedDigimon(); // Refresh animation when entering
 }
 
 void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* playerData) {
@@ -105,7 +101,7 @@ void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* pl
 
     if (selectionChanged) {
         SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Selection changed to index %zu", currentSelectionIndex_);
-        // TODO: Update animation based on new currentSelectionIndex_
+        updateDisplayedDigimon(); // Update the animation
     }
 
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
@@ -115,10 +111,7 @@ void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* pl
              playerData->currentPartner = selectedType;
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelect: Updated PlayerData->currentPartner.");
              game_ptr->requestPopState();
-         } else {
-             if (!playerData) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelect: Cannot confirm, PlayerData is null!");
-             if (availablePartners_.empty()) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelect: Cannot confirm, availablePartners_ is empty!");
-         }
+         } else { /* Error logging */ }
     }
     else if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Cancelled. Popping state.");
@@ -127,123 +120,139 @@ void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* pl
 }
 
 void PartnerSelectState::update(float delta_time, PlayerData* playerData) {
-    // TODO: Implement animation update logic
+    // Update the current Digimon's animation
+    digimonAnimator_.update(delta_time);
 }
 
 void PartnerSelectState::render(PCDisplay& display) {
-    SDL_Renderer* top_level_renderer = display.getRenderer(); // Renamed to avoid conflict if snippet re-declares
-    if (!top_level_renderer) return;
+    SDL_Renderer* renderer = display.getRenderer();
+    if (!renderer) return;
 
-    // Get window size once at the top for general use, can be fetched again if needed
-    int initialWindowW = 0; int initialWindowH = 0;
-    display.getWindowSize(initialWindowW, initialWindowH);
-    if (initialWindowW <= 0 || initialWindowH <= 0) { initialWindowW = 466; initialWindowH = 466; }
-
+    int windowW = 0; int windowH = 0;
+    display.getWindowSize(windowW, windowH);
+    if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; }
 
     // 1. Draw Background
     if (backgroundTexture_) {
-        SDL_RenderCopy(top_level_renderer, backgroundTexture_, NULL, NULL);
+        SDL_RenderCopy(renderer, backgroundTexture_, NULL, NULL);
     } else {
-        SDL_SetRenderDrawColor(top_level_renderer, 0, 50, 0, 255);
-        SDL_RenderClear(top_level_renderer);
+        SDL_SetRenderDrawColor(renderer, 0, 50, 0, 255);
+        SDL_RenderClear(renderer);
     }
 
-    // 2. Draw Digimon Placeholder/Sprite
-    drawSelectedDigimon(display); 
+    // 2. Draw Digimon Sprite using the new helper
+    drawDigimon(display);
 
     // 3. Draw Digimon Name Below Sprite
-    // Snippet integration starts here, replacing the previous logic for this section
-    TextRenderer* textRenderer = nullptr; // Initialize to nullptr
-    if (game_ptr) { // Ensure game_ptr is valid before using it
-        textRenderer = game_ptr->getTextRenderer(); // Get the central renderer
-    }
-
-    if (textRenderer && !availablePartners_.empty()) { // Check if renderer and partners are valid
+    TextRenderer* textRenderer = game_ptr ? game_ptr->getTextRenderer() : nullptr;
+    if (textRenderer && !availablePartners_.empty()) {
         DigimonType selectedType = availablePartners_[currentSelectionIndex_];
-        std::string name = getDigimonName(selectedType); // Use helper
+        std::string name = getDigimonName(selectedType);
 
         if (!name.empty()) {
-            // --- Define desired scale and kerning for the name ---
-            const float nameScale = 0.9f; // Example: Make name larger
-            const int nameKerning = -15;    // Example: No extra kerning
-
-            // --- Use TextRenderer to get dimensions ---
-            // Assuming TextRenderer::getTextDimensions(name, kerning) 
-            // and scale is applied manually after
+            const float nameScale = 0.9f;
+            const int nameKerning = -15;
             SDL_Point baseDimensions = textRenderer->getTextDimensions(name, nameKerning);
-
             if (baseDimensions.x > 0 && baseDimensions.y > 0) {
-                // --- Calculate Scaled Dimensions ---
                 int scaledW = static_cast<int>(static_cast<float>(baseDimensions.x) * nameScale);
                 int scaledH = static_cast<int>(static_cast<float>(baseDimensions.y) * nameScale);
-
-                // --- Calculate Centered Position ---
-                // Get window size from the display object passed into render()
-                // (using initialWindowW, initialWindowH fetched earlier is also fine)
-                int windowW = 0; int windowH = 0;
-                display.getWindowSize(windowW, windowH);
-                if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; } // Fallback
-
-                int nameX = (windowW / 2) - (scaledW / 2); // Center horizontally
-                // Position below the sprite placeholder (adjust Y coordinate as needed)
-                int nameY = (windowH * 3 / 4) - (scaledH / 2); // Example: Lower quarter
-
-                // --- Draw using TextRenderer ---
-                SDL_Renderer* renderer_for_text = display.getRenderer(); // Get renderer from display (can use top_level_renderer too)
-                if (renderer_for_text) {
-                     textRenderer->drawText(renderer_for_text, name, nameX, nameY, nameScale, nameKerning);
-                } else {
-                     SDL_LogError(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState Render: Could not get renderer from display for text!");
-                }
-            } else {
-                 SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState Render: getTextDimensions returned zero size for name '%s'", name.c_str());
-            }
+                int nameX = (windowW / 2) - (scaledW / 2);
+                int nameY = (windowH * 3 / 4) - (scaledH / 2);
+                textRenderer->drawText(renderer, name, nameX, nameY, nameScale, nameKerning);
+            } else { /* Warn */ }
         }
-    } else {
-        if (!textRenderer && game_ptr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState Render: TextRenderer is null!");
-        else if (!game_ptr) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState Render: game_ptr is null, cannot get TextRenderer!");
-        if (availablePartners_.empty()) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState Render: availablePartners_ is empty!");
-    }
-    // End of integrated snippet
+    } else { /* Warn */ }
 }
 
 
 // --- Private Helper Implementations ---
 
-void PartnerSelectState::drawSelectedDigimon(PCDisplay& display) {
-    SDL_Renderer* renderer = display.getRenderer();
-    if (!renderer || availablePartners_.empty()) return;
+// Renamed from drawSelectedDigimon, uses digimonAnimator_
+void PartnerSelectState::drawDigimon(PCDisplay& display) {
+    SDL_Renderer* renderer = display.getRenderer(); // Not used directly if display.drawTexture is used
+    if (!renderer) return; // Should not happen if display is valid
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-    int w = 50, h = 50;
-    int x = (466 / 2) - (w / 2); // Assuming fixed window size for now, should use actual windowW
-    int y = (466 / 2) - (h / 2) - 30; // Assuming fixed window size for now, should use actual windowH
-    SDL_Rect placeholder = {x, y, w, h};
-    SDL_RenderFillRect(renderer, &placeholder);
+    int windowW = 0; int windowH = 0;
+    display.getWindowSize(windowW, windowH);
+    if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; }
 
-    // TODO: Real Digimon sprite rendering using animation system
+
+    SDL_Texture* currentTexture = digimonAnimator_.getCurrentTexture();
+    SDL_Rect currentSourceRect = digimonAnimator_.getCurrentFrameRect();
+
+    SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "PartnerSelect RenderDigimon: AnimTexture=%p, AnimSrcRect={%d,%d,%d,%d}",
+                   (void*)currentTexture, currentSourceRect.x, currentSourceRect.y, currentSourceRect.w, currentSourceRect.h);
+
+    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+        // Center the sprite (adjust vertical offset as needed)
+        int drawX = (windowW / 2) - (currentSourceRect.w / 2);
+        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 30; // Shift up slightly
+        SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
+        display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+    } else {
+         // Placeholder if animation not available (shouldn't happen if logic is correct)
+         SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255); // Bright Pink error box
+         int w = 50, h = 50;
+         int x = (windowW / 2) - (w / 2);
+         int y = (windowH / 2) - (h / 2) - 30;
+         SDL_Rect placeholder = {x, y, w, h};
+         SDL_RenderFillRect(renderer, &placeholder);
+         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState: Drawing placeholder, animator returned invalid texture/rect.");
+    }
 }
 
-DigimonType PartnerSelectState::getDigimonTypeFromIndex(size_t index) const {
-    if (index < availablePartners_.size()) {
-        return availablePartners_[index];
+// New helper to update the displayed Digimon's animation
+void PartnerSelectState::updateDisplayedDigimon() {
+    if (availablePartners_.empty() || !game_ptr || !game_ptr->getAnimationManager()) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "updateDisplayedDigimon: Cannot update, missing partners or manager.");
+        digimonAnimator_.stop(); // Stop animator if we can't set it
+        return;
     }
-    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "getDigimonTypeFromIndex: Index %zu out of bounds!", index);
-    return DIGI_AGUMON;
+
+    DigimonType typeToDisplay = availablePartners_[currentSelectionIndex_];
+    std::string animId = getAnimationId(typeToDisplay, "Idle"); // Get "e.g. agumon_sheet_Idle"
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Requesting Anim ID: '%s'", animId.c_str());
+    AnimationManager* animManager = game_ptr->getAnimationManager();
+    const AnimationData* animData = animManager->getAnimationData(animId);
+
+    digimonAnimator_.setAnimation(animData);
+    if (animData) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Animator set with valid data for '%s'.", animId.c_str());
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Animator set with NULL data for '%s'!", animId.c_str());
+    }
+}
+
+
+DigimonType PartnerSelectState::getDigimonTypeFromIndex(size_t index) const {
+    if (index < availablePartners_.size()) { return availablePartners_[index]; }
+    return DIGI_AGUMON; // Fallback
 }
 
 std::string PartnerSelectState::getDigimonName(DigimonType type) const {
-    switch(type) {
-        case DIGI_AGUMON: return "AGUMON";
-        case DIGI_GABUMON: return "GABUMON";
-        case DIGI_BIYOMON: return "BIYOMON";
-        case DIGI_GATOMON: return "GATOMON";
-        case DIGI_GOMAMON: return "GOMAMON";
-        case DIGI_PALMON: return "PALMON";
-        case DIGI_TENTOMON: return "TENTOMON";
-        case DIGI_PATAMON: return "PATAMON";
-        default: return "UNKNOWN";
+    // ... (Implementation remains the same) ...
+    switch(type) { case DIGI_AGUMON: return "AGUMON"; case DIGI_GABUMON: return "GABUMON"; case DIGI_BIYOMON: return "BIYOMON"; case DIGI_GATOMON: return "GATOMON"; case DIGI_GOMAMON: return "GOMAMON"; case DIGI_PALMON: return "PALMON"; case DIGI_TENTOMON: return "TENTOMON"; case DIGI_PATAMON: return "PATAMON"; default: return "UNKNOWN"; }
+}
+
+// Helper to get the base texture ID string (copied from AdventureState)
+std::string PartnerSelectState::getDigimonTextureId(DigimonType type) const {
+     switch(type) {
+        case DIGI_AGUMON: return "agumon_sheet";
+        case DIGI_GABUMON: return "gabumon_sheet";
+        case DIGI_BIYOMON: return "biyomon_sheet";
+        case DIGI_GATOMON: return "gatomon_sheet";
+        case DIGI_GOMAMON: return "gomamon_sheet";
+        case DIGI_PALMON: return "palmon_sheet";
+        case DIGI_TENTOMON: return "tentomon_sheet";
+        case DIGI_PATAMON: return "patamon_sheet";
+        default: SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "getDigimonTextureId: Unknown DigimonType %d", static_cast<int>(type)); return "unknown_sheet";
     }
+}
+
+// Helper to construct animation ID (copied from AdventureState)
+std::string PartnerSelectState::getAnimationId(DigimonType type, const std::string& animName) const {
+    return getDigimonTextureId(type) + "_" + animName;
 }
 
 // DELETED: PartnerSelectState::loadFontDataFromJson
