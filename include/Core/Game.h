@@ -5,7 +5,6 @@
 #include <memory>
 #include <vector>
 #include <SDL.h>
-// Include necessary headers directly or use more forward declarations
 #include "platform/pc/pc_display.h"
 #include "core/AssetManager.h"
 #include "states/GameState.h"
@@ -13,7 +12,8 @@
 #include "core/PlayerData.h"
 
 // Forward declarations
-class TextRenderer; // <<<--- ADDED Forward declaration
+class TextRenderer;
+class AnimationManager; // <<<--- ADDED Forward declaration
 
 class Game {
 public:
@@ -25,7 +25,7 @@ public:
     bool init(const std::string& title, int width, int height);
     void run();
 
-    // --- State Management Requests (Called by States) ---
+    // --- State Management Requests ---
     void requestPushState(std::unique_ptr<GameState> state);
     void requestPopState();
 
@@ -36,7 +36,8 @@ public:
     GameState* getCurrentState();
     InputManager* getInputManager();
     PlayerData* getPlayerData();
-    TextRenderer* getTextRenderer(); // <<<--- ADDED Getter for TextRenderer
+    TextRenderer* getTextRenderer();
+    AnimationManager* getAnimationManager(); // <<<--- ADDED Getter
 
     // Debug helper
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
@@ -53,7 +54,8 @@ private:
     AssetManager assetManager;
     InputManager inputManager;
     PlayerData playerData_;
-    std::unique_ptr<TextRenderer> textRenderer_; // <<<--- ADDED unique_ptr member
+    std::unique_ptr<TextRenderer> textRenderer_;
+    std::unique_ptr<AnimationManager> animationManager_; // <<<--- ADDED unique_ptr member
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_;
     Uint32 last_frame_time = 0;

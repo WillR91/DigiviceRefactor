@@ -1,13 +1,13 @@
 // File: src/core/Game.cpp
 
 #include "core/Game.h"
-#include "ui/TextRenderer.h"       // Include the new header
-// ... other necessary includes ...
-#include "states/AdventureState.h" // For initial state push
+#include "states/AdventureState.h"
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
 #include "platform/pc/pc_display.h"
-#include "core/AssetManager.h"     // Needed for AssetManager
+#include "core/AssetManager.h"
+#include "ui/TextRenderer.h"
+#include "core/AnimationManager.h"   // <<<--- ADDED Include ---<<<
 #include <SDL_log.h>
 #include <stdexcept>
 #include <filesystem> // For CWD logging
@@ -23,7 +23,8 @@ Game::Game() :
     last_frame_time(0),
     request_pop_(false),
     request_push_(nullptr),
-    textRenderer_(nullptr) // Initialize new pointer member
+    textRenderer_(nullptr),
+    animationManager_(nullptr) // <<<--- Initialize new pointer member
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called. PlayerData implicitly constructed.");
 }
@@ -31,9 +32,6 @@ Game::Game() :
 Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
     // Cleanup happens in close()
-    // playerData_ is automatically destructed when Game object goes out of scope
-    // textRenderer_ unique_ptr is also automatically handled if close() wasn't called,
-    // but explicit reset in close() is good practice for order.
 }
 
 bool Game::init(const std::string& title, int width, int height) {
@@ -77,7 +75,7 @@ bool Game::init(const std::string& title, int width, int height) {
      if (!assets_ok) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load! Check paths and file existence."); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
 
-    // <<< --- Initialize Text Renderer --- >>>
+    // Initialize Text Renderer
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing TextRenderer...");
     SDL_Texture* fontTexturePtr = assetManager.getTexture("ui_font_atlas");
     if (fontTexturePtr) {
@@ -92,12 +90,55 @@ bool Game::init(const std::string& title, int width, int height) {
     } else {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize TextRenderer: Font texture 'ui_font_atlas' not found in AssetManager.");
     }
-    // <<< --- End Text Renderer Init --- >>>
+
+    // <<< --- Initialize Animation Manager & Load Animations --- >>>
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing AnimationManager...");
+    try {
+        animationManager_ = std::make_unique<AnimationManager>(&assetManager); // Pass AssetManager pointer
+
+        // Load animation data for each character/sprite sheet
+        bool anims_ok = true;
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animation data files...");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gabumon_sheet.json", "gabumon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/biyomon_sheet.json", "biyomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gatomon_sheet.json", "gatomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gomamon_sheet.json", "gomamon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
+        // Add any other sprite sheets with animations (e.g., UI elements, effects)
+
+        if (!anims_ok) {
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
+            // Decide if this is fatal - for now, not fatal but log a warning.
+        } else {
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager finished loading animation data.");
+        }
+
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create or initialize AnimationManager: %s", e.what());
+        // Clean up other managers before returning false
+        textRenderer_.reset();
+        assetManager.shutdown();
+        display.close();
+        SDL_Quit();
+        return false;
+    }
+    // <<< --- End Animation Manager Init --- >>>
 
     try {
         states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
-    } catch (const std::exception& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what()); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what());
+        animationManager_.reset(); // Also reset animation manager if state creation fails
+        textRenderer_.reset();
+        assetManager.shutdown();
+        display.close();
+        SDL_Quit();
+        return false;
+    }
 
     is_running = true;
     last_frame_time = SDL_GetTicks();
@@ -144,29 +185,29 @@ void Game::run() {
                 SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling handle_input on state %p", (void*)currentStatePtr);
                 currentStatePtr->handle_input(inputManager, pd);
 
-                SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling update on state %p", (void*)currentStatePtr);
-                currentStatePtr->update(delta_time, pd);
-
+                // Only update if still running after input (input might have quit)
+                if (is_running && !states_.empty() && states_.back().get() == currentStatePtr) { // Check if state is still the same and valid
+                    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling update on state %p", (void*)currentStatePtr);
+                    currentStatePtr->update(delta_time, pd);
+                }
             } else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
-                is_running = false;
+                is_running = false; // Critical error
             }
-        } else {
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges.");
+        } else if (is_running) { // Only log and quit if we weren't already quitting
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges. Quitting.");
              is_running = false;
         }
 
         // --- Rendering ---
-        if (is_running && !states_.empty()) {
-             GameState* currentStateForRender = getCurrentState();
+        if (is_running && !states_.empty()) { // Check is_running again as update might have changed it
+             GameState* currentStateForRender = getCurrentState(); // Could have changed from pop/push
              if (currentStateForRender) {
                  display.clear(0x0000);
-                 // SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling render on state %p", (void*)currentStateForRender); // Optional: Can be very spammy
                  currentStateForRender->render(display);
                  display.present();
              }
         }
-
     } // End while(is_running)
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
@@ -193,7 +234,7 @@ void Game::pop_state() {
 // --- State Management - Requests ---
 void Game::requestPushState(std::unique_ptr<GameState> state) {
     if (!state) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Attempted to request push of NULL state!"); return; }
-    if (request_push_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Overwriting previous push request."); }
+    if (request_push_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Overwriting previous push request for state %p with new request for %p.", (void*)request_push_.get(), (void*)state.get()); }
     request_push_ = std::move(state);
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Push requested for state %p.", (void*)request_push_.get());
 }
@@ -209,12 +250,12 @@ void Game::applyStateChanges() {
     if (request_pop_) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Pop request.");
         pop_state();
-        request_pop_ = false;
+        request_pop_ = false; // Reset after applying
     }
     if (request_push_) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Push request for state %p.", (void*)request_push_.get());
-        push_state(std::move(request_push_));
-        request_push_.reset(); // Use reset() to clear the unique_ptr after moving
+        push_state(std::move(request_push_)); // push_state moves content, request_push_ becomes null
+        // request_push_.reset(); // Not strictly needed after std::move from unique_ptr, but harmless.
     }
 }
 
@@ -234,12 +275,13 @@ PCDisplay* Game::get_display() { return &display; }
 AssetManager* Game::getAssetManager() { return &assetManager; }
 InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
+TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
 
-// <<< --- ADDED TextRenderer Getter Implementation --- >>>
-TextRenderer* Game::getTextRenderer() {
-    return textRenderer_.get(); // .get() returns raw ptr from unique_ptr
+// <<< --- ADDED AnimationManager Getter Implementation --- >>>
+AnimationManager* Game::getAnimationManager() {
+    return animationManager_.get();
 }
-// <<< -------------------------------------------- >>>
+// <<< ------------------------------------------------ >>>
 
 
 // --- close ---
@@ -248,8 +290,10 @@ void Game::close() {
     states_.clear(); // Destroys GameState objects managed by unique_ptr
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
 
-    // Reset unique_ptr for TextRenderer before AssetManager (which owns the texture)
-    textRenderer_.reset(); // <<<--- ADDED Reset for TextRenderer ---<<<
+    // Reset managers in reverse order of dependency/creation
+    animationManager_.reset(); // <<<--- ADDED Reset ---<<<
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager reset.");
+    textRenderer_.reset();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer reset.");
 
     assetManager.shutdown();
@@ -258,7 +302,6 @@ void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay closed.");
     SDL_Quit();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL quit.");
-    // Note: playerData_ is automatically destructed here
 }
 
 // --- DEBUG_getStack Implementation ---
