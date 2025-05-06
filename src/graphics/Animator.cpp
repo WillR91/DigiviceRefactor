@@ -88,12 +88,12 @@ void Animator::update(float deltaTime) {
 
          // Safety check for potentially zero duration frames after advancing
          if (currentFrameDuration <= 0.0f) {
-              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Animator: Animation '%s' frame %zu has zero or negative duration!", currentAnimation_->id.c_str(), currentFrameIndex_);
-              // If we are looping and hit a zero duration frame, break the while to avoid infinite loop
-              if (currentAnimation_->loops) {
-                   break;
-              }
-              // If not looping, continue the while loop to potentially skip past it (might get stuck if many zero frames)
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Animator: Animation '%s' frame %zu has zero or negative duration!", currentAnimation_->id.c_str(), currentFrameIndex_);
+             // If we are looping and hit a zero duration frame, break the while to avoid infinite loop
+             if (currentAnimation_->loops) {
+                  break;
+             }
+             // If not looping, continue the while loop to potentially skip past it (might get stuck if many zero frames)
          }
 
     } // End while (timer >= duration)
@@ -109,7 +109,7 @@ SDL_Rect Animator::getCurrentFrameRect() const {
 
 SDL_Texture* Animator::getCurrentTexture() const {
      if (currentAnimation_) {
-          return currentAnimation_->textureAtlas;
+         return currentAnimation_->textureAtlas;
      }
      return nullptr;
 }
@@ -123,4 +123,9 @@ void Animator::stop() {
     currentFrameIndex_ = 0;
     currentFrameTimerSec_ = 0.0f;
     finished_ = true; // Treat stopped as finished
+}
+
+// <<< --- ADDED GETTER IMPLEMENTATION --- >>>
+const AnimationData* Animator::getCurrentAnimationData() const {
+    return currentAnimation_;
 }

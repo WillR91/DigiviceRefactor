@@ -6,6 +6,9 @@
 #include <cstddef>                  // For size_t
 #include <SDL_rect.h>               // For SDL_Rect
 
+// Forward declaration for SDL_Texture if not fully included by SDL_rect.h
+// struct SDL_Texture; // Usually SDL_rect.h or a fuller SDL.h would cover this.
+
 class Animator {
 public:
     Animator(); // Default constructor
@@ -32,6 +35,9 @@ public:
 
     // Resets the animator to its default state (no animation playing).
     void stop();
+
+    // <<< --- ADDED GETTER --- >>>
+    const AnimationData* getCurrentAnimationData() const;
 
 private:
     const AnimationData* currentAnimation_; // Non-owning pointer to the animation definition being played

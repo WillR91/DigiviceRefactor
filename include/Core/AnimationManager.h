@@ -4,15 +4,16 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <map>                      // <<< REQUIRED for std::map usage
 #include <memory>
-#include <SDL_render.h>             // <<<--- ADDED for SDL_Texture*
-#include "vendor/nlohmann/json.hpp" // <<<--- ADDED for nlohmann::json
+#include <SDL_render.h>             // For SDL_Texture*
+#include <SDL_rect.h>               // <<< REQUIRED for SDL_Rect usage
+#include "vendor/nlohmann/json.hpp" // For nlohmann::json
 
 // Forward Declarations
 struct AnimationData; // From graphics/AnimationData.h
-class AssetManager; // Needed to get texture pointers
-struct SDL_Rect;    // SDL_Rect is needed for the vector type
+class AssetManager;   // Needed to get texture pointers
+// SDL_Rect is included above
 
 class AnimationManager {
 public:
@@ -26,14 +27,14 @@ private:
     AssetManager* assetManager_ = nullptr;
     std::map<std::string, AnimationData> loadedAnimations_;
 
-    // <<<--- MODIFIED Declaration: Use full type name ---<<<
-    bool parseFrameRects(const nlohmann::json& framesNode, std::vector<SDL_Rect>& outFrameRects);
+    // <<<--- MODIFIED Declaration: Use std::map<int, SDL_Rect> ---<<<
+    bool parseFrameRects(const nlohmann::json& framesNode, std::map<int, SDL_Rect>& outFrameRectsMap); // Use map here
 
-    // <<<--- MODIFIED Declaration: Use SDL_Texture* ---<<<
+    // Declaration using SDL_Texture*
     void storeAnimation(
         const std::string& animId,
         SDL_Texture* texture, // Use SDL_Texture* here
-        const std::vector<SDL_Rect>& frameRects,
+        const std::vector<SDL_Rect>& frameRects, // StoreAnimation still builds the vector
         const std::vector<float>& durationsSec,
         bool loops
     );

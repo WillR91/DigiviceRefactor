@@ -1,13 +1,14 @@
 // File: src/core/Game.cpp
 
 #include "core/Game.h"
+#include "states/GameState.h"        // Include base class for enter/exit
 #include "states/AdventureState.h"
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
 #include "platform/pc/pc_display.h"
 #include "core/AssetManager.h"
 #include "ui/TextRenderer.h"
-#include "core/AnimationManager.h"   // <<<--- ADDED Include ---<<<
+#include "core/AnimationManager.h"
 #include <SDL_log.h>
 #include <stdexcept>
 #include <filesystem> // For CWD logging
@@ -24,7 +25,7 @@ Game::Game() :
     request_pop_(false),
     request_push_(nullptr),
     textRenderer_(nullptr),
-    animationManager_(nullptr) // <<<--- Initialize new pointer member
+    animationManager_(nullptr)
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called. PlayerData implicitly constructed.");
 }
@@ -91,12 +92,11 @@ bool Game::init(const std::string& title, int width, int height) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize TextRenderer: Font texture 'ui_font_atlas' not found in AssetManager.");
     }
 
-    // <<< --- Initialize Animation Manager & Load Animations --- >>>
+    // Initialize Animation Manager & Load Animations
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing AnimationManager...");
     try {
         animationManager_ = std::make_unique<AnimationManager>(&assetManager); // Pass AssetManager pointer
 
-        // Load animation data for each character/sprite sheet
         bool anims_ok = true;
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animation data files...");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
@@ -107,32 +107,34 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
-        // Add any other sprite sheets with animations (e.g., UI elements, effects)
 
         if (!anims_ok) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
-            // Decide if this is fatal - for now, not fatal but log a warning.
         } else {
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager finished loading animation data.");
         }
 
     } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create or initialize AnimationManager: %s", e.what());
-        // Clean up other managers before returning false
         textRenderer_.reset();
         assetManager.shutdown();
         display.close();
         SDL_Quit();
         return false;
     }
-    // <<< --- End Animation Manager Init --- >>>
 
+    // Push Initial State and Call Enter
     try {
-        states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
+        states_.push_back(std::make_unique<AdventureState>(this));
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
+        // <<< Call enter() on the initial state >>>
+        if (!states_.empty()) {
+             states_.back()->enter();
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Called enter() on initial state.");
+        }
     } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what());
-        animationManager_.reset(); // Also reset animation manager if state creation fails
+        animationManager_.reset();
         textRenderer_.reset();
         assetManager.shutdown();
         display.close();
@@ -185,23 +187,22 @@ void Game::run() {
                 SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling handle_input on state %p", (void*)currentStatePtr);
                 currentStatePtr->handle_input(inputManager, pd);
 
-                // Only update if still running after input (input might have quit)
-                if (is_running && !states_.empty() && states_.back().get() == currentStatePtr) { // Check if state is still the same and valid
+                if (is_running && !states_.empty() && states_.back().get() == currentStatePtr) {
                     SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling update on state %p", (void*)currentStatePtr);
                     currentStatePtr->update(delta_time, pd);
                 }
             } else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
-                is_running = false; // Critical error
+                is_running = false;
             }
-        } else if (is_running) { // Only log and quit if we weren't already quitting
+        } else if (is_running) {
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges. Quitting.");
              is_running = false;
         }
 
         // --- Rendering ---
-        if (is_running && !states_.empty()) { // Check is_running again as update might have changed it
-             GameState* currentStateForRender = getCurrentState(); // Could have changed from pop/push
+        if (is_running && !states_.empty()) {
+             GameState* currentStateForRender = getCurrentState();
              if (currentStateForRender) {
                  display.clear(0x0000);
                  currentStateForRender->render(display);
@@ -246,18 +247,52 @@ void Game::requestPopState() {
 }
 
 // --- Helper to apply queued changes ---
+// <<< --- MODIFIED VERSION --- >>>
 void Game::applyStateChanges() {
+    // Handle pop request first
     if (request_pop_) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Pop request.");
-        pop_state();
-        request_pop_ = false; // Reset after applying
+        if (!states_.empty()) {
+            // <<< --- Call exit() on the state being popped --- >>>
+            states_.back()->exit();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on popped state.");
+            // ---
+            pop_state(); // Removes from stack
+            // <<< --- Call enter() on the NEW top state (if any) --- >>>
+            if (!states_.empty()) {
+                 states_.back()->enter();
+                 SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly revealed state.");
+            }
+            // ---
+        }
+        request_pop_ = false; // Clear request flag AFTER processing
     }
+
+    // Handle push request second (so push happens onto the potentially new top state)
     if (request_push_) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying Push request for state %p.", (void*)request_push_.get());
-        push_state(std::move(request_push_)); // push_state moves content, request_push_ becomes null
-        // request_push_.reset(); // Not strictly needed after std::move from unique_ptr, but harmless.
+        // <<< --- Call exit() on the state being covered (if any) --- >>>
+        if (!states_.empty()) {
+             states_.back()->exit();
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on state being covered by push.");
+        }
+        // ---
+        // We need to store the pointer before moving ownership
+        GameState* newStatePtr = request_push_.get();
+        push_state(std::move(request_push_)); // Adds new state to stack
+
+        // <<< --- Call enter() on the NEWLY pushed state --- >>>
+        // states_.back()->enter(); // states_.back() should be the same as newStatePtr now
+        if (newStatePtr) { // Check pointer just in case push_state failed internally (though it shouldn't)
+            newStatePtr->enter();
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly pushed state %p.", (void*)newStatePtr);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Failed to get pointer to newly pushed state after push_state call!");
+        }
+        // ---
+        // request_push_ is now null due to std::move, so reset() isn't strictly needed but safe
+        request_push_.reset();
     }
 }
+
 
 // --- getCurrentState ---
 GameState* Game::getCurrentState() {
@@ -276,22 +311,22 @@ AssetManager* Game::getAssetManager() { return &assetManager; }
 InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
 TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
-
-// <<< --- ADDED AnimationManager Getter Implementation --- >>>
-AnimationManager* Game::getAnimationManager() {
-    return animationManager_.get();
-}
-// <<< ------------------------------------------------ >>>
+AnimationManager* Game::getAnimationManager() { return animationManager_.get(); }
 
 
 // --- close ---
 void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Shutting down Game systems...");
-    states_.clear(); // Destroys GameState objects managed by unique_ptr
+
+    // <<< Call exit() on the final state before clearing >>>
+    if (!states_.empty()) {
+         states_.back()->exit();
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Called exit() on final state during shutdown.");
+    }
+    states_.clear();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
 
-    // Reset managers in reverse order of dependency/creation
-    animationManager_.reset(); // <<<--- ADDED Reset ---<<<
+    animationManager_.reset();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager reset.");
     textRenderer_.reset();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer reset.");

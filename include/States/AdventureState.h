@@ -1,21 +1,24 @@
 // File: include/states/AdventureState.h
 #pragma once
 
-#include "states/GameState.h"     // Base class
-#include "graphics/Animation.h"   // Animation definition
-#include "../entities/Digimon.h"  // Include DigimonType enum
-#include <SDL.h>                  // SDL types (SDL_Texture*, Uint32 etc.)
-#include <vector>                 // Standard library container
-#include <cmath>                  // Standard library math functions
-#include <cstdint>                // Standard library integer types
-#include <map>                    // Standard library map container
-#include <cstddef>                // For size_t type
+#include "states/GameState.h"
+#include "graphics/Animator.h"
+#include "../entities/Digimon.h"
+// Reduce includes if possible, move SDL includes to cpp if only needed there
+#include <SDL_render.h> // Needed for SDL_Texture* member
+#include <SDL_rect.h>   // Needed for SDL_Rect usage? (If helpers use it)
+#include <vector>
+#include <cmath>
+#include <cstdint>
+#include <cstddef>
+#include <string>   // Needed for helper return types
 
 // Forward declarations
 class Game;
-class InputManager; // <<< ADDED
-class PlayerData;   // <<< ADDED
-class PCDisplay;    // <<< ADDED
+class InputManager;
+class PlayerData;
+class PCDisplay;
+// SDL_Texture is included via SDL_render.h
 
 // Enums specific to AdventureState logic
 enum PlayerState { STATE_IDLE, STATE_WALKING };
@@ -23,47 +26,44 @@ enum PlayerState { STATE_IDLE, STATE_WALKING };
 class AdventureState : public GameState {
 public:
     // Constructor & Destructor
-    AdventureState(Game* game); // Declaration OK
-    ~AdventureState() override; // Declaration OK
+    AdventureState(Game* game);
+    ~AdventureState() override;
 
-    // Core state functions override (with NEW signatures)
-    void handle_input(InputManager& inputManager, PlayerData* playerData) override; // <<< MODIFIED
-    void update(float delta_time, PlayerData* playerData) override;               // <<< MODIFIED
-    void render(PCDisplay& display) override;                                     // <<< MODIFIED
+    // <<< --- ADDED enter() override --- >>>
+    void enter() override;
+    // exit() override; // Can add later if needed
+
+    // Core state functions override
+    void handle_input(InputManager& inputManager, PlayerData* playerData) override;
+    void update(float delta_time, PlayerData* playerData) override;
+    void render(PCDisplay& display) override;
 
 private:
-    // --- Data Members ---
-    // (Remain unchanged)
-    std::map<DigimonType, Animation> idleAnimations_;
-    std::map<DigimonType, Animation> walkAnimations_;
-    SDL_Texture* bgTexture0_;
-    SDL_Texture* bgTexture1_;
-    SDL_Texture* bgTexture2_;
+    // Animator
+    Animator partnerAnimator_;
+
+    // Other Data Members
+    SDL_Texture* bgTexture0_ = nullptr;
+    SDL_Texture* bgTexture1_ = nullptr;
+    SDL_Texture* bgTexture2_ = nullptr;
     DigimonType current_digimon_;
-    PlayerState current_state_;
-    Animation* active_anim_;
-    size_t current_anim_frame_idx_;
-    float current_frame_elapsed_time_;
-    int queued_steps_;
-    float bg_scroll_offset_0_;
-    float bg_scroll_offset_1_;
-    float bg_scroll_offset_2_;
+    PlayerState current_state_ = STATE_IDLE;
+    int queued_steps_ = 0;
+    float bg_scroll_offset_0_ = 0.0f;
+    float bg_scroll_offset_1_ = 0.0f;
+    float bg_scroll_offset_2_ = 0.0f;
+    bool firstWalkUpdate_ = true;
 
-    // <<< --- ADDED MEMBER VARIABLE AS REQUESTED --- >>>
-    bool firstWalkUpdate_ = true; // Initialize to true
-
-    // --- Constants ---
-    // (Remain unchanged)
+    // Constants
     const int MAX_QUEUED_STEPS = 2;
     const float SCROLL_SPEED_0 = 3.0f * 60.0f;
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;
-    const int WINDOW_WIDTH = 466;
-    const int WINDOW_HEIGHT = 466;
+    const int WINDOW_WIDTH = 466; // Consider getting from display
+    const int WINDOW_HEIGHT = 466;// Consider getting from display
 
-    // --- Private Helper Methods ---
-    // (Remain unchanged)
-    void setActiveAnimation();
-    void initializeAnimations();
+    // Private Helpers
+    std::string getAnimationIdForCurrentState() const;
+    std::string getDigimonTextureId(DigimonType type) const;
 
 }; // End of AdventureState class definition
