@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME}
     src/core/Game.cpp
     src/core/InputManager.cpp
     src/core/AnimationManager.cpp
+    src/Utils/AnimationUtils.cpp
     src/ui/TextRenderer.cpp
     # Add PlayerData source if you create one later
     src/platform/pc/pc_display.cpp

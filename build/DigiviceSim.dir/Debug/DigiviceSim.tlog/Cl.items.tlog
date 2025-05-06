@@ -2,6 +2,7 @@ Z:\DigiviceRefactor\main.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\mai
 Z:\DigiviceRefactor\src\core\Game.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Game.obj
 Z:\DigiviceRefactor\src\core\InputManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager.obj
 Z:\DigiviceRefactor\src\core\AnimationManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationManager.obj
+Z:\DigiviceRefactor\src\Utils\AnimationUtils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationUtils.obj
 Z:\DigiviceRefactor\src\ui\TextRenderer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\TextRenderer.obj
 Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\pc_display.obj
 Z:\DigiviceRefactor\src\core\AssetManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AssetManager.obj

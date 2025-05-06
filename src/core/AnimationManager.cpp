@@ -2,6 +2,7 @@
 #include "core/AnimationManager.h"
 #include "core/AssetManager.h"      // Include full definition
 #include "graphics/AnimationData.h" // Include full definition
+#include "graphics/AnimationDefinitions.h"
 #include "vendor/nlohmann/json.hpp" // For JSON parsing
 #include <SDL_log.h>
 #include <fstream>
@@ -148,108 +149,118 @@ void AnimationManager::storeAnimation(
 
 // Loads animation definitions from a JSON file - REVISED LOGIC
 bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, const std::string& textureAtlasId) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animations from '%s' using texture '%s'", jsonPath.c_str(), textureAtlasId.c_str());
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animations from '%s' using texture '%s'", 
+                jsonPath.c_str(), textureAtlasId.c_str());
 
-    // 1. Get Texture
-    if (!assetManager_) return false;
+    if (!assetManager_) {
+         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "AnimationManager::loadAnimationDataFromFile - AssetManager is null!");
+         return false;
+    }
     SDL_Texture* texture = assetManager_->getTexture(textureAtlasId);
     if (!texture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Texture '%s' not found in AssetManager.", textureAtlasId.c_str());
-        return false;
-     }
-
-    // 2. Parse JSON
-    std::ifstream jsonFile(jsonPath);
-    if (!jsonFile.is_open()) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to open JSON file: %s", jsonPath.c_str());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Texture '%s' not found in AssetManager for JSON '%s'.", 
+                    textureAtlasId.c_str(), jsonPath.c_str());
         return false;
     }
+
+    std::ifstream jsonFile(jsonPath);
+    if (!jsonFile.is_open()) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to open JSON file: %s", 
+                    jsonPath.c_str());
+        return false;
+    }
+
     json data;
     try {
         data = json::parse(jsonFile);
         jsonFile.close();
+    } catch (const json::parse_error& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to parse JSON file '%s': %s (at byte %zu)", 
+                    jsonPath.c_str(), e.what(), e.byte);
+        if(jsonFile.is_open()) jsonFile.close();
+        return false;
     } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to parse JSON file '%s': %s", jsonPath.c_str(), e.what());
-        jsonFile.close(); // Ensure file is closed on error too
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Exception reading JSON file '%s': %s", 
+                    jsonPath.c_str(), e.what());
+        if(jsonFile.is_open()) jsonFile.close();
         return false;
     }
 
-    // 3. Parse ALL frame rectangles into a map (Index -> Rect)
     std::map<int, SDL_Rect> frameRectsMap;
     if (!data.contains("frames") || !parseFrameRects(data["frames"], frameRectsMap)) {
-         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to parse frame rectangles from '%s'.", jsonPath.c_str());
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to parse frame rectangles from '%s'.", 
+                     jsonPath.c_str());
          return false;
     }
-     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,"Parsed %zu total frame rects from %s", frameRectsMap.size(), jsonPath.c_str());
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Parsed %zu total frame rects from %s", 
+                 frameRectsMap.size(), jsonPath.c_str());
 
-
-    // 4. *** Manually Define and Store Known Animations ***
     int animationsStored = 0;
 
     // --- Create Idle Animation ---
     std::vector<SDL_Rect> idleRects;
     std::vector<float> idleDurationsSec;
     bool idleOk = true;
-    for(size_t i = 0; i < IDLE_INDICES.size(); ++i) { // Iterate using index 'i'
-        int frameIndex = IDLE_INDICES[i]; // Get the frame index needed
-        if (frameRectsMap.count(frameIndex)) {
-             idleRects.push_back(frameRectsMap[frameIndex]);
-             // Use index 'i' to get the corresponding duration from the hardcoded list
-             if (i < IDLE_DURATIONS_MS.size()) {
-                 idleDurationsSec.push_back(static_cast<float>(IDLE_DURATIONS_MS[i]) / 1000.0f);
-             } else {
-                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Idle duration missing for index %zu (frame %d) in definition", i, frameIndex);
-                 idleDurationsSec.push_back(1.0f); // Default duration
+    if (AnimDefs::IDLE_INDICES.size() != AnimDefs::IDLE_DURATIONS_MS.size()) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "IDLE definition mismatch: %zu indices vs %zu durations for %s", 
+                    AnimDefs::IDLE_INDICES.size(), AnimDefs::IDLE_DURATIONS_MS.size(), textureAtlasId.c_str());
+        idleOk = false;
+    } else {
+        for (size_t i = 0; i < AnimDefs::IDLE_INDICES.size(); ++i) {
+            int frameIndex = AnimDefs::IDLE_INDICES[i];
+            Uint32 durationMs = AnimDefs::IDLE_DURATIONS_MS[i];
+            if (frameRectsMap.count(frameIndex)) {
+                 idleRects.push_back(frameRectsMap[frameIndex]);
+                 idleDurationsSec.push_back(static_cast<float>(durationMs) / 1000.0f);
+            } else {
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame rect missing for idle index %d in %s", 
+                            frameIndex, jsonPath.c_str());
                  idleOk = false;
-             }
-        } else {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame rect missing for idle index %d in %s", frameIndex, jsonPath.c_str());
-             idleOk = false; // Mark as potentially incomplete
+                 break;
+            }
         }
     }
-    if (idleOk && !idleRects.empty() && idleRects.size() == IDLE_INDICES.size()) { // Ensure all frames were found
-        storeAnimation(textureAtlasId + "_Idle", texture, idleRects, idleDurationsSec, true); // Idle loops
-        animationsStored++;
+    if (idleOk && !idleRects.empty()) {
+         storeAnimation(textureAtlasId + "_Idle", texture, idleRects, idleDurationsSec, true);
+         animationsStored++;
     } else {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Failed to create complete Idle animation for %s (Found %zu/%zu frames)",
-                     textureAtlasId.c_str(), idleRects.size(), IDLE_INDICES.size());
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create complete Idle animation for %s", 
+                     textureAtlasId.c_str());
     }
-
 
     // --- Create Walk Animation ---
     std::vector<SDL_Rect> walkRects;
     std::vector<float> walkDurationsSec;
     bool walkOk = true;
-    for(size_t i = 0; i < WALK_INDICES.size(); ++i) { // Iterate using index 'i'
-        int frameIndex = WALK_INDICES[i]; // Get the frame index needed
-        if (frameRectsMap.count(frameIndex)) {
-             walkRects.push_back(frameRectsMap[frameIndex]);
-             if (i < WALK_DURATIONS_MS.size()) {
-                 walkDurationsSec.push_back(static_cast<float>(WALK_DURATIONS_MS[i]) / 1000.0f);
+    if (AnimDefs::WALK_INDICES.size() != AnimDefs::WALK_DURATIONS_MS.size()) {
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "WALK definition mismatch: %zu indices vs %zu durations for %s", 
+                     AnimDefs::WALK_INDICES.size(), AnimDefs::WALK_DURATIONS_MS.size(), textureAtlasId.c_str());
+         walkOk = false;
+    } else {
+         for (size_t i = 0; i < AnimDefs::WALK_INDICES.size(); ++i) {
+             int frameIndex = AnimDefs::WALK_INDICES[i];
+             Uint32 durationMs = AnimDefs::WALK_DURATIONS_MS[i];
+             if (frameRectsMap.count(frameIndex)) {
+                 walkRects.push_back(frameRectsMap[frameIndex]);
+                 walkDurationsSec.push_back(static_cast<float>(durationMs) / 1000.0f);
              } else {
-                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Walk duration missing for index %zu (frame %d) in definition", i, frameIndex);
-                 walkDurationsSec.push_back(0.3f);
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame rect missing for walk index %d in %s", 
+                            frameIndex, jsonPath.c_str());
                  walkOk = false;
+                 break;
              }
-        } else {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Frame rect missing for walk index %d in %s", frameIndex, jsonPath.c_str());
-             walkOk = false;
-        }
+         }
     }
-    if (walkOk && !walkRects.empty() && walkRects.size() == WALK_INDICES.size()) { // Ensure all frames were found
-         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, false); // Walk doesn't loop (per AdventureState logic)
+    if (walkOk && !walkRects.empty()) {
+         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, false);
          animationsStored++;
     } else {
-         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"Failed to create complete Walk animation for %s (Found %zu/%zu frames)",
-                      textureAtlasId.c_str(), walkRects.size(), WALK_INDICES.size());
+         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create complete Walk animation for %s", 
+                     textureAtlasId.c_str());
     }
 
-    // --- Add blocks here to create Attack, Hurt etc. animations similarly ---
-
-
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Finished processing '%s'. Stored %d animation definitions.", jsonPath.c_str(), animationsStored);
-    // Return true only if BOTH idle and walk were stored successfully? Or just if any were?
-    // Let's return true if at least one was stored, matching previous logic.
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Finished processing '%s'. Stored %d animation definitions.", 
+                jsonPath.c_str(), animationsStored);
     return animationsStored > 0;
 }
 
