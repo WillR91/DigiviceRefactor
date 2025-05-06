@@ -1,15 +1,15 @@
 // File: include/states/AdventureState.h
 #pragma once
 
-#include "states/GameState.h"       // Base class
-#include "graphics/Animation.h"     // Animation definition
-#include "../entities/Digimon.h"    // Include DigimonType enum
-#include <SDL.h>                    // SDL types (SDL_Texture*, Uint32 etc.)
-#include <vector>                   // Standard library container
-#include <cmath>                    // Standard library math functions
-#include <cstdint>                  // Standard library integer types
-#include <map>                      // Standard library map container
-#include <cstddef>                  // For size_t type
+#include "states/GameState.h"     // Base class
+#include "graphics/Animation.h"   // Animation definition
+#include "../entities/Digimon.h"  // Include DigimonType enum
+#include <SDL.h>                  // SDL types (SDL_Texture*, Uint32 etc.)
+#include <vector>                 // Standard library container
+#include <cmath>                  // Standard library math functions
+#include <cstdint>                // Standard library integer types
+#include <map>                    // Standard library map container
+#include <cstddef>                // For size_t type
 
 // Forward declarations
 class Game;
@@ -28,7 +28,7 @@ public:
 
     // Core state functions override (with NEW signatures)
     void handle_input(InputManager& inputManager, PlayerData* playerData) override; // <<< MODIFIED
-    void update(float delta_time, PlayerData* playerData) override;                // <<< MODIFIED
+    void update(float delta_time, PlayerData* playerData) override;               // <<< MODIFIED
     void render(PCDisplay& display) override;                                     // <<< MODIFIED
 
 private:
@@ -48,6 +48,9 @@ private:
     float bg_scroll_offset_0_;
     float bg_scroll_offset_1_;
     float bg_scroll_offset_2_;
+
+    // <<< --- ADDED MEMBER VARIABLE AS REQUESTED --- >>>
+    bool firstWalkUpdate_ = true; // Initialize to true
 
     // --- Constants ---
     // (Remain unchanged)

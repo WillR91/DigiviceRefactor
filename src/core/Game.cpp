@@ -1,10 +1,10 @@
 // File: src/core/Game.cpp
 
-#include "core/Game.h"
-#include "states/AdventureState.h"   // Needed for initial state push
-#include "core/PlayerData.h"         // Included - OK
-#include "core/InputManager.h"     // <<<--- ADDED Include (needed for handle_input call)
-#include "platform/pc/pc_display.h"  // <<<--- ADDED Include (needed for render call)
+#include "core/Game.h"               // Include own header
+#include "states/AdventureState.h"   // For initial state push
+#include "core/PlayerData.h"
+#include "core/InputManager.h"
+#include "platform/pc/pc_display.h"
 #include <SDL_log.h>
 #include <stdexcept>
 #include <filesystem> // For CWD logging
@@ -67,10 +67,6 @@ bool Game::init(const std::string& title, int width, int height) {
      if (!assets_ok) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load! Check paths and file existence."); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
 
-    // <<<--- IMPORTANT NOTE about Base Constructor --->>>
-    // Make sure your AdventureState constructor calls the GameState base constructor:
-    // Example in AdventureState.cpp:
-    // AdventureState::AdventureState(Game* game) : GameState(game), /* other members... */ { ... }
     try {
        states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
@@ -109,40 +105,41 @@ void Game::run() {
         }
 
         // --- State Logic ---
+        // <<< --- ADD LOGS AROUND applyStateChanges --- >>>
+        SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - BEFORE applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
         applyStateChanges(); // Apply Pop/Push requested from previous frame
+        SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - AFTER applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
+        // <<< --------------------------------------------- >>>
+
 
         if (!states_.empty()) {
             GameState* currentStatePtr = states_.back().get();
             if (currentStatePtr) {
-                // <<< --- MODIFIED Calls to pass arguments --- >>>
-                PlayerData* pd = getPlayerData(); // Get pointer to PlayerData
+                PlayerData* pd = getPlayerData();
 
-                // Pass InputManager ref and PlayerData pointer to handle_input
-                currentStatePtr->handle_input(inputManager, pd); // Pass inputManager and pd
+                SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling handle_input on state %p", (void*)currentStatePtr);
+                currentStatePtr->handle_input(inputManager, pd);
 
-                // Pass delta_time and PlayerData pointer to update
-                currentStatePtr->update(delta_time, pd); // Pass delta_time and pd
-                // <<< ---------------------------------------- >>>
+                SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling update on state %p", (void*)currentStatePtr);
+                currentStatePtr->update(delta_time, pd);
+
             } else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
-                is_running = false; // Treat as critical error
+                is_running = false;
             }
         } else {
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges.");
-             is_running = false; // Stop running if no states left
+             is_running = false;
         }
-
 
         // --- Rendering ---
         if (is_running && !states_.empty()) {
              GameState* currentStateForRender = getCurrentState();
              if (currentStateForRender) {
-                 display.clear(0x0000); // Clear screen (to black)
-
-                 // <<<--- MODIFIED Call to pass display --->>>
-                 currentStateForRender->render(display); // Pass PCDisplay object by reference
-
-                 display.present(); // Show the result on screen
+                 display.clear(0x0000);
+                 // SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling render on state %p", (void*)currentStateForRender); // Optional: Can be very spammy
+                 currentStateForRender->render(display);
+                 display.present();
              }
         }
 
