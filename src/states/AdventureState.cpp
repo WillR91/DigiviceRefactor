@@ -11,6 +11,7 @@
 #include "core/InputManager.h"
 #include "core/GameAction.h"
 #include "core/PlayerData.h"
+#include "Utils/AnimationUtils.h"  // <<< ADDED THIS INCLUDE >>>
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -57,7 +58,7 @@ AdventureState::AdventureState(Game* game) :
 
     // Set Initial Animation using Animator (happens here)
     // Note: enter() might reset this if PlayerData changed between construction and enter()
-    std::string initialAnimId = getAnimationIdForCurrentState();
+    std::string initialAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"Constructor: Requesting Anim ID: '%s'", initialAnimId.c_str());
     AnimationManager* animManager = game_ptr->getAnimationManager();
     const AnimationData* initialAnimData = animManager->getAnimationData(initialAnimId);
@@ -99,7 +100,7 @@ void AdventureState::enter() {
          queued_steps_ = 0;           // Clear steps
 
          // Set the correct IDLE animation for the new partner immediately
-         std::string idleAnimId = getAnimationIdForCurrentState(); // Uses the now updated current_digimon_ and current_state_
+         std::string idleAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
          AnimationManager* animManager = game_ptr->getAnimationManager();
          const AnimationData* idleAnimData = animManager->getAnimationData(idleAnimId);
          partnerAnimator_.setAnimation(idleAnimData); // Update the animator
@@ -113,7 +114,7 @@ void AdventureState::enter() {
          SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter() - Partner matches PlayerData (%d). No change needed.", static_cast<int>(current_digimon_));
          // Ensure the animator is set to the *current* correct animation, in case it wasn't
          // (e.g., if returning from a state that didn't exist before)
-         std::string currentAnimId = getAnimationIdForCurrentState();
+         std::string currentAnimId = AnimationUtils::GetAnimationId(current_digimon_, (current_state_ == STATE_WALKING) ? "Walk" : "Idle");
          AnimationManager* animManager = game_ptr->getAnimationManager(); // Need manager again
          const AnimationData* currentAnimData = nullptr;
          if(animManager) { // Check manager pointer
@@ -194,7 +195,7 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Switched character to %d via debug key.", static_cast<int>(current_digimon_));
 
         // Set new Idle animation via Animator
-        std::string newIdleAnimId = getAnimationIdForCurrentState();
+        std::string newIdleAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"HandleInput Switch: Requesting Anim ID: '%s'", newIdleAnimId.c_str());
         AnimationManager* animManager = game_ptr->getAnimationManager();
         if(animManager){
@@ -274,7 +275,9 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     // --- Set active animation ---
     if (stateNeedsAnimUpdate) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, ">>> Calling setAnimation on Animator (State is now %d) <<<", current_state_);
-        std::string nextAnimId = getAnimationIdForCurrentState();
+        std::string nextAnimId = (current_state_ == STATE_WALKING) ? 
+            AnimationUtils::GetAnimationId(current_digimon_, "Walk") :
+            AnimationUtils::GetAnimationId(current_digimon_, "Idle");
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"Update StateChange: Requesting Anim ID: '%s' for state %d", nextAnimId.c_str(), current_state_);
         AnimationManager* animManager = game_ptr->getAnimationManager();
         if (animManager) {
@@ -332,31 +335,4 @@ void AdventureState::render(PCDisplay& display) {
 
     // Draw Foreground
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
-}
-
-// --- Private Helper Definitions ---
-
-std::string AdventureState::getDigimonTextureId(DigimonType type) const {
-     switch(type) {
-         case DIGI_AGUMON: return "agumon_sheet";
-         case DIGI_GABUMON: return "gabumon_sheet";
-         case DIGI_BIYOMON: return "biyomon_sheet";
-         case DIGI_GATOMON: return "gatomon_sheet";
-         case DIGI_GOMAMON: return "gomamon_sheet";
-         case DIGI_PALMON: return "palmon_sheet";
-         case DIGI_TENTOMON: return "tentomon_sheet";
-         case DIGI_PATAMON: return "patamon_sheet";
-         default: return "unknown_sheet";
-     }
-}
-
-std::string AdventureState::getAnimationIdForCurrentState() const {
-    std::string baseId = getDigimonTextureId(current_digimon_);
-    std::string stateSuffix = "";
-    switch (current_state_) {
-        case STATE_IDLE:    stateSuffix = "_Idle";    break;
-        case STATE_WALKING: stateSuffix = "_Walk";    break;
-        default:            stateSuffix = "_Idle";    break;
-    }
-    return baseId + stateSuffix;
 }

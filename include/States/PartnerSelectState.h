@@ -5,6 +5,7 @@
 #include "ui/TextRenderer.h"       
 #include "../entities/Digimon.h"   
 #include "graphics/Animator.h"     
+#include "Utils/AnimationUtils.h"  // <<< ADDED THIS INCLUDE >>>
 #include <SDL.h>                   
 #include <vector>                  
 #include <string>                  

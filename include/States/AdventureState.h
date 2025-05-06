@@ -59,8 +59,8 @@ private:
     const float SCROLL_SPEED_0 = 3.0f * 60.0f;
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;
-    const int WINDOW_WIDTH = 466; // Consider getting from display
-    const int WINDOW_HEIGHT = 466;// Consider getting from display
+    const int WINDOW_WIDTH = 466;  // Consider getting from display
+    const int WINDOW_HEIGHT = 466; // Consider getting from display
 
     // Private Helpers
     std::string getAnimationIdForCurrentState() const;
