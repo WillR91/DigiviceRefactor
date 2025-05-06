@@ -336,3 +336,7 @@ void AdventureState::render(PCDisplay& display) {
     // Draw Foreground
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
 }
+
+StateType AdventureState::getType() const {
+    return StateType::Adventure;
+}

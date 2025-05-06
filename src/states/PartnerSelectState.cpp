@@ -219,3 +219,7 @@ std::string PartnerSelectState::getDigimonName(DigimonType type) const {
         default: return "UNKNOWN";
     }
 }
+
+StateType PartnerSelectState::getType() const {
+    return StateType::PartnerSelect;
+}

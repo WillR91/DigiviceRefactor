@@ -217,3 +217,8 @@ void TransitionState::render(PCDisplay& display) {
     }
 }
 // <<< --- END MODIFIED render --- >>>
+
+// --- getType ---
+StateType TransitionState::getType() const {
+    return StateType::Transition;
+}

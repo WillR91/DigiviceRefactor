@@ -8,6 +8,21 @@ class InputManager; // <<<--- ADDED Forward declaration (already present)
 class PlayerData;   // <<<--- ADDED Forward declaration (already present)
 class PCDisplay;    // <<<--- ADDED Forward declaration (for render) (already present)
 
+// <<< --- ADDED StateType Enum --- >>>
+enum class StateType {
+    None,           // Default or error state
+    Adventure,
+    Menu,
+    PartnerSelect,
+    Transition,
+    // Add future states here:
+    // Status,
+    // MapView,
+    // ItemsView,
+    // Battle
+};
+// <<< ---------------------------- >>>
+
 class GameState {
 public:
     // Constructor: Store the game pointer
@@ -21,11 +36,14 @@ public:
     virtual void exit() {};  // Default empty implementation
     // <<< ----------------------------- >>>
 
-
     // <<<--- MODIFIED function signatures (already present) --->>>
     virtual void handle_input(InputManager& inputManager, PlayerData* playerData) = 0;
     virtual void update(float delta_time, PlayerData* playerData) = 0;
     virtual void render(PCDisplay& display) = 0; // Assuming render needs the display object
+
+    // <<< --- ADDED getType() Pure Virtual Method --- >>>
+    virtual StateType getType() const = 0; // Must be implemented by derived states
+    // <<< ----------------------------------------- >>>
 
 protected:
     Game* game_ptr = nullptr; // Non-owning pointer to access Game resources - OK

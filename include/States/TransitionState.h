@@ -7,9 +7,9 @@
 
 // Forward declarations
 class Game;
-class InputManager; // <<< ADDED
-class PlayerData;   // <<< ADDED
-class PCDisplay;    // <<< ADDED
+class InputManager;
+class PlayerData;
+class PCDisplay;
 
 // Enum to define different transition types
 enum class TransitionType {
@@ -19,20 +19,24 @@ enum class TransitionType {
 class TransitionState : public GameState {
 public:
     // Constructor takes the state that will be below this one during/after transition
-    TransitionState(Game* game, GameState* belowState, float duration, TransitionType type); // Declaration OK
-    ~TransitionState() override; // Declaration OK
+    TransitionState(Game* game, GameState* belowState, float duration, TransitionType type);
+    ~TransitionState() override;
 
-    // Core state functions override (with NEW signatures)
-    void handle_input(InputManager& inputManager, PlayerData* playerData) override; // <<< MODIFIED
-    void update(float delta_time, PlayerData* playerData) override;                // <<< MODIFIED
-    void render(PCDisplay& display) override;                                     // <<< MODIFIED
+    // Lifecycle methods
+    void enter() override {};  // Added
+    void exit() override {};   // Added
+
+    // Core state functions
+    void handle_input(InputManager& inputManager, PlayerData* playerData) override;
+    void update(float delta_time, PlayerData* playerData) override;
+    void render(PCDisplay& display) override;
+    StateType getType() const override;  // Added
 
     // Function for the state below to signal exit
-    void requestExit(); // Signature unchanged
+    void requestExit();
 
 private:
     // --- Data Members ---
-    // (Remain unchanged)
     GameState* belowState_;
     float duration_;
     float timer_;
@@ -46,7 +50,6 @@ private:
     bool transitionComplete_;
 
     // --- Private Helper Methods ---
-    // (Signature remains unchanged)
     bool loadBorderRectsFromJson(const std::string& jsonPath);
 
 }; // End TransitionState class

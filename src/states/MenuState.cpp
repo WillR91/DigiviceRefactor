@@ -195,6 +195,10 @@ void MenuState::render(PCDisplay& display) {
     // }
 }
 
+StateType MenuState::getType() const {
+    return StateType::Menu;
+}
+
 // --- Helper Functions ---
 // bool MenuState::loadFontDataFromJson(const std::string& jsonPath) { /* ... DELETED ... */ }
 // SDL_Point MenuState::getTextDimensions(const std::string& text, int kerning) { /* ... DELETED ... */ }

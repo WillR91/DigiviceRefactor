@@ -29,14 +29,11 @@ public:
     AdventureState(Game* game);
     ~AdventureState() override;
 
-    // <<< --- ADDED enter() override --- >>>
     void enter() override;
-    // exit() override; // Can add later if needed
-
-    // Core state functions override
     void handle_input(InputManager& inputManager, PlayerData* playerData) override;
     void update(float delta_time, PlayerData* playerData) override;
     void render(PCDisplay& display) override;
+    StateType getType() const override; // <<< ADDED getType override >>>
 
 private:
     // Animator

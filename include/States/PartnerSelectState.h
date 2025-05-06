@@ -5,7 +5,7 @@
 #include "ui/TextRenderer.h"       
 #include "../entities/Digimon.h"   
 #include "graphics/Animator.h"     
-#include "Utils/AnimationUtils.h"  // <<< ADDED THIS INCLUDE >>>
+#include "Utils/AnimationUtils.h"  
 #include <SDL.h>                   
 #include <vector>                  
 #include <string>                  
@@ -23,9 +23,11 @@ public:
     ~PartnerSelectState() override;
 
     void enter() override;
+    void exit() override {};
     void handle_input(InputManager& inputManager, PlayerData* playerData) override;
     void update(float delta_time, PlayerData* playerData) override;
     void render(PCDisplay& display) override;
+    StateType getType() const override;
 
 private:
     // --- Member Variables ---
