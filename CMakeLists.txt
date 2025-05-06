@@ -38,6 +38,7 @@ add_executable(${PROJECT_NAME}
     main.cpp
     src/core/Game.cpp
     src/core/InputManager.cpp
+    src/ui/TextRenderer.cpp
     # Add PlayerData source if you create one later
     src/platform/pc/pc_display.cpp
     src/core/AssetManager.cpp

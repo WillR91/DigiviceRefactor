@@ -1,10 +1,13 @@
 // File: src/core/Game.cpp
 
-#include "core/Game.h"               // Include own header
-#include "states/AdventureState.h"   // For initial state push
+#include "core/Game.h"
+#include "ui/TextRenderer.h"       // Include the new header
+// ... other necessary includes ...
+#include "states/AdventureState.h" // For initial state push
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
 #include "platform/pc/pc_display.h"
+#include "core/AssetManager.h"     // Needed for AssetManager
 #include <SDL_log.h>
 #include <stdexcept>
 #include <filesystem> // For CWD logging
@@ -15,8 +18,13 @@
 #include <string>
 
 
-Game::Game() : is_running(false), last_frame_time(0), request_pop_(false), request_push_(nullptr) {
-    // Note: playerData_ is automatically default-constructed here using PlayerData::PlayerData()
+Game::Game() :
+    is_running(false),
+    last_frame_time(0),
+    request_pop_(false),
+    request_push_(nullptr),
+    textRenderer_(nullptr) // Initialize new pointer member
+{
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called. PlayerData implicitly constructed.");
 }
 
@@ -24,6 +32,8 @@ Game::~Game() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game destructor called.");
     // Cleanup happens in close()
     // playerData_ is automatically destructed when Game object goes out of scope
+    // textRenderer_ unique_ptr is also automatically handled if close() wasn't called,
+    // but explicit reset in close() is good practice for order.
 }
 
 bool Game::init(const std::string& title, int width, int height) {
@@ -67,9 +77,26 @@ bool Game::init(const std::string& title, int width, int height) {
      if (!assets_ok) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "One or more essential assets failed to load! Check paths and file existence."); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading initial assets attempt.");
 
+    // <<< --- Initialize Text Renderer --- >>>
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing TextRenderer...");
+    SDL_Texture* fontTexturePtr = assetManager.getTexture("ui_font_atlas");
+    if (fontTexturePtr) {
+        textRenderer_ = std::make_unique<TextRenderer>(fontTexturePtr);
+        const std::string fontJsonPath = "assets/ui/fonts/bluewhitefont.json";
+        if (!textRenderer_->loadFontData(fontJsonPath)) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font data for TextRenderer from '%s'. Text rendering may fail.", fontJsonPath.c_str());
+            textRenderer_.reset(); // Invalidate renderer if font data fails
+        } else {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer initialized successfully.");
+        }
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize TextRenderer: Font texture 'ui_font_atlas' not found in AssetManager.");
+    }
+    // <<< --- End Text Renderer Init --- >>>
+
     try {
-       states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
-       SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
+        states_.push_back(std::make_unique<AdventureState>(this)); // Pass 'this' to constructor
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initial AdventureState created and added.");
     } catch (const std::exception& e) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create initial state: %s", e.what()); assetManager.shutdown(); display.close(); SDL_Quit(); return false; }
 
     is_running = true;
@@ -105,12 +132,9 @@ void Game::run() {
         }
 
         // --- State Logic ---
-        // <<< --- ADD LOGS AROUND applyStateChanges --- >>>
         SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - BEFORE applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
         applyStateChanges(); // Apply Pop/Push requested from previous frame
         SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - AFTER applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
-        // <<< --------------------------------------------- >>>
-
 
         if (!states_.empty()) {
             GameState* currentStatePtr = states_.back().get();
@@ -209,7 +233,13 @@ void Game::quit_game() {
 PCDisplay* Game::get_display() { return &display; }
 AssetManager* Game::getAssetManager() { return &assetManager; }
 InputManager* Game::getInputManager() { return &inputManager; }
-PlayerData* Game::getPlayerData() { return &playerData_; } // Already implemented
+PlayerData* Game::getPlayerData() { return &playerData_; }
+
+// <<< --- ADDED TextRenderer Getter Implementation --- >>>
+TextRenderer* Game::getTextRenderer() {
+    return textRenderer_.get(); // .get() returns raw ptr from unique_ptr
+}
+// <<< -------------------------------------------- >>>
 
 
 // --- close ---
@@ -217,6 +247,11 @@ void Game::close() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Shutting down Game systems...");
     states_.clear(); // Destroys GameState objects managed by unique_ptr
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
+
+    // Reset unique_ptr for TextRenderer before AssetManager (which owns the texture)
+    textRenderer_.reset(); // <<<--- ADDED Reset for TextRenderer ---<<<
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer reset.");
+
     assetManager.shutdown();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager shutdown.");
     display.close();
