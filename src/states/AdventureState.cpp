@@ -23,6 +23,16 @@
 #include <cmath>
 #include <memory>
 
+// Step Goal Constant
+const int CURRENT_CHAPTER_STEP_GOAL = 10;
+
+// Rate Limiting Constants
+const float STEP_WINDOW_DURATION = 1.0f; // Time window in seconds
+const int MAX_STEPS_PER_WINDOW = 4;      // Max steps allowed per window
+
+// Idle Return Constant
+const float TIME_TO_RETURN_TO_IDLE = 1.25f; // Seconds of no STEP input before stopping
+
 // --- Constructor ---
 AdventureState::AdventureState(Game* game) :
     GameState(game),
@@ -34,7 +44,10 @@ AdventureState::AdventureState(Game* game) :
     firstWalkUpdate_(true),
     bg_scroll_offset_0_(0.0f),
     bg_scroll_offset_1_(0.0f),
-    bg_scroll_offset_2_(0.0f)
+    bg_scroll_offset_2_(0.0f),
+    timeSinceLastStep_(0.0f),
+    stepWindowTimer_(0.0f),
+    stepsInWindow_(0)
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Initializing...");
     
@@ -97,28 +110,39 @@ void AdventureState::enter() {
 void AdventureState::handle_input(InputManager& inputManager, PlayerData* playerData) {
     if (!game_ptr || game_ptr->getCurrentState() != this) return;
 
-    // Check for CANCEL first to push ProgressState
+    // Menu Activation
+    if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
+        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
+        game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
+        return;
+    }
     if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "AdventureState: Cancel action. Pushing ProgressState.");
         game_ptr->requestPushState(std::make_unique<ProgressState>(game_ptr));
         return;
     }
 
-    if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
-        game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, mainMenuItems));
-        return;
-    }
-
-    bool stepIsJustPressed = inputManager.isActionJustPressed(GameAction::STEP);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "handle_input: isActionJustPressed(GameAction::STEP) result: %d", stepIsJustPressed);
-
-    if (stepIsJustPressed) {
-        if (queued_steps_ < MAX_QUEUED_STEPS) {
-            queued_steps_++;
-            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected. Queued: %d", queued_steps_);
+    // Step Input with Rate Limiting
+    if (inputManager.isActionJustPressed(GameAction::STEP)) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Input: STEP pressed");
+        if (stepsInWindow_ < MAX_STEPS_PER_WINDOW) {
+            stepsInWindow_++; // Consume a slot in the window
+            if (playerData) {
+                playerData->stepsTakenThisChapter++;
+                playerData->totalSteps++;
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 
+                    "Step Counted (Rate Limit OK). Steps in Window: %d. Chapter Steps: %d", 
+                    stepsInWindow_, playerData->stepsTakenThisChapter);
+            }
+            current_state_ = STATE_WALKING;
+            timeSinceLastStep_ = 0.0f;
         } else {
-            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Step action detected, but queue is full (%d).", queued_steps_);
+            SDL_LogVerbose(SDL_LOG_CATEGORY_INPUT, 
+                "Step press ignored due to rate limit (StepsInWindow: %d)", stepsInWindow_);
+            if(current_state_ == STATE_WALKING) {
+                timeSinceLastStep_ = 0.0f;
+            }
+            current_state_ = STATE_WALKING;
         }
     }
 
@@ -158,89 +182,71 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
 
 // --- update ---
 void AdventureState::update(float delta_time, PlayerData* playerData) {
-    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "--- AdventureState update CALLED (Start State: %d, QueuedSteps: %d, DT: %.4f) ---", 
-                   current_state_, queued_steps_, delta_time);
-
     if (!playerData) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update - PlayerData pointer is null!");
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update - PlayerData is null!");
     }
 
-    PlayerState state_before_this_update = current_state_;
+    PlayerState stateBeforeChanges = current_state_;
     bool needs_new_animation_set = false;
 
-    // 1. Handle state transition based on input (queued_steps)
-    if (current_state_ == STATE_IDLE && queued_steps_ > 0) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: IDLE and steps queued. Transitioning to WALKING.");
-        current_state_ = STATE_WALKING;
-        needs_new_animation_set = true;
+    // Update Rate Limiting Window Timer
+    stepWindowTimer_ += delta_time;
+    if (stepWindowTimer_ >= STEP_WINDOW_DURATION) {
+        stepWindowTimer_ = std::fmod(stepWindowTimer_, STEP_WINDOW_DURATION);
+        SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, 
+            "Resetting step window. Steps counted in last window: %d", stepsInWindow_);
+        stepsInWindow_ = 0;
     }
 
-    // --- Update the Animator ---
-    size_t frameBeforeUpdate = partnerAnimator_.getCurrentFrameIndex(); // Get index BEFORE update
-    partnerAnimator_.update(delta_time);
-    size_t frameAfterUpdate = partnerAnimator_.getCurrentFrameIndex(); // Get index AFTER update
-
-    // --- Check for Specific Frame Transitions to Count Steps ---
-    bool stepTakenThisFrame = false;
-    if (current_state_ == STATE_WALKING && playerData) {
-        // Define which frame indices trigger a step count
-        const int stepFrame1 = 3; // Example: Index 3 is when a step lands
-
-        // Check if the animator JUST PASSED a step frame
-        if (frameBeforeUpdate != stepFrame1 && frameAfterUpdate == stepFrame1) {
-            stepTakenThisFrame = true;
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Step detected at frame index %d", stepFrame1);
-        }
-
-        // --- If a step was visually taken this frame, update PlayerData ---
-        if (stepTakenThisFrame) {
-             playerData->stepsTakenThisChapter++;
-             playerData->totalSteps++;
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Step Counted (Frame Trigger). Chapter Steps: %d / %d, Total Steps: %d",
-                         playerData->stepsTakenThisChapter, GameConstants::CURRENT_CHAPTER_STEP_GOAL, playerData->totalSteps);
-
-             // Check for Chapter Goal immediately after counting step
-             if (playerData->stepsTakenThisChapter >= GameConstants::CURRENT_CHAPTER_STEP_GOAL) {
-                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "!!! CHAPTER GOAL REACHED (%d steps) !!!", GameConstants::CURRENT_CHAPTER_STEP_GOAL);
-                 playerData->stepsTakenThisChapter = 0;
-                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Chapter steps reset to 0.");
-             }
-        }
-    }
-
-    // --- State Change: Walking -> Idle ---
-    if (current_state_ == STATE_WALKING && partnerAnimator_.isFinished()) {
-         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "*** Walk cycle finished (Animator). Checking queued steps. ***");
-         queued_steps_--; // Consume the queued step that triggered this walk cycle
-
-         if (queued_steps_ <= 0) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, ">>> State Change: WALKING -> IDLE (No more steps queued) <<<");
+    // Update Idle Timer and Check for Return to Idle
+    if (current_state_ == STATE_WALKING) {
+        timeSinceLastStep_ += delta_time;
+        if (timeSinceLastStep_ >= TIME_TO_RETURN_TO_IDLE) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                "Update: No step input for %.2fs. Transitioning to IDLE.", timeSinceLastStep_);
             current_state_ = STATE_IDLE;
             needs_new_animation_set = true;
-            queued_steps_ = 0;
-         } else {
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Walk cycle finished, starting next. Steps remaining: %d", queued_steps_);
-            partnerAnimator_.resetPlayback();
-         }
+        }
     }
 
-    // Set a new animation if needed
-    if (needs_new_animation_set || (current_state_ != state_before_this_update)) {
+    // Update Animator
+    partnerAnimator_.update(delta_time);
+
+    // Determine required animation based on current state
+    std::string requiredAnimSuffix;
+    if (current_state_ == STATE_IDLE) {
+        requiredAnimSuffix = "Idle";
+    } else { // current_state_ == STATE_WALKING
+        requiredAnimSuffix = "WalkLoop"; // Use the looping version for walking
+    }
+    
+    std::string requiredAnimId = AnimationUtils::GetAnimationId(current_digimon_, requiredAnimSuffix);
+    
+    // Check if we need to set/reset the animation
+    bool needsNewAnimation = needs_new_animation_set || 
+                           !partnerAnimator_.getCurrentAnimationData() ||
+                           (partnerAnimator_.getCurrentAnimationData()->id != requiredAnimId);
+
+    if (needsNewAnimation) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
-                   "Update: Setting new animation. Prev State: %d, Curr State: %d, NeedsNewAnimFlag: %d",
-                   state_before_this_update, current_state_, needs_new_animation_set);
+            "Update: Setting animation to '%s' (State: %d)", requiredAnimId.c_str(), current_state_);
+        
+        const AnimationData* requiredAnimData = game_ptr->getAnimationManager()->getAnimationData(requiredAnimId);
+        partnerAnimator_.setAnimation(requiredAnimData);
+        
+        if (!requiredAnimData) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                "Update: Failed to get animation data for '%s'", requiredAnimId.c_str());
+        }
+    }
 
-        std::string anim_suffix = (current_state_ == STATE_IDLE) ? "Idle" : "Walk";
-        std::string anim_id = AnimationUtils::GetAnimationId(current_digimon_, anim_suffix);
-
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: Requesting Anim ID '%s' for state %d", 
-                   anim_id.c_str(), current_state_);
-        const AnimationData* anim_data = game_ptr->getAnimationManager()->getAnimationData(anim_id);
-        partnerAnimator_.setAnimation(anim_data);
-
-        if (!anim_data) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Update: Animator set with NULL data for '%s'", 
-                        anim_id.c_str());
+    // Goal/Encounter Checks
+    if (playerData && current_state_ == STATE_WALKING) {
+        if (playerData->stepsTakenThisChapter >= GameConstants::CURRENT_CHAPTER_STEP_GOAL) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                "!!! CHAPTER GOAL REACHED (%d steps) !!!", GameConstants::CURRENT_CHAPTER_STEP_GOAL);
+            playerData->stepsTakenThisChapter = 0;
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Chapter steps reset to 0.");
         }
     }
 

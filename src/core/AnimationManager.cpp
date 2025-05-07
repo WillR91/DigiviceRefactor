@@ -252,9 +252,14 @@ bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, co
          }
     }
     if (walkOk && !walkRects.empty()) {
-         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, false); // Changed back to non-looping
+         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, false); // Non-looping
          animationsStored++;
          SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Created NON-looping walk animation for %s", textureAtlasId.c_str());
+
+         // --- Create LOOPING Walk Animation ---
+         storeAnimation(textureAtlasId + "_WalkLoop", texture, walkRects, walkDurationsSec, true); // Looping version
+         animationsStored++;
+         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Created additional LOOPING walk animation (%s_WalkLoop)", textureAtlasId.c_str());
     } else {
          SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create complete Walk animation for %s", 
                      textureAtlasId.c_str());

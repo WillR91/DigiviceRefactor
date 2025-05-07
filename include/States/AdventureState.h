@@ -33,7 +33,7 @@ public:
     void handle_input(InputManager& inputManager, PlayerData* playerData) override;
     void update(float delta_time, PlayerData* playerData) override;
     void render(PCDisplay& display) override;
-    StateType getType() const override; // <<< ADDED getType override >>>
+    StateType getType() const override;
 
 private:
     // Animator
@@ -50,14 +50,19 @@ private:
     float bg_scroll_offset_1_ = 0.0f;
     float bg_scroll_offset_2_ = 0.0f;
     bool firstWalkUpdate_ = true;
+    float timeSinceLastStep_ = 0.0f; // Added: Timer for returning to Idle
+
+    // Rate Limiting Members
+    float stepWindowTimer_ = 0.0f;  // Timer tracking the current window
+    int stepsInWindow_ = 0;         // Steps counted in the current window
 
     // Constants
     const int MAX_QUEUED_STEPS = 2;
     const float SCROLL_SPEED_0 = 3.0f * 60.0f;
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;
-    const int WINDOW_WIDTH = 466;  // Consider getting from display
-    const int WINDOW_HEIGHT = 466; // Consider getting from display
+    const int WINDOW_WIDTH = 466;
+    const int WINDOW_HEIGHT = 466;
 
     // Private Helpers
     std::string getAnimationIdForCurrentState() const;
