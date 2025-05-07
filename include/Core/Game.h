@@ -7,13 +7,13 @@
 #include <SDL.h>
 #include "platform/pc/pc_display.h"
 #include "core/AssetManager.h"
-#include "states/GameState.h"
+#include "states/GameState.h"       // Includes StateType enum now
 #include "core/InputManager.h"
 #include "core/PlayerData.h"
 
 // Forward declarations
 class TextRenderer;
-class AnimationManager; // <<<--- ADDED Forward declaration
+class AnimationManager;
 
 class Game {
 public:
@@ -27,7 +27,8 @@ public:
 
     // --- State Management Requests ---
     void requestPushState(std::unique_ptr<GameState> state);
-    void requestPopState();
+    void requestPopState();                      // Pops one state
+    void requestPopUntil(StateType targetType); // <<< ADDED
 
     // --- Getters for Core Systems/Data ---
     void quit_game();
@@ -37,7 +38,7 @@ public:
     InputManager* getInputManager();
     PlayerData* getPlayerData();
     TextRenderer* getTextRenderer();
-    AnimationManager* getAnimationManager(); // <<<--- ADDED Getter
+    AnimationManager* getAnimationManager();
 
     // Debug helper
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
@@ -55,10 +56,13 @@ private:
     InputManager inputManager;
     PlayerData playerData_;
     std::unique_ptr<TextRenderer> textRenderer_;
-    std::unique_ptr<AnimationManager> animationManager_; // <<<--- ADDED unique_ptr member
+    std::unique_ptr<AnimationManager> animationManager_;
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_;
     Uint32 last_frame_time = 0;
+
+    // State Change Request Variables
     bool request_pop_ = false;
     std::unique_ptr<GameState> request_push_ = nullptr;
+    StateType pop_until_target_type_ = StateType::None; // <<< ADDED
 };

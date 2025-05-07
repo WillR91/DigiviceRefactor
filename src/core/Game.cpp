@@ -18,12 +18,12 @@
 #include <memory>
 #include <string>
 
-
 Game::Game() :
     is_running(false),
     last_frame_time(0),
     request_pop_(false),
     request_push_(nullptr),
+    pop_until_target_type_(StateType::None), // <<< Initialize new member
     textRenderer_(nullptr),
     animationManager_(nullptr)
 {
@@ -242,57 +242,85 @@ void Game::requestPushState(std::unique_ptr<GameState> state) {
 
 void Game::requestPopState() {
     if(request_pop_) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Multiple pop requests made before applyStateChanges.");
-    request_pop_ = true;
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Pop requested.");
+    request_pop_ = true; // Flag for single pop
+    pop_until_target_type_ = StateType::None; // Ensure pop_until is not active if single pop is called
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Single Pop requested.");
+}
+
+void Game::requestPopUntil(StateType targetType) {
+    if (targetType == StateType::None) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "requestPopUntil called with StateType::None. Performing single pop instead.");
+        requestPopState(); // Fallback to single pop if target is None
+        return;
+    }
+    pop_until_target_type_ = targetType;
+    request_pop_ = false; // Ensure single pop is not active
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "PopUntil requested for type: %d", static_cast<int>(targetType));
 }
 
 // --- Helper to apply queued changes ---
-// <<< --- MODIFIED VERSION --- >>>
 void Game::applyStateChanges() {
-    // Handle pop request first
-    if (request_pop_) {
-        if (!states_.empty()) {
-            // <<< --- Call exit() on the state being popped --- >>>
-            states_.back()->exit();
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on popped state.");
-            // ---
-            pop_state(); // Removes from stack
-            // <<< --- Call enter() on the NEW top state (if any) --- >>>
-            if (!states_.empty()) {
-                 states_.back()->enter();
-                 SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly revealed state.");
+    // Handle PopUntil first as it's more specific
+    if (pop_until_target_type_ != StateType::None) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying PopUntil target type %d.", 
+                    static_cast<int>(pop_until_target_type_));
+        bool targetReached = false;
+        while (!states_.empty()) {
+            GameState* topState = states_.back().get();
+            if (topState->getType() == pop_until_target_type_) {
+                targetReached = true;
+                topState->enter();
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Reached target state type %d. Calling enter().", 
+                            static_cast<int>(topState->getType()));
+                break;
             }
-            // ---
+            topState->exit();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Popping state type %d.", 
+                        static_cast<int>(topState->getType()));
+            states_.pop_back();
         }
-        request_pop_ = false; // Clear request flag AFTER processing
+        if (!targetReached && states_.empty()) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Stack emptied, but target type %d not found.", 
+                       static_cast<int>(pop_until_target_type_));
+        } else if (!targetReached && !states_.empty()) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Target type %d not found, top is now %d.", 
+                       static_cast<int>(pop_until_target_type_), static_cast<int>(states_.back()->getType()));
+        }
+
+        pop_until_target_type_ = StateType::None;
+        request_pop_ = false;
+        request_push_.reset();
+        return;
     }
 
-    // Handle push request second (so push happens onto the potentially new top state)
-    if (request_push_) {
-        // <<< --- Call exit() on the state being covered (if any) --- >>>
+    // Handle single pop request
+    if (request_pop_) {
         if (!states_.empty()) {
-             states_.back()->exit();
-             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on state being covered by push.");
+            states_.back()->exit();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on popped state.");
+            pop_state();
+            if (!states_.empty()) {
+                states_.back()->enter();
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly revealed state.");
+            }
         }
-        // ---
-        // We need to store the pointer before moving ownership
-        GameState* newStatePtr = request_push_.get();
-        push_state(std::move(request_push_)); // Adds new state to stack
+        request_pop_ = false;
+    }
 
-        // <<< --- Call enter() on the NEWLY pushed state --- >>>
-        // states_.back()->enter(); // states_.back() should be the same as newStatePtr now
-        if (newStatePtr) { // Check pointer just in case push_state failed internally (though it shouldn't)
-            newStatePtr->enter();
-             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly pushed state %p.", (void*)newStatePtr);
-        } else {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Failed to get pointer to newly pushed state after push_state call!");
+    // Handle push request
+    if (request_push_) {
+        if (!states_.empty()) {
+            states_.back()->exit();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on state being covered by push.");
         }
-        // ---
-        // request_push_ is now null due to std::move, so reset() isn't strictly needed but safe
+        push_state(std::move(request_push_));
+        if(!states_.empty()) {
+            states_.back()->enter();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly pushed state.");
+        }
         request_push_.reset();
     }
 }
-
 
 // --- getCurrentState ---
 GameState* Game::getCurrentState() {
@@ -312,7 +340,6 @@ InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
 TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
 AnimationManager* Game::getAnimationManager() { return animationManager_.get(); }
-
 
 // --- close ---
 void Game::close() {

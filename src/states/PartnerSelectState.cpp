@@ -96,10 +96,14 @@ void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* pl
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
          if (!availablePartners_.empty() && playerData) {
              DigimonType selectedType = availablePartners_[currentSelectionIndex_];
-             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Confirmed selection index %zu, type %d", currentSelectionIndex_, static_cast<int>(selectedType));
+             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Confirmed selection index %zu, type %d", 
+                        currentSelectionIndex_, static_cast<int>(selectedType));
              playerData->currentPartner = selectedType;
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelect: Updated PlayerData->currentPartner.");
-             game_ptr->requestPopState();
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Updated PlayerData->currentPartner.");
+
+             // Changed from requestPopState to requestPopUntil
+             game_ptr->requestPopUntil(StateType::Adventure);
+
          } else { /* Error logging */ }
     }
     else if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
@@ -142,7 +146,7 @@ void PartnerSelectState::render(PCDisplay& display) {
                 int scaledW = static_cast<int>(static_cast<float>(baseDimensions.x) * nameScale);
                 int scaledH = static_cast<int>(static_cast<float>(baseDimensions.y) * nameScale);
                 int nameX = (windowW / 2) - (scaledW / 2);
-                int nameY = (windowH * 3 / 4) - (scaledH / 2);
+                int nameY = (windowH * 2 / 3) - (scaledH / 2);
                 textRenderer->drawText(renderer, name, nameX, nameY, nameScale, nameKerning);
             } else { /* Warn */ }
         }
@@ -165,7 +169,7 @@ void PartnerSelectState::drawDigimon(PCDisplay& display) {
 
     if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
         int drawX = (windowW / 2) - (currentSourceRect.w / 2);
-        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 30;
+        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 65;
         SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     } else {
