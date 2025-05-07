@@ -74,40 +74,21 @@ void PartnerSelectState::enter() {
 void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* playerData) {
     if (!game_ptr) return;
 
-    bool selectionChanged = false;
-
     if (inputManager.isActionJustPressed(GameAction::NAV_UP)) {
-        if (currentSelectionIndex_ == 0) {
-            currentSelectionIndex_ = availablePartners_.size() - 1;
-        } else {
-            currentSelectionIndex_--;
-        }
-        selectionChanged = true;
+        currentSelectionIndex_ = (currentSelectionIndex_ == 0) ? 
+            availablePartners_.size() - 1 : currentSelectionIndex_ - 1;
+        updateDisplayedDigimon();
     } else if (inputManager.isActionJustPressed(GameAction::NAV_DOWN)) {
         currentSelectionIndex_ = (currentSelectionIndex_ + 1) % availablePartners_.size();
-        selectionChanged = true;
-    }
-
-    if (selectionChanged) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Selection changed to index %zu", currentSelectionIndex_);
-        updateDisplayedDigimon(); // Update the animation
+        updateDisplayedDigimon();
     }
 
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-         if (!availablePartners_.empty() && playerData) {
-             DigimonType selectedType = availablePartners_[currentSelectionIndex_];
-             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Confirmed selection index %zu, type %d", 
-                        currentSelectionIndex_, static_cast<int>(selectedType));
-             playerData->currentPartner = selectedType;
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Updated PlayerData->currentPartner.");
-
-             // Changed from requestPopState to requestPopUntil
-             game_ptr->requestPopUntil(StateType::Adventure);
-
-         } else { /* Error logging */ }
-    }
-    else if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "PartnerSelect: Cancelled. Popping state.");
+        if (!availablePartners_.empty() && playerData) {
+            playerData->currentPartner = availablePartners_[currentSelectionIndex_];
+            game_ptr->requestPopUntil(StateType::Adventure);
+        }
+    } else if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
         game_ptr->requestPopState();
     }
 }
@@ -164,45 +145,32 @@ void PartnerSelectState::drawDigimon(PCDisplay& display) {
     SDL_Texture* currentTexture = digimonAnimator_.getCurrentTexture();
     SDL_Rect currentSourceRect = digimonAnimator_.getCurrentFrameRect();
 
-    SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "PartnerSelect RenderDigimon: AnimTexture=%p, AnimSrcRect={%d,%d,%d,%d}",
-                   (void*)currentTexture, currentSourceRect.x, currentSourceRect.y, currentSourceRect.w, currentSourceRect.h);
-
     if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
         int drawX = (windowW / 2) - (currentSourceRect.w / 2);
         int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 65;
         SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     } else {
-         SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
-         int w = 50, h = 50;
-         int x = (windowW / 2) - (w / 2);
-         int y = (windowH / 2) - (h / 2) - 30;
-         SDL_Rect placeholder = {x, y, w, h};
-         SDL_RenderFillRect(renderer, &placeholder);
-         SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState: Drawing placeholder, animator returned invalid texture/rect.");
+        SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+        int w = 50, h = 50;
+        int x = (windowW / 2) - (w / 2);
+        int y = (windowH / 2) - (h / 2) - 30;
+        SDL_Rect placeholder = {x, y, w, h};
+        SDL_RenderFillRect(renderer, &placeholder);
     }
 }
 
 void PartnerSelectState::updateDisplayedDigimon() {
     if (availablePartners_.empty() || !game_ptr || !game_ptr->getAnimationManager()) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "updateDisplayedDigimon: Cannot update, missing partners or manager.");
         digimonAnimator_.stop();
         return;
     }
 
     DigimonType typeToDisplay = availablePartners_[currentSelectionIndex_];
     std::string animId = AnimationUtils::GetAnimationId(typeToDisplay, "Idle");
-
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Requesting Anim ID: '%s'", animId.c_str());
     AnimationManager* animManager = game_ptr->getAnimationManager();
     const AnimationData* animData = animManager->getAnimationData(animId);
-
     digimonAnimator_.setAnimation(animData);
-    if (animData) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Animator set with valid data for '%s'.", animId.c_str());
-    } else {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelect: Animator set with NULL data for '%s'!", animId.c_str());
-    }
 }
 
 DigimonType PartnerSelectState::getDigimonTypeFromIndex(size_t index) const {

@@ -252,8 +252,9 @@ bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, co
          }
     }
     if (walkOk && !walkRects.empty()) {
-         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, false);
+         storeAnimation(textureAtlasId + "_Walk", texture, walkRects, walkDurationsSec, true); // Changed to loop
          animationsStored++;
+         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Created looping walk animation for %s", textureAtlasId.c_str());
     } else {
          SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create complete Walk animation for %s", 
                      textureAtlasId.c_str());

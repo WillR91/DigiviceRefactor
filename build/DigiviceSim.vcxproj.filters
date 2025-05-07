@@ -43,6 +43,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\ProgressState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Z:\DigiviceRefactor\CMakeLists.txt" />

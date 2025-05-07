@@ -23,11 +23,12 @@ Game::Game() :
     last_frame_time(0),
     request_pop_(false),
     request_push_(nullptr),
-    pop_until_target_type_(StateType::None), // <<< Initialize new member
+    pop_until_target_type_(StateType::None),
     textRenderer_(nullptr),
     animationManager_(nullptr)
 {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Game constructor called. PlayerData implicitly constructed.");
+    // Single init log instead of multiple debug logs
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Game initializing...");
 }
 
 Game::~Game() {
@@ -155,16 +156,16 @@ void Game::run() {
         return;
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Entering main game loop.");
-    last_frame_time = SDL_GetTicks(); // Ensure timer starts correctly
+    last_frame_time = SDL_GetTicks();
 
     while (is_running) {
-        // --- Calculate Delta Time ---
+        // Calculate Delta Time
         Uint32 current_time = SDL_GetTicks();
         float delta_time = (current_time - last_frame_time) / 1000.0f;
-        if (delta_time > 0.1f) delta_time = 0.1f; // Clamp delta time
+        if (delta_time > 0.1f) delta_time = 0.1f;
         last_frame_time = current_time;
 
-        // --- Input Processing ---
+        // Input Processing
         inputManager.prepareNewFrame();
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -174,21 +175,16 @@ void Game::run() {
             inputManager.processEvent(event);
         }
 
-        // --- State Logic ---
-        SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - BEFORE applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
-        applyStateChanges(); // Apply Pop/Push requested from previous frame
-        SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - AFTER applyStateChanges (Top State Ptr: %p)", (void*)(states_.empty() ? nullptr : states_.back().get()));
+        // State Logic
+        applyStateChanges();
 
         if (!states_.empty()) {
             GameState* currentStatePtr = states_.back().get();
             if (currentStatePtr) {
                 PlayerData* pd = getPlayerData();
-
-                SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling handle_input on state %p", (void*)currentStatePtr);
                 currentStatePtr->handle_input(inputManager, pd);
 
                 if (is_running && !states_.empty() && states_.back().get() == currentStatePtr) {
-                    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "Game::run - Calling update on state %p", (void*)currentStatePtr);
                     currentStatePtr->update(delta_time, pd);
                 }
             } else {
@@ -196,23 +192,23 @@ void Game::run() {
                 is_running = false;
             }
         } else if (is_running) {
-             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges. Quitting.");
-             is_running = false;
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges. Quitting.");
+            is_running = false;
         }
 
-        // --- Rendering ---
+        // Rendering
         if (is_running && !states_.empty()) {
-             GameState* currentStateForRender = getCurrentState();
-             if (currentStateForRender) {
-                 display.clear(0x0000);
-                 currentStateForRender->render(display);
-                 display.present();
-             }
+            GameState* currentStateForRender = getCurrentState();
+            if (currentStateForRender) {
+                display.clear(0x0000);
+                currentStateForRender->render(display);
+                display.present();
+            }
         }
-    } // End while(is_running)
+    }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
-    close(); // Perform cleanup after loop ends
+    close();
 }
 
 // --- State Management - Actual Push/Pop ---
@@ -260,64 +256,33 @@ void Game::requestPopUntil(StateType targetType) {
 
 // --- Helper to apply queued changes ---
 void Game::applyStateChanges() {
-    // Handle PopUntil first as it's more specific
     if (pop_until_target_type_ != StateType::None) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Applying PopUntil target type %d.", 
-                    static_cast<int>(pop_until_target_type_));
-        bool targetReached = false;
         while (!states_.empty()) {
             GameState* topState = states_.back().get();
             if (topState->getType() == pop_until_target_type_) {
-                targetReached = true;
                 topState->enter();
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Reached target state type %d. Calling enter().", 
-                            static_cast<int>(topState->getType()));
                 break;
             }
             topState->exit();
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Popping state type %d.", 
-                        static_cast<int>(topState->getType()));
             states_.pop_back();
         }
-        if (!targetReached && states_.empty()) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Stack emptied, but target type %d not found.", 
-                       static_cast<int>(pop_until_target_type_));
-        } else if (!targetReached && !states_.empty()) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges (PopUntil): Target type %d not found, top is now %d.", 
-                       static_cast<int>(pop_until_target_type_), static_cast<int>(states_.back()->getType()));
-        }
-
         pop_until_target_type_ = StateType::None;
         request_pop_ = false;
         request_push_.reset();
         return;
     }
 
-    // Handle single pop request
-    if (request_pop_) {
-        if (!states_.empty()) {
-            states_.back()->exit();
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on popped state.");
-            pop_state();
-            if (!states_.empty()) {
-                states_.back()->enter();
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly revealed state.");
-            }
-        }
+    if (request_pop_ && !states_.empty()) {
+        states_.back()->exit();
+        pop_state();
+        if (!states_.empty()) states_.back()->enter();
         request_pop_ = false;
     }
 
-    // Handle push request
     if (request_push_) {
-        if (!states_.empty()) {
-            states_.back()->exit();
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called exit() on state being covered by push.");
-        }
+        if (!states_.empty()) states_.back()->exit();
         push_state(std::move(request_push_));
-        if(!states_.empty()) {
-            states_.back()->enter();
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ApplyStateChanges: Called enter() on newly pushed state.");
-        }
+        if(!states_.empty()) states_.back()->enter();
         request_push_.reset();
     }
 }

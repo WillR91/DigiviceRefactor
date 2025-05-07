@@ -8,8 +8,8 @@ const int WINDOW_WIDTH = 466;
 const int WINDOW_HEIGHT = 466;
 
 int main(int argc, char* argv[]) {
-    // <<< --- Set Log Priority to Verbose --- >>>
-    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+    // Set logging level to show INFO and above
+    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_INFO);
     SDL_Log("--- Creating Game Instance ---");
 
     Game digivice_game; // Create Game object

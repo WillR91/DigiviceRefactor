@@ -15,6 +15,7 @@ enum class StateType {
     Menu,
     PartnerSelect,
     Transition,
+    Progress,       // New state for tracking progress/achievements
     // Add future states here:
     // Status,
     // MapView,

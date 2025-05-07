@@ -2,48 +2,30 @@
 #ifndef ANIMATOR_H
 #define ANIMATOR_H
 
+#pragma once
+#include <SDL_rect.h>               // For SDL_Rect
 #include "graphics/AnimationData.h" // Needs the definition of AnimationData
 #include <cstddef>                  // For size_t
-#include <SDL_rect.h>               // For SDL_Rect
-
-// Forward declaration for SDL_Texture if not fully included by SDL_rect.h
-// struct SDL_Texture; // Usually SDL_rect.h or a fuller SDL.h would cover this.
 
 class Animator {
 public:
-    Animator(); // Default constructor
-
-    // Starts playing a new animation sequence.
-    // Takes a non-owning pointer to the animation data definition.
-    // Resets the playback state (frame index, timer).
-    void setAnimation(const AnimationData* animationData);
-
-    // Updates the animation playback based on elapsed time.
-    // Should be called once per frame.
+    Animator();
+    
+    void setAnimation(const AnimationData* animation, bool resetPlayback = true);
     void update(float deltaTime);
-
-    // Gets the source rectangle on the texture atlas for the current frame.
-    // Returns a default/empty rect if no animation is set or invalid.
-    SDL_Rect getCurrentFrameRect() const;
-
-    // Gets the texture atlas currently being used by the animation.
-    // Returns nullptr if no animation is set.
-    SDL_Texture* getCurrentTexture() const;
-
-    // Checks if the current animation has finished playing (for non-looping anims).
-    bool isFinished() const;
-
-    // Resets the animator to its default state (no animation playing).
     void stop();
-
-    // <<< --- ADDED GETTER --- >>>
-    const AnimationData* getCurrentAnimationData() const;
+    bool isFinished() const { return finished_; }
+    const AnimationData* getCurrentAnimationData() const { return currentAnimation_; }
+    
+    SDL_Rect getCurrentFrameRect() const;  // Changed from sf::IntRect
+    SDL_Texture* getCurrentTexture() const; // Changed from sf::Texture*
+    void resetPlayback();
 
 private:
-    const AnimationData* currentAnimation_; // Non-owning pointer to the animation definition being played
-    size_t currentFrameIndex_;              // Index of the frame currently being displayed
-    float currentFrameTimerSec_;            // How long the current frame has been shown (in seconds)
-    bool finished_;                         // Flag indicating if a non-looping animation has completed
+    const AnimationData* currentAnimation_;
+    size_t currentFrameIndex_;
+    float currentFrameTimerSec_;
+    bool finished_;
 };
 
 #endif // ANIMATOR_H
