@@ -175,43 +175,56 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         needs_new_animation_set = true;
     }
 
-    // 2. Update the current animation
+    // --- Update the Animator ---
+    size_t frameBeforeUpdate = partnerAnimator_.getCurrentFrameIndex(); // Get index BEFORE update
     partnerAnimator_.update(delta_time);
+    size_t frameAfterUpdate = partnerAnimator_.getCurrentFrameIndex(); // Get index AFTER update
 
-    // 3. Handle state transition based on animation finishing
-    if (current_state_ == STATE_WALKING && partnerAnimator_.isFinished()) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: Walk animation finished.");
-        if (queued_steps_ > 0) {
-            queued_steps_--;
+    // --- Check for Specific Frame Transitions to Count Steps ---
+    bool stepTakenThisFrame = false;
+    if (current_state_ == STATE_WALKING && playerData) {
+        // Define which frame indices trigger a step count
+        const int stepFrame1 = 3; // Example: Index 3 is when a step lands
 
-            if (playerData) {
-                playerData->stepsTakenThisChapter++;
-                playerData->totalSteps++;
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Step Consumed. Chapter Steps: %d / %d, Total Steps: %d",
-                            playerData->stepsTakenThisChapter, GameConstants::CURRENT_CHAPTER_STEP_GOAL, 
-                            playerData->totalSteps);
+        // Check if the animator JUST PASSED a step frame
+        if (frameBeforeUpdate != stepFrame1 && frameAfterUpdate == stepFrame1) {
+            stepTakenThisFrame = true;
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Step detected at frame index %d", stepFrame1);
+        }
 
-                if (playerData->stepsTakenThisChapter >= GameConstants::CURRENT_CHAPTER_STEP_GOAL) {
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "!!! CHAPTER GOAL REACHED (%d steps) !!!", 
-                               GameConstants::CURRENT_CHAPTER_STEP_GOAL);
-                    playerData->stepsTakenThisChapter = 0;
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Chapter steps reset to 0 for next 'chapter'.");
-                }
-            }
+        // --- If a step was visually taken this frame, update PlayerData ---
+        if (stepTakenThisFrame) {
+             playerData->stepsTakenThisChapter++;
+             playerData->totalSteps++;
+             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Step Counted (Frame Trigger). Chapter Steps: %d / %d, Total Steps: %d",
+                         playerData->stepsTakenThisChapter, GameConstants::CURRENT_CHAPTER_STEP_GOAL, playerData->totalSteps);
 
-            if (queued_steps_ > 0) {
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "More steps queued (%d), resetting walk animation.", 
-                            queued_steps_);
-                partnerAnimator_.resetPlayback();
-            } else {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: No more steps queued. Transitioning to IDLE.");
-                current_state_ = STATE_IDLE;
-                needs_new_animation_set = true;
-            }
+             // Check for Chapter Goal immediately after counting step
+             if (playerData->stepsTakenThisChapter >= GameConstants::CURRENT_CHAPTER_STEP_GOAL) {
+                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "!!! CHAPTER GOAL REACHED (%d steps) !!!", GameConstants::CURRENT_CHAPTER_STEP_GOAL);
+                 playerData->stepsTakenThisChapter = 0;
+                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Chapter steps reset to 0.");
+             }
         }
     }
 
-    // 4. Set a new animation on the animator IF the state or required animation type changed
+    // --- State Change: Walking -> Idle ---
+    if (current_state_ == STATE_WALKING && partnerAnimator_.isFinished()) {
+         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "*** Walk cycle finished (Animator). Checking queued steps. ***");
+         queued_steps_--; // Consume the queued step that triggered this walk cycle
+
+         if (queued_steps_ <= 0) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, ">>> State Change: WALKING -> IDLE (No more steps queued) <<<");
+            current_state_ = STATE_IDLE;
+            needs_new_animation_set = true;
+            queued_steps_ = 0;
+         } else {
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Walk cycle finished, starting next. Steps remaining: %d", queued_steps_);
+            partnerAnimator_.resetPlayback();
+         }
+    }
+
+    // Set a new animation if needed
     if (needs_new_animation_set || (current_state_ != state_before_this_update)) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
                    "Update: Setting new animation. Prev State: %d, Curr State: %d, NeedsNewAnimFlag: %d",
@@ -230,7 +243,7 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
                         anim_id.c_str());
         }
     }
-    
+
     // Scroll Background (Only if walking)
     if (current_state_ == STATE_WALKING) {
         float scrollAmount0 = SCROLL_SPEED_0 * delta_time;

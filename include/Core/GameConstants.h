@@ -5,7 +5,7 @@
 namespace GameConstants {
 
     // Gameplay Constants
-    const int CURRENT_CHAPTER_STEP_GOAL = 10; // Steps to complete a chapter/area
+    const int CURRENT_CHAPTER_STEP_GOAL = 300; // Steps to complete a chapter/area
     const int STEPS_PER_RANDOM_ENCOUNTER_CHECK = 5; // How often to check for random encounters
 
     // You can add other game-wide constants here later

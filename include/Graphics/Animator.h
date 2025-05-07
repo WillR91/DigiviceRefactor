@@ -20,6 +20,7 @@ public:
     SDL_Rect getCurrentFrameRect() const;  // Changed from sf::IntRect
     SDL_Texture* getCurrentTexture() const; // Changed from sf::Texture*
     void resetPlayback();
+    size_t getCurrentFrameIndex() const; // New getter method
 
 private:
     const AnimationData* currentAnimation_;

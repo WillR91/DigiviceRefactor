@@ -113,3 +113,8 @@ void Animator::stop()
     currentFrameTimerSec_ = 0.0f;
     finished_ = true;
 }
+
+size_t Animator::getCurrentFrameIndex() const 
+{
+    return currentFrameIndex_;
+}

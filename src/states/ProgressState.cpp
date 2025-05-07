@@ -126,24 +126,65 @@ void ProgressState::render(PCDisplay& display) {
 
     if (textRenderer && playerData) {
         int steps_taken = playerData->stepsTakenThisChapter;
-        int goal_steps = GameConstants::CURRENT_CHAPTER_STEP_GOAL; // Using namespaced constant
+        int goal_steps = GameConstants::CURRENT_CHAPTER_STEP_GOAL;
         int steps_remaining = goal_steps - steps_taken;
-        if (steps_remaining < 0) steps_remaining = 0; // Don't show negative steps
+        if (steps_remaining < 0) steps_remaining = 0;
 
-        std::string progressText = std::to_string(steps_remaining) + " STEPS TO GOAL";
+        // --- Define Text Parts ---
+        std::string line1Text = std::to_string(steps_remaining) + " STEPS";
+        std::string line2Text = "REMAINING"; // Or "TO GOAL" if you prefer
 
-        // Position text (e.g., below the Digimon)
-        const float textScale = 0.65f;
-        const int textKerning = -15; // Adjust as needed
-        SDL_Point textDimensions = textRenderer->getTextDimensions(progressText, textKerning);
+        // --- Define Text Style ---
+        const float textScale = 0.85f; // Adjust as needed
+        const int textKerning = -10;   // Adjust as needed
+        const int lineSpacing = 2;    // Pixels between the bottom of line 1 and top of line 2
 
-        if (textDimensions.x > 0) {
-            int textDrawX = (windowW / 2) - (static_cast<int>(textDimensions.x * textScale) / 2);
-            int textDrawY = windowH * 2 / 3; // Position lower on screen
+        // --- Calculate Position for Line 1 ---
+        SDL_Point dims1 = textRenderer->getTextDimensions(line1Text, textKerning);
+        int scaledW1 = 0;
+        int scaledH1 = 0;
+        if (dims1.x > 0) {
+            scaledW1 = static_cast<int>(dims1.x * textScale);
+            scaledH1 = static_cast<int>(dims1.y * textScale);
+        }
 
-            textRenderer->drawText(renderer, progressText, textDrawX, textDrawY, textScale, textKerning);
-        } else {
-            SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: Text dimensions are zero for: %s", progressText.c_str());
+        // Center Line 1 horizontally, position vertically (e.g., below sprite)
+        int windowW = 0; int windowH = 0;
+        display.getWindowSize(windowW, windowH);
+        if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; }
+
+        int line1X = (windowW / 2) - (scaledW1 / 2);
+        // Example: Position line 1 below the digimon sprite area (adjust as needed)
+        int line1Y = windowH * 12 / 20; // Roughly 2/3rds down
+
+        // --- Calculate Position for Line 2 ---
+        SDL_Point dims2 = textRenderer->getTextDimensions(line2Text, textKerning);
+        int scaledW2 = 0;
+        if (dims2.x > 0) {
+             scaledW2 = static_cast<int>(dims2.x * textScale);
+             // scaledH2 not strictly needed for positioning below line 1
+        }
+
+        // Center Line 2 horizontally, position it below Line 1
+        int line2X = (windowW / 2) - (scaledW2 / 2);
+        int line2Y = line1Y + scaledH1 + lineSpacing; // Position below line1's bottom edge + spacing
+
+        // --- Draw Both Lines ---
+        SDL_Renderer* renderer = display.getRenderer();
+        if (renderer) {
+             if (scaledW1 > 0) { // Only draw if dimensions are valid
+                 textRenderer->drawText(renderer, line1Text, line1X, line1Y, textScale, textKerning);
+             } else { 
+                 SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: Zero dimensions for line 1: %s", line1Text.c_str());
+             }
+
+             if (scaledW2 > 0) { // Only draw if dimensions are valid
+                 textRenderer->drawText(renderer, line2Text, line2X, line2Y, textScale, textKerning);
+             } else { 
+                 SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: Zero dimensions for line 2: %s", line2Text.c_str());
+             }
+        } else { 
+            SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: Renderer is null when drawing text");
         }
     } else {
         if (!textRenderer) SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: TextRenderer is null.");
