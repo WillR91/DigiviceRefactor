@@ -59,6 +59,9 @@ bool Game::init(const std::string& title, int width, int height) {
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
      bool assets_ok = true;
+
+     assets_ok &= assetManager.loadTexture("ui_round_mask", "assets\\ui\\mask\\round_mask.png");
+     assets_ok &= assetManager.loadTexture("round_mask", "assets\\ui\\mask\\round_mask.png");
      assets_ok &= assetManager.loadTexture("agumon_sheet", "assets\\sprites\\agumon_sheet.png");
      assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets\\sprites\\gabumon_sheet.png");
      assets_ok &= assetManager.loadTexture("biyomon_sheet", "assets\\sprites\\biyomon_sheet.png");
@@ -187,21 +190,51 @@ void Game::run() {
                 if (is_running && !states_.empty() && states_.back().get() == currentStatePtr) {
                     currentStatePtr->update(delta_time, pd);
                 }
-            } else {
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: Top state pointer is NULL despite non-empty stack!");
-                is_running = false;
             }
-        } else if (is_running) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "RunLoop Update: State stack empty after applyStateChanges. Quitting.");
-            is_running = false;
         }
 
         // Rendering
         if (is_running && !states_.empty()) {
             GameState* currentStateForRender = getCurrentState();
             if (currentStateForRender) {
+                // 1. Clear the screen
                 display.clear(0x0000);
+
+                // 2. Render the actual current game state
                 currentStateForRender->render(display);
+
+                // 3. Draw the Overlay Mask
+                SDL_Texture* maskTexture = assetManager.getTexture("ui_round_mask");
+                if (maskTexture) {
+                    SDL_Renderer* renderer = display.getRenderer();
+                    if (renderer) {
+                        // Set blend mode to allow transparency of the mask
+                        SDL_SetTextureBlendMode(maskTexture, SDL_BLENDMODE_BLEND);
+
+                        // Get window dimensions to draw mask over entire screen
+                        int w = 0, h = 0;
+                        display.getWindowSize(w, h);
+                        if (w > 0 && h > 0) {
+                            SDL_Rect destRect = {0, 0, w, h};
+                            SDL_RenderCopy(renderer, maskTexture, NULL, &destRect);
+                        } else {
+                            SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, 
+                                "Game::run - Invalid window dimensions for mask overlay.");
+                        }
+                    } else {
+                        SDL_LogError(SDL_LOG_CATEGORY_RENDER, 
+                            "Game::run - Failed to get renderer for mask overlay.");
+                    }
+                } else {
+                    static bool maskWarned = false;
+                    if (!maskWarned) {
+                        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, 
+                            "Game::run - Mask texture 'ui_round_mask' not found for overlay!");
+                        maskWarned = true;
+                    }
+                }
+
+                // 4. Present the final frame (with mask overlay)
                 display.present();
             }
         }
