@@ -1,8 +1,8 @@
 // File: src/core/Game.cpp
 
 #include "core/Game.h"
-#include "states/GameState.h"       // Include base class for enter/exit
-#include "states/AdventureState.h"  // Include concrete states used
+#include "states/GameState.h"        // Include base class for enter/exit
+#include "states/AdventureState.h"   // Include concrete states used
 #include "states/TransitionState.h" // Include concrete states used
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
@@ -28,7 +28,7 @@ Game::Game() :
     pending_state_for_fade_(nullptr),
     active_fade_type_(TransitionEffectType::BORDER_WIPE), // Default
     fade_duration_(0.5f),
-    pop_current_after_fade_out_(true),
+    pop_current_after_fade_out_(true), // Default behavior is to pop
     textRenderer_(nullptr),
     animationManager_(nullptr)
 {
@@ -235,14 +235,8 @@ void Game::run() {
              is_running = false; // Force quit
         }
 
-        // --- Frame Limiter (Simplified) ---
-        // This is a very basic limiter, more advanced techniques exist
-        // Uint32 frame_duration = SDL_GetTicks() - current_time;
-        // const Uint32 MIN_FRAME_DURATION_MS = 16; // ~60 FPS
-        // if (frame_duration < MIN_FRAME_DURATION_MS) {
-        //     SDL_Delay(MIN_FRAME_DURATION_MS - frame_duration);
-        // }
-        // Note: VSync enabled in renderer creation often handles frame limiting better.
+        // --- Frame Limiter (Simplified) --- REMOVED for now, rely on VSync
+        // ...
     }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Exited main game loop.");
@@ -252,7 +246,8 @@ void Game::run() {
 // --- State Management - Actual Push/Pop ---
 void Game::push_state(std::unique_ptr<GameState> new_state) {
     if (!new_state) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "push_state called with null state!"); return; }
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing push_state for state %p...", (void*)new_state.get());
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing push_state for state %p (Type: %d)...",
+                (void*)new_state.get(), (int)new_state->getType()); // Log type
     states_.push_back(std::move(new_state));
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "push_state complete. New stack size: %zu", states_.size());
 }
@@ -261,7 +256,7 @@ void Game::pop_state() {
     if (!states_.empty()) {
          GameState* stateToPop = states_.back().get();
          SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Executing pop_state for state %p (Type: %d)...", (void*)stateToPop, (int)stateToPop->getType());
-         // No need to call exit() here, it should be called before pop_state in applyStateChanges
+         // exit() called before this in applyStateChanges
          states_.pop_back(); // Removes the unique_ptr, deleting the state object
          SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "pop_state complete. New stack size: %zu", states_.size());
     } else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "pop_state called on empty stack!"); }
@@ -272,7 +267,8 @@ void Game::requestPushState(std::unique_ptr<GameState> state) {
     if (!state) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Attempted to request push of NULL state!"); return; }
     if (request_push_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Overwriting previous push request for state %p with new request for %p.", (void*)request_push_.get(), (void*)state.get()); }
     request_push_ = std::move(state);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Push requested for state %p.", (void*)request_push_.get());
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Push requested for state %p (Type: %d).",
+                 (void*)request_push_.get(), (int)request_push_->getType()); // Log type
 }
 
 void Game::requestPopState() {
@@ -301,69 +297,91 @@ void Game::requestFadeToState(std::unique_ptr<GameState> targetState, float dura
     }
     if (!targetState) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "requestFadeToState called with null targetState."); return; }
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Requesting Fade-To-State sequence (Duration: %.2fs, PopCurrent: %s).", duration, popCurrent ? "true" : "false");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Requesting Fade-To-State sequence (Target Type: %d, Duration: %.2fs, PopCurrent: %s).",
+                (int)targetState->getType(), duration, popCurrent ? "true" : "false"); // Log target type
     pending_state_for_fade_ = std::move(targetState);
     fade_duration_ = duration > 0.001f ? duration : 0.001f;
     pop_current_after_fade_out_ = popCurrent;
     fade_step_ = FadeSequenceStep::FADING_OUT;
     active_fade_type_ = TransitionEffectType::FADE_TO_COLOR; // Set type for this fade
 
-    // Immediately request push for the FADE_TO_COLOR transition state
     auto fadeOutState = std::make_unique<TransitionState>(
         this,
         fade_duration_,
-        active_fade_type_ // Use the type we just set
+        active_fade_type_
     );
     requestPushState(std::move(fadeOutState)); // Use existing requestPushState
 }
 
 // --- Helper to apply queued changes ---
+// <<< --- INTEGRATED NEW VERSION --- >>>
 void Game::applyStateChanges() {
+
     bool state_popped_this_frame = false;
     TransitionEffectType popped_transition_type = TransitionEffectType::BORDER_WIPE; // Default unimportant
 
     // --- 1. Handle Pops ---
     if (pop_until_target_type_ != StateType::None) {
+        // --- Pop Until Logic ---
         while (!states_.empty()) {
             GameState* topState = states_.back().get();
             if (topState->getType() == pop_until_target_type_) {
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges (PopUntil): Found target state %p (type %d). Calling enter().",
+                             (void*)topState, (int)topState->getType());
                 topState->enter(); // Enter the target state
-                state_popped_this_frame = true; // Mark change
+                state_popped_this_frame = true;
                 break; // Stop popping
             }
+            // Exit and pop states above the target
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges (PopUntil): Exiting and popping state %p (type %d).",
+                         (void*)topState, (int)topState->getType());
             topState->exit();
-            pop_state(); // Internal pop
+            pop_state();
             state_popped_this_frame = true;
         }
         if (states_.empty() && pop_until_target_type_ != StateType::None) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PopUntil target type %d not found in stack.", (int)pop_until_target_type_);
         }
-        pop_until_target_type_ = StateType::None; // Reset request
-        request_pop_ = false;
-        request_push_.reset(); // Clear any pending push after pop_until
-        if (fade_step_ != FadeSequenceStep::NONE) { // Abort fade if pop_until happens during it
+        // Reset pop_until regardless of whether target was found
+        pop_until_target_type_ = StateType::None;
+        request_pop_ = false; // Clear other pop flags
+        request_push_.reset(); // Clear push requests
+
+        // Abort any ongoing fade sequence if pop_until was executed
+        if (fade_step_ != FadeSequenceStep::NONE) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: pop_until executed during fade sequence. Resetting fade.");
              fade_step_ = FadeSequenceStep::NONE;
              pending_state_for_fade_.reset();
+             active_fade_type_ = TransitionEffectType::BORDER_WIPE;
         }
     }
     else if (request_pop_) {
+        // --- Handle Single Pop ---
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Processing request_pop_ = true.");
         if (!states_.empty()) {
             GameState* topState = states_.back().get();
             StateType popped_state_type = topState->getType();
+            popped_transition_type = TransitionEffectType::BORDER_WIPE; // Reset
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Popping state type %d (ptr: %p). Stack size BEFORE pop: %zu",
+                         (int)popped_state_type, (void*)topState, states_.size());
+
             if (popped_state_type == StateType::Transition) {
-                TransitionState* ts = static_cast<TransitionState*>(topState);
-                popped_transition_type = ts->getEffectType();
+               TransitionState* ts = static_cast<TransitionState*>(topState);
+               popped_transition_type = ts->getEffectType();
+               SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Popped state was Transition, effect type: %d", (int)popped_transition_type);
             }
 
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Calling exit() on state %p.", (void*)topState);
             topState->exit();
-            pop_state();
+            pop_state(); // Actual removal from stack
             state_popped_this_frame = true;
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: State popped. Stack size AFTER pop: %zu", states_.size());
+
 
             // Check if this pop completed a fade step
             if (fade_step_ == FadeSequenceStep::FADING_OUT &&
                 popped_state_type == StateType::Transition &&
-                popped_transition_type == TransitionEffectType::FADE_TO_COLOR && // Check popped type matches
+                popped_transition_type == TransitionEffectType::FADE_TO_COLOR &&
                 pending_state_for_fade_)
             {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade Sequence: FADE_TO_COLOR transition finished.");
@@ -371,98 +389,130 @@ void Game::applyStateChanges() {
             }
             else if (fade_step_ == FadeSequenceStep::FADING_IN &&
                      popped_state_type == StateType::Transition &&
-                     popped_transition_type == TransitionEffectType::FADE_FROM_COLOR) // Check popped type matches
+                     popped_transition_type == TransitionEffectType::FADE_FROM_COLOR)
             {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade Sequence: FADE_FROM_COLOR transition finished. Sequence complete.");
                 fade_step_ = FadeSequenceStep::NONE;
-                active_fade_type_ = TransitionEffectType::BORDER_WIPE; // Reset default
-                if (!states_.empty()) states_.back()->enter(); // Enter the target state now fully visible
-            }
-            else { // Normal pop or unexpected pop during fade
-                if (!states_.empty()) states_.back()->enter(); // Enter the newly revealed state
-                if(fade_step_ != FadeSequenceStep::NONE) { // Abort fade if unexpected pop
-                     SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Pop occurred during fade sequence but was not expected fade transition. Resetting fade.");
-                     fade_step_ = FadeSequenceStep::NONE;
-                     pending_state_for_fade_.reset();
+                active_fade_type_ = TransitionEffectType::BORDER_WIPE;
+                if (!states_.empty()) {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Calling enter() on target state %p after FADE_FROM_COLOR.",
+                                 (void*)states_.back().get());
+                    states_.back()->enter();
+                } else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Stack empty after FADE_FROM_COLOR pop.");
                 }
             }
+            else {
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Handling as normal pop.");
+                if (!states_.empty()) {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Calling enter() on new top state %p (type %d).",
+                                 (void*)states_.back().get(), (int)states_.back()->getType());
+                    states_.back()->enter();
+                } else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: State stack is empty after pop!");
+                }
+                if(fade_step_ != FadeSequenceStep::NONE ) {
+                     SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Pop (type %d, effect %d) occurred during fade step %d but was not expected. Resetting fade.",
+                                 (int)popped_state_type, (int)popped_transition_type, (int)fade_step_);
+                     fade_step_ = FadeSequenceStep::NONE;
+                     pending_state_for_fade_.reset();
+                     active_fade_type_ = TransitionEffectType::BORDER_WIPE;
+                }
+            }
+        } else {
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: request_pop_ was true, but state stack was already empty!");
         }
-        request_pop_ = false; // Reset request
+        request_pop_ = false; // Reset the single pop request flag
     }
 
     // --- 2. Handle State Swap (if fade out just finished) ---
     if (fade_step_ == FadeSequenceStep::READY_FOR_STATE_SWAP) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade Sequence: Swapping states.");
+
+        // Pop the original state if requested
         if (pop_current_after_fade_out_ && !states_.empty()) {
-             if (states_.back().get() != pending_state_for_fade_.get()) {
+             if (pending_state_for_fade_ && states_.back().get() != pending_state_for_fade_.get()) {
+                 SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Fade Swap: Popping state %p (type %d) because pop_current_after_fade_out_ is true.",
+                              (void*)states_.back().get(), (int)states_.back()->getType());
+                 states_.back()->exit();
+                 pop_state();
+             } else if (!pending_state_for_fade_ && !states_.empty()) {
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Fade Swap: pop_current is true, but pending_state is null. Popping current top %p.", (void*)states_.back().get());
                  states_.back()->exit();
                  pop_state();
              }
         }
 
+        // Push the target state (e.g., MenuState)
         if (pending_state_for_fade_) {
-            if (!states_.empty()) states_.back()->exit(); // Exit current top before pushing target
-            push_state(std::move(pending_state_for_fade_)); // Push target state
-            if (!states_.empty()) states_.back()->enter();  // Enter target state briefly
+             std::unique_ptr<GameState> targetStateToPush = std::move(pending_state_for_fade_);
+             pending_state_for_fade_.reset();
 
-            // Push the FADE_FROM_COLOR transition
-            active_fade_type_ = TransitionEffectType::FADE_FROM_COLOR; // Set type for fade-in
-            auto fadeInState = std::make_unique<TransitionState>(
-                this,
-                fade_duration_,
-                active_fade_type_
-            );
-            if (!states_.empty()) states_.back()->exit(); // Exit target state before pushing fade-in
-            push_state(std::move(fadeInState));
-            if (!states_.empty()) states_.back()->enter(); // Enter the FadeIn state
-
-            fade_step_ = FadeSequenceStep::FADING_IN; // Advance fade sequence
+             // Push the target state
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Fade Swap: Pushing target state %p (type %d).",
+                          (void*)targetStateToPush.get(), (int)targetStateToPush->getType());
+             push_state(std::move(targetStateToPush));
+             // DO NOT call enter() on targetState yet. It will be entered after FadeIn.
 
         } else {
              SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Fade Sequence Error: Ready for swap but pending_state_for_fade_ is null!");
              fade_step_ = FadeSequenceStep::NONE; // Abort
         }
-        pending_state_for_fade_.reset(); // Clear pending state pointer
+
+        // Push the FADE_FROM_COLOR transition (only if swap didn't abort)
+        if (fade_step_ == FadeSequenceStep::READY_FOR_STATE_SWAP) {
+             active_fade_type_ = TransitionEffectType::FADE_FROM_COLOR;
+             auto fadeInState = std::make_unique<TransitionState>( this, fade_duration_, active_fade_type_ );
+
+             // No exit on the targetState here, the FadeIn state just goes on top.
+             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Fade Swap: Pushing FadeIn state %p over target state %p.",
+                          (void*)fadeInState.get(), (states_.empty() ? nullptr : (void*)states_.back().get()) );
+             push_state(std::move(fadeInState));
+
+             if (!states_.empty()) {
+                 SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Fade Swap: Entering FadeIn state %p.", (void*)states_.back().get());
+                 states_.back()->enter(); // Enter ONLY the FadeIn State
+             }
+             fade_step_ = FadeSequenceStep::FADING_IN;
+        }
+        pending_state_for_fade_.reset(); // Ensure cleared if not already
     }
 
-    // --- 3. Handle Regular Push --- // <<< INTEGRATED USER'S CODE HERE
+    // --- 3. Handle Regular Push ---
     if (request_push_) {
-        // Allow push if no fade sequence is active OR if we are just starting the fade out
-        // (because the push request *is* the fade-out transition itself).
-        if (fade_step_ == FadeSequenceStep::NONE || fade_step_ == FadeSequenceStep::FADING_OUT) { // <<< MODIFIED CONDITION
+        if (fade_step_ == FadeSequenceStep::NONE || fade_step_ == FadeSequenceStep::FADING_OUT) {
 
-            // Check if the push is the START of the fade sequence.
-            // If fade_step_ is FADING_OUT, this push MUST be the fade-out state.
             bool is_fade_out_push = (fade_step_ == FadeSequenceStep::FADING_OUT);
 
             if (!states_.empty()) {
-                // Don't exit the underlying state if this is the fade-out push,
-                // because the fade-out should happen *over* the current state.
                 if (!is_fade_out_push) {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Exiting state %p before normal push.", (void*)states_.back().get());
                     states_.back()->exit();
+                } else {
+                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Pushing FadeOut transition OVER state %p (no exit called).", (void*)states_.back().get());
                 }
             }
 
-            push_state(std::move(request_push_)); // request_push_ is now null
+            std::unique_ptr<GameState> stateToPush = std::move(request_push_);
+            // request_push_ is now nullptr
+
+            push_state(std::move(stateToPush));
 
             if (!states_.empty()) {
-                // Don't call enter() immediately if this was the fade-out push?
-                // The push_state call already adds it. The enter() might need
-                // to be called here regardless to initialize the transition timer.
-                // Let's keep calling enter() for now. TransitionState::enter() resets the timer.
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "applyStateChanges: Entering newly pushed state %p.", (void*)states_.back().get());
                 states_.back()->enter();
             }
-
-        } else { // A push was requested during READY_FOR_STATE_SWAP or FADING_IN
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                 "applyStateChanges: Push requested during fade step %d. Push ignored.", (int)fade_step_);
+        } else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                "applyStateChanges: Push requested during fade step %d. Push ignored.", (int)fade_step_);
+            request_push_.reset(); // Discard the push if ignored
         }
-        // Reset happens outside the conditional now
     }
-    request_push_.reset(); // Always reset request outside the if/else
-    // --- END INTEGRATED CODE ---
+    // If request_push_ was moved from, it's already null. If it was reset, it's null.
+    // No need for a final reset here.
 
-}
+} // End applyStateChanges
+
 
 // --- quit_game ---
 void Game::quit_game() {
@@ -484,14 +534,22 @@ GameState* Game::getCurrentState() {
 
 GameState* Game::getUnderlyingState(const GameState* currentState) {
     if (states_.size() < 2) { return nullptr; }
-    for (size_t i = states_.size() - 1; i > 0; --i) {
+    // Find the index of currentState
+    size_t currentIndex = states_.size(); // Invalid index initially
+    for (size_t i = 0; i < states_.size(); ++i) {
         if (states_[i].get() == currentState) {
-            return states_[i - 1].get();
+            currentIndex = i;
+            break;
         }
     }
-    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "getUnderlyingState: currentState not found on stack or is the bottom-most state.");
+    // If found and not the bottom-most state, return the one below it
+    if (currentIndex > 0 && currentIndex < states_.size()) {
+        return states_[currentIndex - 1].get();
+    }
+    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "getUnderlyingState: currentState (%p) not found on stack or is the bottom-most state.", (void*)currentState);
     return nullptr;
 }
+
 
 // --- close ---
 void Game::close() {
@@ -518,5 +576,3 @@ void Game::close() {
 
 // --- DEBUG_getStack Implementation ---
 std::vector<std::unique_ptr<GameState>>& Game::DEBUG_getStack() { return states_; }
-
-

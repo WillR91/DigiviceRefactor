@@ -217,10 +217,13 @@ void TransitionState::render(PCDisplay& display) {
         t = 1.0f; 
     }
     
-    if (effectType_ == TransitionEffectType::FADE_FROM_COLOR) {
+    // For both FADE_TO_COLOR and FADE_FROM_COLOR, render the state underneath.
+    // For FADE_TO_COLOR, we are fading out the state below.
+    // For FADE_FROM_COLOR, we are fading in to reveal the state below.
+    if (effectType_ == TransitionEffectType::FADE_TO_COLOR || effectType_ == TransitionEffectType::FADE_FROM_COLOR) {
         GameState* underlyingState = game_ptr->getUnderlyingState(this); 
         if (underlyingState) {
-            underlyingState->render(display);
+            underlyingState->render(display); // Render the state that is being faded out from or faded into.
         }
     }
 
