@@ -6,8 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "vendor/nlohmann/json.hpp"
-
+#include "vendor/nlohmann/json.hpp" // <<<< INCLUDE FULL HEADER
 
 class TextRenderer {
 public:

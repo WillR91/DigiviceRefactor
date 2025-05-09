@@ -4,6 +4,10 @@
 
 namespace GameConstants {
 
+    // Window Dimensions
+    const int WINDOW_WIDTH = 466;  // ADDED
+    const int WINDOW_HEIGHT = 466; // ADDED
+
     // Gameplay Constants
     const int CURRENT_CHAPTER_STEP_GOAL = 300; // Steps to complete a chapter/area
     const int STEPS_PER_RANDOM_ENCOUNTER_CHECK = 5; // How often to check for random encounters

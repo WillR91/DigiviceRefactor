@@ -8,12 +8,11 @@
 #include <memory>
 #include <SDL_render.h>             // For SDL_Texture*
 #include <SDL_rect.h>               // <<< REQUIRED for SDL_Rect usage
-#include "vendor/nlohmann/json.hpp" // For nlohmann::json
+#include "vendor/nlohmann/json.hpp" // <<<< INCLUDE FULL HEADER
 
 // Forward Declarations
 struct AnimationData; // From graphics/AnimationData.h
 class AssetManager;   // Needed to get texture pointers
-// SDL_Rect is included above
 
 class AnimationManager {
 public:
@@ -27,8 +26,8 @@ private:
     AssetManager* assetManager_ = nullptr;
     std::map<std::string, AnimationData> loadedAnimations_;
 
-    // <<<--- MODIFIED Declaration: Use std::map<int, SDL_Rect> ---<<<
-    bool parseFrameRects(const nlohmann::json& framesNode, std::map<int, SDL_Rect>& outFrameRectsMap); // Use map here
+    // Declaration uses const nlohmann::json& which is fine with forward declaration
+    bool parseFrameRects(const nlohmann::json& framesNode, std::map<int, SDL_Rect>& outFrameRectsMap); 
 
     // Declaration using SDL_Texture*
     void storeAnimation(

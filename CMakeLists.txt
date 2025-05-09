@@ -1,12 +1,9 @@
 # Minimum CMake version required
-cmake_minimum_required(VERSION 3.15) # Keep 3.15, it's fine
+cmake_minimum_required(VERSION 3.15)
 
-# Prefix Paths (Only need SDL2 now, SDL2_image is manual)
+# Prefix Paths
 list(APPEND CMAKE_PREFIX_PATH "Z:/Libraries/SDL2-2.32.0/cmake")
 list(APPEND CMAKE_PREFIX_PATH "Z:/Libraries/SDL2-2.32.0")
-
-# <<< --- REMOVED SFML PATH SETTING --- >>>
-# set(SFML_DIR "C:/Libraries/SFML-2.6.1/lib/cmake/SFML")
 
 # Project Name
 project(DigiviceSim CXX)
@@ -15,16 +12,13 @@ project(DigiviceSim CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --- Find ONLY SDL2 Library --- <<< --- MODIFIED SECTION TITLE --- >>>
+# Find SDL2 Library
 find_package(SDL2 REQUIRED)
-# <<< --- REMOVED SFML FIND_PACKAGE --- >>>
-# find_package(SFML 2.6.1 COMPONENTS graphics REQUIRED)
 
 # --- Debug Messages ---
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "SDL2 Include Dirs: ${SDL2_INCLUDE_DIRS}")
 message(STATUS "SDL2 Libraries: ${SDL2_LIBRARIES}")
-# (Removed SFML messages)
 
 # --- Add Your Source Files ---
 add_executable(${PROJECT_NAME}
@@ -36,7 +30,7 @@ add_executable(${PROJECT_NAME}
     src/ui/TextRenderer.cpp
     src/platform/pc/pc_display.cpp
     src/core/AssetManager.cpp
-    src/graphics/Animation.cpp # Still here? Ensure this file exists and is needed.
+    src/graphics/Animation.cpp 
     src/graphics/Animator.cpp
     src/states/AdventureState.cpp
     src/states/MenuState.cpp
@@ -45,9 +39,10 @@ add_executable(${PROJECT_NAME}
     src/states/ProgressState.cpp
 )
 
-# --- Include Directories --- <<< --- RENAMED SECTION TITLE --- >>>
+# --- Include Directories --- 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    "${CMAKE_SOURCE_DIR}/include"           # Project includes
+    "${CMAKE_SOURCE_DIR}/include"           # Project includes (This covers Z:/DigiviceRefactor/include/ AND its subdirectories like vendor/)
+    # "${CMAKE_SOURCE_DIR}/vendor"          # <<< --- REMOVED THIS LINE --- >>> (because json.hpp is under include/vendor)
     ${SDL2_INCLUDE_DIRS}                    # SDL2 includes
     "Z:/Libraries/SDL2_image-2.8.6/include" # Manual SDL_image include path
 )
@@ -56,12 +51,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC
     ${SDL2_LIBRARIES}                                       # Link SDL2 found by find_package
     "Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.lib"  # Manual link to SDL2_image
-    # <<< --- REMOVED SFML LINKING --- >>>
-    # sfml-graphics
 )
 
 # --- Copy Assets to Output Directory Post-Build ---
-# (This block is correct and useful)
 set(ASSET_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets")
 set(ASSET_DESTINATION_DIR "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets")
 add_custom_command(
@@ -71,12 +63,7 @@ add_custom_command(
     VERBATIM
 )
 
-# <<< --- REMOVED SFML DLL COPYING --- >>>
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD ... )
-
-
 # --- Optional: Add build options for debugging ---
-# (This block is correct)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT CMAKE_BUILD_TYPE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
     if(MSVC)

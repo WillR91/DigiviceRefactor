@@ -1,9 +1,11 @@
 // src/core/AnimationManager.cpp
+
+#include "vendor/nlohmann/json.hpp" // <<<< ENSURE THIS IS FIRST or very early
+
 #include "core/AnimationManager.h"
 #include "core/AssetManager.h"      // Include full definition
 #include "graphics/AnimationData.h" // Include full definition
 #include "graphics/AnimationDefinitions.h"
-#include "vendor/nlohmann/json.hpp" // For JSON parsing
 #include <SDL_log.h>
 #include <fstream>
 #include <vector>
