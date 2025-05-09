@@ -75,34 +75,50 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu: Confirmed '%s'", selectedOption.c_str());
 
             if (selectedOption == "EXIT") {
-                game_ptr->requestPopState();
+                // Fade out current MenuState, pop it, then fade in the state below (e.g., AdventureState)
+                game_ptr->requestFadeToState(nullptr, 0.5f, true); 
             } else if (selectedOption == "DIGIMON") {
                 std::vector<std::string> opts = {"PARTNER", "STATUS", "EVOLVE", "BACK"};
-                game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, opts));
+                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
+                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "MAP") {
                 std::vector<std::string> opts = {"VIEW MAP", "TRAVEL", "BACK"};
-                game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, opts));
+                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
+                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "ITEMS") {
                 std::vector<std::string> opts = {"VIEW", "USE", "DROP", "BACK"};
-                game_ptr->requestPushState(std::make_unique<MenuState>(game_ptr, opts));
+                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
+                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "SAVE") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for SAVE not implemented.");
             } else if (selectedOption == "BACK") {
-                game_ptr->requestPopState();
+                // Fade out current sub-menu, pop it, then fade in the parent menu below
+                game_ptr->requestFadeToState(nullptr, 0.3f, true); 
             } else if (selectedOption == "PARTNER") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Pushing PartnerSelectState.");
-                game_ptr->requestPushState(std::make_unique<PartnerSelectState>(game_ptr));
+                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu: Fading to PartnerSelectState.");
+                auto partnerSelectState = std::make_unique<PartnerSelectState>(game_ptr);
+                game_ptr->requestFadeToState(std::move(partnerSelectState), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "STATUS") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for STATUS not implemented.");
+                // If STATUS leads to another state, use requestFadeToState:
+                // auto statusState = std::make_unique<StatusState>(game_ptr); // Assuming StatusState exists
+                // game_ptr->requestFadeToState(std::move(statusState), 0.3f, false);
             } else if (selectedOption == "EVOLVE") {
                  SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for EVOLVE not implemented.");
+                // If EVOLVE leads to another state, use requestFadeToState:
+                // auto evolveState = std::make_unique<EvolveState>(game_ptr); // Assuming EvolveState exists
+                // game_ptr->requestFadeToState(std::move(evolveState), 0.3f, false);
             }
             else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_INPUT, "Selected option '%s' has no defined action yet.", selectedOption.c_str());
             }
         }
     }
-    else if (cancel) { SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Cancel action detected in MenuState, requesting popState."); game_ptr->requestPopState(); }
+    else if (cancel) { 
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Cancel action detected in MenuState, requesting fade and pop."); 
+        // Fade out current MenuState, pop it, then fade in the state below
+        game_ptr->requestFadeToState(nullptr, 0.5f, true); 
+    }
 }
 
 void MenuState::update(float delta_time, PlayerData* playerData) {

@@ -295,10 +295,16 @@ void Game::requestFadeToState(std::unique_ptr<GameState> targetState, float dura
         if (targetState) { SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "requestFadeToState: Discarding targetState due to ongoing fade."); }
         return;
     }
-    if (!targetState) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "requestFadeToState called with null targetState."); return; }
+    // Allow nullptr targetState ONLY if we intend to pop the current state.
+    // If popCurrent is false, a targetState is mandatory.
+    if (!targetState && !popCurrent) { 
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "requestFadeToState called with null targetState and popCurrent is false. This is invalid."); 
+        return; 
+    }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Requesting Fade-To-State sequence (Target Type: %d, Duration: %.2fs, PopCurrent: %s).",
-                (int)targetState->getType(), duration, popCurrent ? "true" : "false"); // Log target type
+                (targetState ? (int)targetState->getType() : (int)StateType::None), // Log target type or None
+                duration, popCurrent ? "true" : "false");
     pending_state_for_fade_ = std::move(targetState);
     fade_duration_ = duration > 0.001f ? duration : 0.001f;
     pop_current_after_fade_out_ = popCurrent;
@@ -381,8 +387,7 @@ void Game::applyStateChanges() {
             // Check if this pop completed a fade step
             if (fade_step_ == FadeSequenceStep::FADING_OUT &&
                 popped_state_type == StateType::Transition &&
-                popped_transition_type == TransitionEffectType::FADE_TO_COLOR &&
-                pending_state_for_fade_)
+                popped_transition_type == TransitionEffectType::FADE_TO_COLOR) // Removed '&& pending_state_for_fade_'
             {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade Sequence: FADE_TO_COLOR transition finished.");
                 fade_step_ = FadeSequenceStep::READY_FOR_STATE_SWAP;
