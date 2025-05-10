@@ -76,7 +76,7 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
 
             if (selectedOption == "EXIT") {
                 // Fade out current MenuState, pop it, then fade in the state below (e.g., AdventureState)
-                game_ptr->requestFadeToState(nullptr, 0.5f, true); 
+                game_ptr->requestFadeToState(nullptr, 0.3f, true); 
             } else if (selectedOption == "DIGIMON") {
                 std::vector<std::string> opts = {"PARTNER", "STATUS", "EVOLVE", "BACK"};
                 auto subMenu = std::make_unique<MenuState>(game_ptr, opts);

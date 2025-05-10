@@ -17,7 +17,7 @@
 // Removed fstream, map, nlohmann/json as they are not used directly for font loading anymore
 
 PartnerSelectState::PartnerSelectState(Game* game) :
-    GameState(game), // <<< ADDED Base class constructor call
+    GameState(game),
     currentSelectionIndex_(0),
     backgroundTexture_(nullptr),
     digimonAnimator_() // Default construct the animator
@@ -82,19 +82,40 @@ void PartnerSelectState::handle_input(InputManager& inputManager, PlayerData* pl
         currentSelectionIndex_ = (currentSelectionIndex_ + 1) % availablePartners_.size();
         updateDisplayedDigimon();
     }
-
+    
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-        if (!availablePartners_.empty() && playerData) {
+        if (!availablePartners_.empty() && playerData && game_ptr) { // Added game_ptr check for safety
             playerData->currentPartner = availablePartners_[currentSelectionIndex_];
-            game_ptr->requestPopUntil(StateType::Adventure);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                        "PartnerSelectState: CONFIRM selected %s. Game ptr: %p",
+                        getDigimonName(playerData->currentPartner).c_str(),
+                        (void*)game_ptr);
+
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState: Calling requestFadeToState(nullptr, 0.5f, true)");
+            game_ptr->requestFadeToState(nullptr, 0.5f, true); // Pop PartnerSelectState
+
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState: Calling setTargetStateAfterFade(StateType::Adventure)");
+            game_ptr->setTargetStateAfterFade(StateType::Adventure); // Target AdventureState after fade & pop
+            
+            // Log to see if targetStateAfterFade_ was set, if getTargetStateAfterFade() exists and is accessible
+            // This is illustrative; direct access or a getter would be needed.
+            // SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState: game_ptr->targetStateAfterFade_ is now %d (expected Adventure)", (int)game_ptr->getTargetStateAfterFade());
+
         }
     } else if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
-        game_ptr->requestPopState();
+        if (game_ptr) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PartnerSelectState: CANCEL pressed. Requesting pop via fade.");
+            game_ptr->requestFadeToState(nullptr, 0.3f, true); // Pop current, fade to underlying
+        }
     }
 }
 
 void PartnerSelectState::update(float delta_time, PlayerData* playerData) {
+    // Just update the animator without checking (it should handle null animations internally)
     digimonAnimator_.update(delta_time);
+    
+    // We've simplified the code by removing the fade transition logic
+    // and directly popping to the adventure state from handle_input
 }
 
 void PartnerSelectState::render(PCDisplay& display) {

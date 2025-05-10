@@ -11,10 +11,20 @@
 #include "states/TransitionState.h" // <<< ADDED to make TransitionEffectType visible
 #include "core/InputManager.h"
 #include "core/PlayerData.h"
+#include "core/GraphicsTypes.h" // For Color struct
 
 // Forward declarations
 class TextRenderer;
 class AnimationManager;
+
+// Add this near the top of the file, after includes but before any class definitions
+enum class FadeSequenceStep {
+    NONE,
+    FADING_OUT,               // A fade-out TransitionState is active
+    READY_FOR_STATE_SWAP,     // For fading TO a new state (e.g., Adventure -> Menu)
+    SETUP_TARGET_STATE,       // For ensuring target state (e.g., Adventure from PartnerSelect) is active before fade-in
+    FADING_IN                 // A fade-in TransitionState is active
+};
 
 class Game {
 public:
@@ -26,11 +36,22 @@ public:
     bool init(const std::string& title, int width, int height);
     void run();
 
+    // Main update method
+    void update(float delta_time);
+
     // --- State Management Requests ---
     void requestPushState(std::unique_ptr<GameState> state);
     void requestPopState();                      // Pops one state
     void requestPopUntil(StateType targetType); 
     void requestFadeToState(std::unique_ptr<GameState> targetState, float duration = 0.5f, bool popCurrent = true); // <<< NEW
+
+    // Request a fade to black without immediately changing state
+    void requestFadeToBlack(float duration = 0.3f);
+
+    // Get current fade step to check progress
+    FadeSequenceStep getFadeStep() const {
+        return fade_step_;
+    }
 
     // --- Getters for Core Systems/Data ---
     void quit_game();
@@ -46,12 +67,22 @@ public:
     // Debug helper
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();
 
+    // Add these new methods:
+    void setTargetStateAfterFade(StateType target) { 
+        targetStateAfterFade_ = target; 
+    }
+    
+    StateType getTargetStateAfterFade() const {
+        return targetStateAfterFade_;
+    }
+
 private:
     // Private Helper Functions
     void close();
     void push_state(std::unique_ptr<GameState> new_state);
     void pop_state();
     void applyStateChanges();
+    void processPopUntil(); // Add this method declaration inside the Game class:
 
     // Member Variables
     PCDisplay display;
@@ -70,15 +101,12 @@ private:
     StateType pop_until_target_type_ = StateType::None;
 
     // --- For Fade Transitions ---
-    enum class FadeSequenceStep {
-        NONE,
-        FADING_OUT,
-        READY_FOR_STATE_SWAP,
-        FADING_IN
-    };
     FadeSequenceStep fade_step_ = FadeSequenceStep::NONE;
     std::unique_ptr<GameState> pending_state_for_fade_ = nullptr;
     float fade_duration_ = 0.5f;
     bool pop_current_after_fade_out_ = true; 
     TransitionEffectType active_fade_type_ = TransitionEffectType::BORDER_WIPE; // <<< NEW (default unimportant)
+
+    // Add this new member variable inside the Game class:
+    StateType targetStateAfterFade_ = StateType::None;
 };

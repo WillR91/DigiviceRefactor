@@ -388,6 +388,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\Game_fade.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AnimationManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\Utils\AnimationUtils.cpp" />

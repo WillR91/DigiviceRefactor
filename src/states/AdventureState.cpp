@@ -90,16 +90,19 @@ void AdventureState::enter() {
     PlayerData* playerData = game_ptr->getPlayerData();
     if (playerData && current_digimon_ != playerData->currentPartner) {
         current_digimon_ = playerData->currentPartner;
-        current_state_ = STATE_IDLE;
-        queued_steps_ = 0;
+        current_state_ = STATE_IDLE; // Reset state to idle
+        queued_steps_ = 0;           // Reset steps
 
+        // Update the animator with the new partner's idle animation
         std::string idleAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
         AnimationManager* animManager = game_ptr->getAnimationManager();
         const AnimationData* idleAnimData = animManager->getAnimationData(idleAnimId);
         partnerAnimator_.setAnimation(idleAnimData);
 
         if (!idleAnimData) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to set animation: %s", idleAnimId.c_str());
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter - Failed to set animation for new partner %d", (int)current_digimon_);
+        } else {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter - Updated partner to %d and set animation to %s", (int)current_digimon_, idleAnimId.c_str());
         }
     }
     firstWalkUpdate_ = true;
@@ -115,7 +118,7 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "AdventureState: Confirm action. Requesting fade to MenuState.");
         std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
         auto menuState = std::make_unique<MenuState>(game_ptr, mainMenuItems);
-        game_ptr->requestFadeToState(std::move(menuState), 0.5f, false); // Fade for 0.5s, pop AdventureState
+        game_ptr->requestFadeToState(std::move(menuState), 0.3f, false); // Fade for 0.3s, pop AdventureState
         return;
     }
     if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
@@ -299,7 +302,51 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
 
 // --- render ---
 void AdventureState::render(PCDisplay& display) {
-    const int windowW = WINDOW_WIDTH; const int windowH = WINDOW_HEIGHT; auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) { if (!tex || texW <= 0 || effectiveWidth <= 0) { return; } int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth)); if (drawX1 > 0) drawX1 -= effectiveWidth; SDL_Rect dst1 = { drawX1, 0, texW, texH }; display.drawTexture(tex, NULL, &dst1); int drawX2 = drawX1 + effectiveWidth; SDL_Rect dst2 = { drawX2, 0, texW, texH }; display.drawTexture(tex, NULL, &dst2); if (drawX2 + texW < windowW) { int drawX3 = drawX2 + effectiveWidth; SDL_Rect dst3 = { drawX3, 0, texW, texH }; display.drawTexture(tex, NULL, &dst3); } }; int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0; if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;} if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;} if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
+    // Add debugging to verify rendering is happening
+    static int frameCount = 0;
+    if (frameCount % 60 == 0) { // Log every 60 frames to avoid spamming
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState rendering frame: %d", frameCount);
+    }
+    frameCount++;
+
+    SDL_Renderer* renderer = display.getRenderer();
+    if (!renderer) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::render - Renderer is NULL!");
+        return;
+    }
+
+    // Clear the screen (this should ideally be a common color or handled by a specific background)
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Clear to black
+    SDL_RenderClear(renderer);
+
+    const int windowW = GameConstants::WINDOW_WIDTH; 
+    const int windowH = GameConstants::WINDOW_HEIGHT; 
+
+    auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) { 
+        if (!tex || texW <= 0 || effectiveWidth <= 0) { 
+            return; 
+        } 
+        int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth)); 
+        if (drawX1 > 0) drawX1 -= effectiveWidth; 
+        SDL_Rect dst1 = { drawX1, 0, texW, texH }; 
+        display.drawTexture(tex, NULL, &dst1); 
+        
+        int drawX2 = drawX1 + effectiveWidth; 
+        SDL_Rect dst2 = { drawX2, 0, texW, texH }; 
+        display.drawTexture(tex, NULL, &dst2); 
+        
+        if (drawX2 + texW < windowW) { 
+            int drawX3 = drawX2 + effectiveWidth; 
+            SDL_Rect dst3 = { drawX3, 0, texW, texH }; 
+            display.drawTexture(tex, NULL, &dst3); 
+        } 
+    }; 
+
+    int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
+    if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
+    if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
+    if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
+
     drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
     drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
 
@@ -308,7 +355,7 @@ void AdventureState::render(PCDisplay& display) {
 
     if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
         int drawX = (windowW / 2) - (currentSourceRect.w / 2);
-        int verticalOffset = 7;
+        int verticalOffset = 7; // This might need to be a constant or configurable
         int drawY = (windowH / 2) - (currentSourceRect.h / 2) - verticalOffset;
         SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
 

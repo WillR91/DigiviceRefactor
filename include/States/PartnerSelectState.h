@@ -35,6 +35,7 @@ private:
     std::vector<DigimonType> availablePartners_;
     SDL_Texture* backgroundTexture_;
     Animator digimonAnimator_;
+    bool returnToAdventure_ = false;
 
     // --- Private Helper Methods ---
     void drawDigimon(PCDisplay& display);    

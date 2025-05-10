@@ -7,6 +7,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\Game_fade.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

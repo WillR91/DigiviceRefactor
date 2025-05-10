@@ -1,5 +1,6 @@
 Z:\DigiviceRefactor\main.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\main.obj
 Z:\DigiviceRefactor\src\core\Game.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Game.obj
+Z:\DigiviceRefactor\src\core\Game_fade.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Game_fade.obj
 Z:\DigiviceRefactor\src\core\InputManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager.obj
 Z:\DigiviceRefactor\src\core\AnimationManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationManager.obj
 Z:\DigiviceRefactor\src\Utils\AnimationUtils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationUtils.obj

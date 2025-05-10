@@ -24,6 +24,7 @@ message(STATUS "SDL2 Libraries: ${SDL2_LIBRARIES}")
 add_executable(${PROJECT_NAME}
     main.cpp
     src/core/Game.cpp
+    src/core/Game_fade.cpp
     src/core/InputManager.cpp
     src/core/AnimationManager.cpp
     src/Utils/AnimationUtils.cpp
