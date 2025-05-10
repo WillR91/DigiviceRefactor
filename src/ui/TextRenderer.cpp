@@ -171,7 +171,8 @@ SDL_Point TextRenderer::getTextDimensions(const std::string& text, int kerning) 
 // (Based on MenuState::drawText)
 void TextRenderer::drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale, int kerning) const {
     if (!fontTexture_ || fontCharMap_.empty() || !renderer || scale <= 0.0f) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::drawText returning early. Texture=%p, MapEmpty=%d, Renderer=%p, Scale=%.2f", (void*)fontTexture_, fontCharMap_.empty(), (void*)renderer, scale);
+        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::drawText returning early. Texture=%p, MapEmpty=%d, Renderer=%p, Scale=%.2f", 
+                   static_cast<const void*>(fontTexture_), fontCharMap_.empty(), static_cast<const void*>(renderer), scale);
         return;
     }
 
@@ -194,11 +195,9 @@ void TextRenderer::drawText(SDL_Renderer* renderer, const std::string& text, int
                 charWidth = pSrcRect->w;
             } else {
                 charWidth = 5; // Fallback width for unknown chars
-                 SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::drawText: Char '%c' not found in map.", c);
+                SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::drawText: Char '%c' not found in map.", c);
             }
-        }
-
-        // Apply kerning before drawing (except for first char)
+        }        // Apply kerning before drawing (except for first char)
         if (!firstChar) {
             currentX += static_cast<int>(scaledKerning);
         } else {
