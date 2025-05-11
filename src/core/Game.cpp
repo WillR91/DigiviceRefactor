@@ -45,6 +45,9 @@ bool Game::init(const std::string& title, int width, int height) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL Initialized.");
 
     if (!display.init(title.c_str(), width, height)) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); SDL_Quit(); return false; }
+    original_width_ = width; // Store original width
+    original_height_ = height; // Store original height
+    is_small_screen_ = false; // Ensure it starts with normal size
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
 
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
@@ -60,6 +63,11 @@ bool Game::init(const std::string& title, int width, int height) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
      bool assets_ok = true;
      assets_ok &= assetManager.loadTexture("ui_round_mask", "assets/ui/mask/round_mask.png"); // Use forward slashes for consistency
+     ui_mask_texture_ = assetManager.getTexture("ui_round_mask"); // Load and store the mask texture
+     if (!ui_mask_texture_) {
+         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load UI mask texture: assets/ui/mask/round_mask.png");
+         // Decide if this is a critical failure or if the game can run without it
+     }
      assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
      assets_ok &= assetManager.loadTexture("agumon_sheet", "assets/sprites/agumon_sheet.png");
      assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets/sprites/gabumon_sheet.png");
@@ -180,6 +188,18 @@ void Game::run() {
             inputManager.processEvent(event);
         }
 
+        // Handle screen toggle action
+        if (inputManager.isActionJustPressed(GameAction::TOGGLE_SCREEN_SIZE)) {
+            is_small_screen_ = !is_small_screen_;
+            if (is_small_screen_) {
+                display.setWindowSize(SMALL_SCREEN_WIDTH, SMALL_SCREEN_HEIGHT);
+                display.setLogicalSize(original_width_, original_height_); // Render at original size, scale down
+            } else {
+                display.setWindowSize(original_width_, original_height_);
+                display.setLogicalSize(original_width_, original_height_); // Reset logical size
+            }
+        }
+
         // State Logic
         if (!states_.empty()) {
             // Apply any pending state changes
@@ -202,6 +222,11 @@ void Game::run() {
                     // Clear the screen (e.g., black or a debug color)
                     // display.clear(0, 0, 0, 255); // Example: Clear to black
                     currentStateForRender->render(display); // Pass by reference
+
+                    // Apply the UI mask after the state has rendered its content
+                    if (ui_mask_texture_) {
+                        display.applyMask(ui_mask_texture_);
+                    }
                 }
             }
             // Present the frame

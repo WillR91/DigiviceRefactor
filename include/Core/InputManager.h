@@ -46,4 +46,5 @@ private:
 
     // Helper to initialize the key map
     void initializeDefaultKeyMap();
+    void handleToggleScreenSizeAction(); // Added to handle screen size toggle
 };

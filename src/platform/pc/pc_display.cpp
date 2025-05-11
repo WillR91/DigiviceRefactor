@@ -117,6 +117,28 @@ void PCDisplay::getWindowSize(int& width, int& height) const {
     }
 }
 
+void PCDisplay::setWindowSize(int width, int height) {
+    if (window_) {
+        SDL_SetWindowSize(window_, width, height);
+        // You might want to re-center the window after resizing
+        // SDL_SetWindowPosition(window_, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Window size set to %d x %d", width, height);
+    }
+}
+
+void PCDisplay::setLogicalSize(int width, int height) {
+    if (renderer_) {
+        SDL_RenderSetLogicalSize(renderer_, width, height);
+    }
+}
+
+void PCDisplay::applyMask(SDL_Texture* maskTexture) {
+    if (renderer_ && maskTexture) {
+        SDL_SetTextureBlendMode(maskTexture, SDL_BLENDMODE_BLEND); // Or SDL_BLENDMODE_MUL, check which looks best
+        SDL_RenderCopy(renderer_, maskTexture, NULL, NULL); // Stretch mask to full render target
+    }
+}
+
 SDL_Color PCDisplay::convert_rgb565_to_sdl_color(uint16_t color565) {
     SDL_Color color; 
     color.r = static_cast<Uint8>(((color565 >> 11) & 0x1F) * 255 / 31);

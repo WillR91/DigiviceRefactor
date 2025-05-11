@@ -112,5 +112,14 @@ void InputManager::initializeDefaultKeyMap() {
     keyToActionMap_[SDL_SCANCODE_6] = GameAction::SELECT_DIGI_6;
     keyToActionMap_[SDL_SCANCODE_7] = GameAction::SELECT_DIGI_7;
     keyToActionMap_[SDL_SCANCODE_8] = GameAction::SELECT_DIGI_8;
+    keyToActionMap_[SDL_SCANCODE_F2] = GameAction::TOGGLE_SCREEN_SIZE; // Added F2 mapping
     SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Initialized InputManager key map with %zu mappings.", keyToActionMap_.size());
+}
+
+// Placeholder for now, actual screen toggle logic will be in Game or PCDisplay
+void InputManager::handleToggleScreenSizeAction() {
+    if (isActionJustPressed(GameAction::TOGGLE_SCREEN_SIZE)) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Toggle screen size action detected by InputManager.");
+        // The actual resizing will be handled by the Game class listening for this action.
+    }
 }

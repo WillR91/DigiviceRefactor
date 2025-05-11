@@ -29,6 +29,8 @@ enum class GameAction {
     MENU_TOGGLE, // Might replace separate CONFIRM/CANCEL in some contexts
     QUIT_GAME,   // Usually handled by SDL_QUIT event
 
+    TOGGLE_SCREEN_SIZE, // Action to toggle screen size
+
     // Add more actions as needed (ATTACK, USE_ITEM, etc.)
 
     _ACTION_COUNT // Helper to get the number of actions

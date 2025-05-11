@@ -36,6 +36,9 @@ public:
     bool isInitialized() const;
     SDL_Window* getWindow() const;
     void getWindowSize(int& width, int& height) const;
+    void setWindowSize(int width, int height); // Added to allow changing window size
+    void setLogicalSize(int width, int height); // Added for scaling
+    void applyMask(SDL_Texture* maskTexture); // Added for applying a mask
 
 private:
     SDL_Window* window_ = nullptr;

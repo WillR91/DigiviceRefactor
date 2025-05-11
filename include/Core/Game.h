@@ -17,6 +17,10 @@
 class TextRenderer;
 class AnimationManager;
 
+// Define screen size constants
+const int SMALL_SCREEN_WIDTH = 172;
+const int SMALL_SCREEN_HEIGHT = 172;
+
 // Add this near the top of the file, after includes but before any class definitions
 enum class FadeSequenceStep {
     NONE,
@@ -94,6 +98,12 @@ private:
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_;
     Uint32 last_frame_time = 0;
+
+    // Screen toggle state
+    bool is_small_screen_ = false;
+    int original_width_ = 0;
+    int original_height_ = 0;
+    SDL_Texture* ui_mask_texture_ = nullptr; // For the round UI mask
 
     // State Change Request Variables
     bool request_pop_ = false;
