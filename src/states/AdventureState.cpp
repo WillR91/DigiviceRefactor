@@ -14,6 +14,7 @@
 #include "core/PlayerData.h"
 #include "Utils/AnimationUtils.h"
 #include "core/GameConstants.h"     // Added for game constants
+#include "States/BattleState.h"       // Forward declare or include for BattleState later
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -33,6 +34,9 @@ const int MAX_STEPS_PER_WINDOW = 4;      // Max steps allowed per window
 // Idle Return Constant
 const float TIME_TO_RETURN_TO_IDLE = 1.25f; // Seconds of no STEP input before stopping
 
+// Battle Fade Constants
+const float BATTLE_FADE_DURATION_SECONDS = 1.0f; // Duration of fade to battle in seconds
+
 // --- Constructor ---
 AdventureState::AdventureState(Game* game) :
     GameState(game),
@@ -47,7 +51,13 @@ AdventureState::AdventureState(Game* game) :
     bg_scroll_offset_2_(0.0f),
     timeSinceLastStep_(0.0f),
     stepWindowTimer_(0.0f),
-    stepsInWindow_(0)
+    stepsInWindow_(0),
+    // Initialize new battle trigger members
+    current_area_step_goal_(CURRENT_CHAPTER_STEP_GOAL), // Using existing constant for now
+    total_steps_taken_in_area_(0),
+    current_area_enemy_id_("DefaultEnemy"), // Placeholder
+    is_fading_to_battle_(false),
+    battle_fade_alpha_(0.0f)
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Initializing...");
     
@@ -191,6 +201,33 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update - PlayerData is null!");
     }
 
+    // If fading to battle, primarily handle fade logic and skip most other updates.
+    if (is_fading_to_battle_) {
+        battle_fade_alpha_ += (255.0f / BATTLE_FADE_DURATION_SECONDS) * delta_time;
+        if (battle_fade_alpha_ >= 255.0f) {
+            battle_fade_alpha_ = 255.0f;
+            // Transition to BattleState
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Fade to black complete. Requesting BattleState.");
+            // Ensure PlayerData is available for BattleState
+            PlayerData* pd = game_ptr->getPlayerData();
+            if (!pd) {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: PlayerData is null, cannot start battle.");
+                // Potentially handle this error, e.g., by not starting the battle
+                is_fading_to_battle_ = false; // Reset fade
+                battle_fade_alpha_ = 0.0f;
+                total_steps_taken_in_area_ = 0; // Reset steps to avoid immediate re-trigger
+                return;
+            }
+            // This line will be uncommented once BattleState is defined and StateType::Battle exists
+            game_ptr->requestPushState(std::make_unique<BattleState>(game_ptr, pd->currentPartner, current_area_enemy_id_));
+            
+            total_steps_taken_in_area_ = 0; // Reset steps for the area
+            is_fading_to_battle_ = false; // Reset fade state
+            // battle_fade_alpha_ is reset when fade completes or if battle starts and AdventureState re-enters
+        }
+        return; // Don't process other game logic while fading to battle
+    }
+
     PlayerState stateBeforeChanges = current_state_;
     bool needs_new_animation_set = false;
 
@@ -207,11 +244,26 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     if (current_state_ == STATE_WALKING) {
         timeSinceLastStep_ += delta_time;
         if (timeSinceLastStep_ >= TIME_TO_RETURN_TO_IDLE) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
-                "Update: No step input for %.2fs. Transitioning to IDLE.", timeSinceLastStep_);
             current_state_ = STATE_IDLE;
+            queued_steps_ = 0; // Clear queue when stopping
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: Returning to IDLE due to inactivity.");
             needs_new_animation_set = true;
         }
+    }
+
+    // Process queued steps
+    if (current_state_ == STATE_WALKING && queued_steps_ > 0) {
+        // This is where a step is "taken"
+        queued_steps_--; // Consume one step from the queue
+        if (playerData) {
+            playerData->totalSteps++; // Increment global player steps
+        }
+        total_steps_taken_in_area_++; // Increment steps for this area's battle trigger
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Step taken. Total in area: %d/%d", total_steps_taken_in_area_, current_area_step_goal_);
+
+        // Reset idle timer as a step was just processed
+        timeSinceLastStep_ = 0.0f;
+        firstWalkUpdate_ = false; // A step has been taken, no longer the "first walk update"
     }
 
     // Update Animator
@@ -246,17 +298,16 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     }
 
     // Goal/Encounter Checks
-    if (playerData && current_state_ == STATE_WALKING) {
-        if (playerData->stepsTakenThisChapter >= GameConstants::CURRENT_CHAPTER_STEP_GOAL) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
-                "!!! CHAPTER GOAL REACHED (%d steps) !!!", GameConstants::CURRENT_CHAPTER_STEP_GOAL);
-            playerData->stepsTakenThisChapter = 0;
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Chapter steps reset to 0.");
-        }
+    if (playerData && !is_fading_to_battle_ && total_steps_taken_in_area_ >= current_area_step_goal_) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Step goal reached! Initiating fade to battle.");
+        is_fading_to_battle_ = true;
+        battle_fade_alpha_ = 0.0f; // Start fade from transparent
+        // current_state_ = STATE_IDLE; // Optionally stop walking animation
+        // queued_steps_ = 0;
     }
 
-    // Scroll Background (Only if walking)
-    if (current_state_ == STATE_WALKING) {
+    // Scroll Background (Only if walking and not fading to battle)
+    if (current_state_ == STATE_WALKING && !is_fading_to_battle_) {
         float scrollAmount0 = SCROLL_SPEED_0 * delta_time;
         float scrollAmount1 = SCROLL_SPEED_1 * delta_time;
         float scrollAmount2 = SCROLL_SPEED_2 * delta_time;
@@ -363,6 +414,15 @@ void AdventureState::render(PCDisplay& display) {
     }
 
     drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+
+    // Render fade_to_battle overlay if active
+    if (is_fading_to_battle_ && battle_fade_alpha_ > 0.0f) {
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, static_cast<Uint8>(battle_fade_alpha_));
+        SDL_Rect fullscreen_rect = {0, 0, GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT};
+        SDL_RenderFillRect(renderer, &fullscreen_rect);
+        SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "AdventureState: Rendering fade overlay with alpha: %.2f", battle_fade_alpha_);
+    }
 }
 
 StateType AdventureState::getType() const {

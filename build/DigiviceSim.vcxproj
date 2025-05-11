@@ -402,6 +402,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\TransitionState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\ProgressState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

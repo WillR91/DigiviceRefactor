@@ -14,3 +14,4 @@ Z:\DigiviceRefactor\src\states\MenuState.cpp;Z:\DigiviceRefactor\build\DigiviceS
 Z:\DigiviceRefactor\src\states\TransitionState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\TransitionState.obj
 Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\PartnerSelectState.obj
 Z:\DigiviceRefactor\src\states\ProgressState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ProgressState.obj
+Z:\DigiviceRefactor\src\states\BattleState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\BattleState.obj

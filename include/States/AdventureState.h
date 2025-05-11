@@ -39,6 +39,14 @@ private:
     // Animator
     Animator partnerAnimator_;
 
+    // Battle Trigger Members
+    int current_area_step_goal_;        // How many steps to trigger a battle in the current area
+    int total_steps_taken_in_area_;   // Accumulator for steps in the current area
+    std::string current_area_enemy_id_; // Placeholder for future use to specify the enemy
+    bool is_fading_to_battle_;          // True if currently fading out for a battle
+    float battle_fade_alpha_;           // Alpha for the fade-to-black overlay (0.0 to 255.0)
+    const float BATTLE_FADE_DURATION_SECONDS = 0.5f; // How long the fade to black should take
+
     // Other Data Members
     SDL_Texture* bgTexture0_ = nullptr;
     SDL_Texture* bgTexture1_ = nullptr;
