@@ -348,6 +348,35 @@ void BattleState::render(PCDisplay& display) {
                 }
             }
         }
+
+        // Render Enemy Sprite and Name (AFTER Layer 1, BEFORE Layer 0)
+        const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
+        if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { 
+            SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
+            // Center the sprite at enemy_sprite_position_
+            SDL_Rect destR = {
+                enemy_sprite_position_.x - srcR.w / 2,
+                enemy_sprite_position_.y - srcR.h / 2,
+                srcR.w,
+                srcR.h
+            };
+            display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR, SDL_FLIP_HORIZONTAL); 
+        }
+
+        // Render Enemy Name
+        if (enemy_name_texture_) {
+            int name_w, name_h;
+            SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_w, &name_h);
+            // Center the name texture horizontally at enemy_name_position_.x, use enemy_name_position_.y as top
+            SDL_Rect nameDestR = {
+                enemy_name_position_.x - name_w / 2, 
+                enemy_name_position_.y, 
+                name_w, 
+                name_h
+            };
+            display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
+        }
+
         // Layer 0 (Nearest)
         if (bg_texture_layer0_) {
             SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
@@ -381,6 +410,8 @@ void BattleState::render(PCDisplay& display) {
 
         // Render Enemy Sprite and Name (now inside the same conditional as background)
         // The previous specific 'if' condition for enemy rendering is removed as it's covered by allow_scene_rendering.
+        // MOVED EARLIER, BETWEEN LAYER 1 AND LAYER 0
+        /*
         const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
         if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { // Changed textureSheet to textureAtlas
             SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
@@ -407,6 +438,7 @@ void BattleState::render(PCDisplay& display) {
             };
             display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
         }
+        */
     } // End of if (allow_scene_rendering)
 
     // 2. Render Fade-In Overlay (if active)

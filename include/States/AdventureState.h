@@ -46,6 +46,7 @@ private:
     bool is_fading_to_battle_;          // True if currently fading out for a battle
     float battle_fade_alpha_;           // Alpha for the fade-to-black overlay (0.0 to 255.0)
     const float BATTLE_FADE_DURATION_SECONDS = 0.5f; // How long the fade to black should take
+    const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition
 
     // Other Data Members
     SDL_Texture* bgTexture0_ = nullptr;

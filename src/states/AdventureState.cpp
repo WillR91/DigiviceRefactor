@@ -221,6 +221,32 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
                 return;
             }
 
+            // Calculate additional scroll distances for battle transition
+            float additional_scroll_0 = SCROLL_SPEED_0 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
+            float additional_scroll_1 = SCROLL_SPEED_1 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
+            float additional_scroll_2 = SCROLL_SPEED_2 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
+
+            // Calculate new battle starting offsets (raw, before wrapping)
+            // Subtract because scroll offsets decrease as the player moves "forward" (right)
+            float battle_start_offset_0_raw = bg_scroll_offset_0_ - additional_scroll_0;
+            float battle_start_offset_1_raw = bg_scroll_offset_1_ - additional_scroll_1;
+            float battle_start_offset_2_raw = bg_scroll_offset_2_ - additional_scroll_2;
+
+            // Get effective widths for wrapping
+            int effW0 = 0, effW1 = 0, effW2 = 0;
+            if (bgTexture0_) { int w; SDL_QueryTexture(bgTexture0_, NULL, NULL, &w, NULL); effW0 = w * 2/3; if (effW0 <= 0) effW0 = w; }
+            if (bgTexture1_) { int w; SDL_QueryTexture(bgTexture1_, NULL, NULL, &w, NULL); effW1 = w * 2/3; if (effW1 <= 0) effW1 = w; }
+            if (bgTexture2_) { int w; SDL_QueryTexture(bgTexture2_, NULL, NULL, &w, NULL); effW2 = w * 2/3; if (effW2 <= 0) effW2 = w; }
+
+            // Wrap the new offsets
+            float battle_start_offset_0 = battle_start_offset_0_raw;
+            float battle_start_offset_1 = battle_start_offset_1_raw;
+            float battle_start_offset_2 = battle_start_offset_2_raw;
+
+            if (effW0 > 0) battle_start_offset_0 = std::fmod(battle_start_offset_0_raw + effW0, (float)effW0);
+            if (effW1 > 0) battle_start_offset_1 = std::fmod(battle_start_offset_1_raw + effW1, (float)effW1);
+            if (effW2 > 0) battle_start_offset_2 = std::fmod(battle_start_offset_2_raw + effW2, (float)effW2);
+
             game_ptr->requestPushState(std::make_unique<BattleState>(
                 game_ptr, 
                 pd->currentPartner, 
@@ -228,9 +254,9 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
                 bgTexture0_, 
                 bgTexture1_, 
                 bgTexture2_, 
-                bg_scroll_offset_0_, 
-                bg_scroll_offset_1_, 
-                bg_scroll_offset_2_
+                battle_start_offset_0, // Pass wrapped offset
+                battle_start_offset_1, // Pass wrapped offset
+                battle_start_offset_2  // Pass wrapped offset
             ));
             
             total_steps_taken_in_area_ = 0; // Reset steps for the area
