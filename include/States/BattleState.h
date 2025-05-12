@@ -1,14 +1,17 @@
 #pragma once
 
 #include <string> // Include for std::string
+#include <SDL_render.h> // For SDL_Texture*
 #include "GameState.h" // Corrected: GameState.h is in the same directory
 #include "../entities/Digimon.h" // For DigimonType enum
+#include "graphics/Animator.h" // Added for enemy_animator_
 
 // Forward declarations
 class Game;
 class InputManager;
 class PCDisplay;
 class AssetManager; // For loading assets later
+struct SDL_Texture; // Forward declare SDL_Texture
 
 // Define a duration for the fade effect
 const float BATTLE_STATE_FADE_DURATION_SECONDS = 0.75f; // Duration of fade in/out within BattleState
@@ -35,8 +38,11 @@ enum class VPetBattlePhase {
 
 class BattleState : public GameState {
 public:
-    // Constructor now takes player's Digimon type and an enemy ID string
-    BattleState(Game* game, DigimonType playerDigimonType, const std::string& enemyId);
+    // Constructor now takes player's Digimon type, an enemy ID string,
+    // and background texture information.
+    BattleState(Game* game, DigimonType playerDigimonType, const std::string& enemyId,
+                SDL_Texture* bgLayer0, SDL_Texture* bgLayer1, SDL_Texture* bgLayer2,
+                float scrollOffset0, float scrollOffset1, float scrollOffset2);
     ~BattleState() override = default;
 
     void enter() override; // Was init()
@@ -62,8 +68,21 @@ private:
     // Combatant info (simplified for now)
     DigimonType player_digimon_type_;
     std::string enemy_id_;
+    DigimonType enemy_digimon_type_; // Added: Actual type of the enemy
+    Animator enemy_animator_;      // Added: Animator for the enemy
+    SDL_Texture* enemy_name_texture_ = nullptr; // Added: Texture for enemy's name
+    SDL_Point enemy_sprite_position_;
+    SDL_Point enemy_name_position_;
     // SDL_Texture* player_sprite_texture_; // To be added
     // SDL_Texture* enemy_sprite_texture_;  // To be added
     // SDL_Texture* enemy_name_texture_;    // To be added
     // Basic data for now, will expand with Combatant struct later
+
+    // Background Textures & Offsets
+    SDL_Texture* bg_texture_layer0_;
+    SDL_Texture* bg_texture_layer1_;
+    SDL_Texture* bg_texture_layer2_;
+    float bg_scroll_offset_0_;
+    float bg_scroll_offset_1_;
+    float bg_scroll_offset_2_;
 };

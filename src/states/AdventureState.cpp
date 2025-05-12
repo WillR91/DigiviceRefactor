@@ -219,8 +219,18 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
                 total_steps_taken_in_area_ = 0; // Reset steps to avoid immediate re-trigger
                 return;
             }
-            // This line will be uncommented once BattleState is defined and StateType::Battle exists
-            game_ptr->requestPushState(std::make_unique<BattleState>(game_ptr, pd->currentPartner, current_area_enemy_id_));
+            // Pass background textures and current scroll offsets to BattleState
+            game_ptr->requestPushState(std::make_unique<BattleState>(
+                game_ptr, 
+                pd->currentPartner, 
+                current_area_enemy_id_,
+                bgTexture0_, // Pass background layer 0
+                bgTexture1_, // Pass background layer 1
+                bgTexture2_, // Pass background layer 2
+                bg_scroll_offset_0_, // Pass scroll offset for layer 0
+                bg_scroll_offset_1_, // Pass scroll offset for layer 1
+                bg_scroll_offset_2_  // Pass scroll offset for layer 2
+            ));
             
             total_steps_taken_in_area_ = 0; // Reset steps for the area
             is_fading_to_battle_ = false; // Reset fade state
