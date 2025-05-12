@@ -20,6 +20,13 @@ public:
     // Calculates the pixel dimensions of a string if rendered with this font
     SDL_Point getTextDimensions(const std::string& text, int kerning = -1) const; // Default kerning? Check original code use. Use -1 to signal using default member
 
+    // Renders text to a new SDL_Texture
+    // Implementation needed in TextRenderer.cpp
+    // It should use the existing bitmap font rendering logic to draw onto a new texture.
+    // The SDL_Renderer* is needed to create the texture.
+    // The SDL_Color can be used if the font atlas supports color modulation (e.g., if it's a white font).
+    SDL_Texture* renderTextToTexture(SDL_Renderer* renderer, const std::string& text, SDL_Color color, float scale = 1.0f, int kerning = -1);
+
     // Draws the text using the loaded font data
     void drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale = 1.0f, int kerning = -1) const; // Default kerning?
 

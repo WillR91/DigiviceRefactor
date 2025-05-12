@@ -222,3 +222,61 @@ void TextRenderer::drawText(SDL_Renderer* renderer, const std::string& text, int
         currentX += scaledW;
     }
 }
+
+// Implementation for renderTextToTexture
+SDL_Texture* TextRenderer::renderTextToTexture(SDL_Renderer* renderer, const std::string& text, SDL_Color color, float scale, int kerning) {
+    if (!fontTexture_ || fontCharMap_.empty() || !renderer || scale <= 0.0f || text.empty()) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::renderTextToTexture returning early. Texture=%p, MapEmpty=%d, Renderer=%p, Scale=%.2f, TextEmpty=%d",
+                   static_cast<const void*>(fontTexture_), fontCharMap_.empty(), static_cast<const void*>(renderer), scale, text.empty());
+        return nullptr;
+    }
+
+    // 1. Calculate dimensions
+    SDL_Point dimensions = getTextDimensions(text, kerning);
+    if (dimensions.x <= 0 || dimensions.y <= 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "TextRenderer::renderTextToTexture: Calculated text dimensions are invalid (w=%d, h=%d) for text: %s", dimensions.x, dimensions.y, text.c_str());
+        return nullptr;
+    }
+
+    int finalWidth = static_cast<int>(static_cast<float>(dimensions.x) * scale);
+    int finalHeight = static_cast<int>(static_cast<float>(dimensions.y) * scale);
+
+    if (finalWidth <= 0 || finalHeight <= 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "TextRenderer::renderTextToTexture: Scaled text dimensions are invalid (w=%d, h=%d) for text: %s", finalWidth, finalHeight, text.c_str());
+        return nullptr;
+    }
+
+    // 2. Create a new texture
+    SDL_Texture* newTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, finalWidth, finalHeight);
+    if (!newTexture) {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "TextRenderer::renderTextToTexture: Failed to create target texture: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    // 3. Set the new texture as render target and make it transparent
+    SDL_SetRenderTarget(renderer, newTexture);
+    SDL_SetTextureBlendMode(newTexture, SDL_BLENDMODE_BLEND); // Enable alpha blending for the texture itself
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0); // Transparent background
+    SDL_RenderClear(renderer);
+
+    // Optional: Modulate the font texture color if your font atlas is white/grayscale
+    // This allows you to "colorize" the text. If your font atlas already has colors, you might skip this.
+    SDL_SetTextureColorMod(fontTexture_, color.r, color.g, color.b);
+    // Note: Alpha modulation (SDL_SetTextureAlphaMod) might also be useful if the color.a is intended to make the whole text semi-transparent.
+    // However, for typical text rendering, color.a in SDL_Color is often ignored unless specifically handled.
+    // The created texture (newTexture) will handle overall transparency via its pixel data and blend mode.
+
+    // 4. Draw the text onto the new texture
+    // The drawText method handles scaling internally, so we pass the original scale.
+    // We draw at (0,0) on the new texture.
+    drawText(renderer, text, 0, 0, scale, kerning);
+
+    // Reset color modulation on the font atlas if you changed it
+    SDL_SetTextureColorMod(fontTexture_, 255, 255, 255); // Reset to white (no modulation)
+
+    // 5. Reset render target back to the default (screen or previous target)
+    SDL_SetRenderTarget(renderer, nullptr);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::renderTextToTexture - Successfully created texture for text: %s", text.c_str());
+    return newTexture;
+}

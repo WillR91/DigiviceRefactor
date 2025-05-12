@@ -20,6 +20,7 @@ enum class VPetBattlePhase {
     ENTERING_FADE_IN,    // Fade in from black to battle scene
     ENEMY_REVEAL_SETUP,  // Prepare enemy sprite and name
     ENEMY_REVEAL_ANIM,   // Simple animation/timer for reveal
+    BATTLE_AWAITING_PLAYER_COMMAND, // Added new phase
     PLAYER_ATTACK_SETUP,
     PLAYER_ATTACK_ANIM,
     ENEMY_ATTACK_SETUP,
@@ -43,7 +44,7 @@ public:
     BattleState(Game* game, DigimonType playerDigimonType, const std::string& enemyId,
                 SDL_Texture* bgLayer0, SDL_Texture* bgLayer1, SDL_Texture* bgLayer2,
                 float scrollOffset0, float scrollOffset1, float scrollOffset2);
-    ~BattleState() override = default;
+    ~BattleState() override; // Removed = default
 
     void enter() override; // Was init()
     void exit() override;  // Was close()
@@ -85,4 +86,5 @@ private:
     float bg_scroll_offset_0_;
     float bg_scroll_offset_1_;
     float bg_scroll_offset_2_;
+    // int enemy_id_; // Removed redefinition
 };
