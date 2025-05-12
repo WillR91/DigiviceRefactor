@@ -188,22 +188,25 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
             int screen_height = 0;
             display->getWindowSize(screen_width, screen_height);
 
-            // Position enemy sprite on the right, vertically centered
-            // Assuming sprite's origin is its center for now when rendering
-            enemy_sprite_position_ = {screen_width * 3 / 4, screen_height / 2};
+            // Center enemy sprite on the screen
+            enemy_sprite_position_ = {screen_width / 2, screen_height / 2};
 
             // Position name texture below the sprite
-            // We'll center the name texture based on its width later in render, this is the top-left for now if not centered.
-            int name_texture_width = 0;
-            // int name_texture_height = 0; // Not used for this positioning
-            if (enemy_name_texture_) {
-                SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_texture_width, nullptr /*&name_texture_height*/);
+            int sprite_frame_height = 0;
+            const AnimationData* currentEnemyAnimData = enemy_animator_.getCurrentAnimationData();
+            if (currentEnemyAnimData && !currentEnemyAnimData->frameRects.empty()) {
+                sprite_frame_height = currentEnemyAnimData->frameRects[0].h; // Height of the first frame
+            } else {
+                sprite_frame_height = 50; // Fallback height if animation data not available or empty
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "BattleState::ENEMY_REVEAL_SETUP - Could not get enemy sprite height from animation, using fallback %dpx", sprite_frame_height);
             }
-            // Position name centered horizontally under sprite_position.y + offset
-            enemy_name_position_ = {enemy_sprite_position_.x , enemy_sprite_position_.y + 40}; // Adjust 40 based on sprite height + desired gap
+            
+            const int name_gap_pixels = 10; // Gap between bottom of sprite and top of name text
 
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Enemy reveal setup complete. Enemy: %s, Pos: (%d,%d), NamePos: (%d,%d)", 
-                        enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
+            enemy_name_position_.x = enemy_sprite_position_.x; // Center X for name is same as sprite's center X
+            enemy_name_position_.y = enemy_sprite_position_.y + (sprite_frame_height / 2) + name_gap_pixels; // Y for name (top of name texture)
+
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Enemy reveal setup complete. Enemy: %s, SpritePos: (%d,%d), NamePos: (%d,%d)", enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
 
             current_phase_ = VPetBattlePhase::ENEMY_REVEAL_ANIM;
             phase_timer_ = 0.0f; // Reset timer for the new phase (e.g., if ENEMY_REVEAL_ANIM has a duration)
