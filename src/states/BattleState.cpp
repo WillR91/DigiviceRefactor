@@ -3,6 +3,8 @@
 #include "Core/InputManager.h"
 #include "Core/PlayerData.h" 
 #include "Platform/PC/pc_display.h"
+#include "Utils/AnimationUtils.h" // Added
+#include "ui/TextRenderer.h"    // Corrected Path
 #include <SDL_log.h>
 #include <algorithm> // For std::min
 #include <cmath>     // For other math functions if needed
@@ -23,7 +25,11 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
       bg_texture_layer2_(bgLayer2),
       bg_scroll_offset_0_(scrollOffset0),
       bg_scroll_offset_1_(scrollOffset1),
-      bg_scroll_offset_2_(scrollOffset2)
+      bg_scroll_offset_2_(scrollOffset2),
+      enemy_digimon_type_(DIGI_COUNT), // Initialize enemy_digimon_type_
+      enemy_name_texture_(nullptr),    // Initialize enemy_name_texture_
+      enemy_sprite_position_({0,0}),   // Initialize enemy_sprite_position_
+      enemy_name_position_({0,0})     // Initialize enemy_name_position_
 {
     if (game_ptr) { // Ensure game_ptr is valid before using it
         asset_manager_ptr_ = game_ptr->getAssetManager();
@@ -32,6 +38,22 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
                 static_cast<int>(player_digimon_type_), enemy_id_.c_str());
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Initial background scroll offsets: L0: %.2f, L1: %.2f, L2: %.2f", 
                 bg_scroll_offset_0_, bg_scroll_offset_1_, bg_scroll_offset_2_);
+}
+
+// Helper function to get Digimon name (similar to PartnerSelectState)
+// TODO: Consider moving this to a common utility if used in more places.
+std::string getDigimonNameForBattle(DigimonType type) {
+    switch(type) {
+        case DIGI_AGUMON: return "AGUMON";
+        case DIGI_GABUMON: return "GABUMON";
+        case DIGI_BIYOMON: return "BIYOMON";
+        case DIGI_GATOMON: return "GATOMON";
+        case DIGI_GOMAMON: return "GOMAMON";
+        case DIGI_PALMON: return "PALMON";
+        case DIGI_TENTOMON: return "TENTOMON";
+        case DIGI_PATAMON: return "PATAMON";
+        default: return "UNKNOWN";
+    }
 }
 
 void BattleState::enter() {
