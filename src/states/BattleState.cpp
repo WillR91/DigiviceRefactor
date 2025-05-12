@@ -363,7 +363,7 @@ void BattleState::render(PCDisplay& display) {
                 srcR.w,
                 srcR.h
             };
-            display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR); // Changed textureSheet to textureAtlas
+            display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR, SDL_FLIP_HORIZONTAL); // Added SDL_FLIP_HORIZONTAL
         }
 
         // Render Enemy Name
