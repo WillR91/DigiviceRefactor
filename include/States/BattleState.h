@@ -86,5 +86,6 @@ private:
     float bg_scroll_offset_0_;
     float bg_scroll_offset_1_;
     float bg_scroll_offset_2_;
+    bool show_foreground_layer_; // Added: Flag to control foreground rendering
     // int enemy_id_; // Removed redefinition
 };

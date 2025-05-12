@@ -37,6 +37,7 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
       bg_scroll_offset_0_(scrollOffset0),
       bg_scroll_offset_1_(scrollOffset1),
       bg_scroll_offset_2_(scrollOffset2),
+      show_foreground_layer_(false), // Initialize the new flag to false (foreground off by default)
       enemy_digimon_type_(DIGI_COUNT), // Initialize enemy_digimon_type_
       enemy_name_texture_(nullptr),    // Initialize enemy_name_texture_
       enemy_sprite_position_({ENEMY_SPRITE_POS_X, ENEMY_SPRITE_POS_Y}),   // Initialize enemy_sprite_position_
@@ -379,8 +380,8 @@ void BattleState::render(PCDisplay& display) {
         }
         */
 
-        // Layer 0 (Nearest)
-        if (bg_texture_layer0_) {
+        // Layer 0 (Nearest) - Now controlled by show_foreground_layer_
+        if (show_foreground_layer_ && bg_texture_layer0_) { // <--- MODIFIED HERE: Use the flag
             SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
             if (srcRect.w > 0) {
                 float positive_offset_0 = bg_scroll_offset_0_;
