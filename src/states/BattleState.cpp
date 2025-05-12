@@ -75,11 +75,99 @@ std::string getDigimonNameForBattle(DigimonType type) {
 }
 
 void BattleState::enter() {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState enter. Current phase: ENTERING_FADE_IN");
-    current_phase_ = VPetBattlePhase::ENTERING_FADE_IN; // Explicitly set phase
-    general_fade_alpha_ = 255.0f; // Start fade from black
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState enter: Performing initial enemy setup.");
+
+    // Ensure the fade starts fully black
+    general_fade_alpha_ = 255.0f;
+
+    PCDisplay* display = game_ptr->get_display(); // Declare display once here
+
+    // Ensure the screen is fully black before starting the fade-in
+    if (display) {
+        int screen_width = 0;
+        int screen_height = 0;
+        display->getWindowSize(screen_width, screen_height);
+        display->setDrawBlendMode(SDL_BLENDMODE_BLEND);
+        display->setDrawColor(0, 0, 0, 255); // Fully opaque black
+        SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
+        display->fillRect(&fullScreenRect);
+    }
+
+    // --- BEGIN MOVED ENEMY_REVEAL_SETUP LOGIC ---
+    if (!game_ptr) { // Ensure game_ptr is valid
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - game_ptr is null! Cannot setup enemy.");
+        current_phase_ = VPetBattlePhase::OUTCOME_DISPLAY; 
+        general_fade_alpha_ = 0.0f; // No fade if erroring out immediately
+        return;
+    }
+
+    AnimationManager* animManager = game_ptr->getAnimationManager();
+    TextRenderer* textRenderer = game_ptr->getTextRenderer();
+
+    if (!display || !animManager || !textRenderer) { // Use the 'display' variable declared earlier
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Missing required game systems (display, animManager, or textRenderer).");
+        current_phase_ = VPetBattlePhase::OUTCOME_DISPLAY; 
+        general_fade_alpha_ = 0.0f;
+        return;
+    }
+
+    // 1. Determine Enemy Type (Hardcoded for now)
+    if (enemy_id_ == "DefaultEnemy") {
+        enemy_digimon_type_ = DIGI_GABUMON; // Example
+    } else {
+        enemy_digimon_type_ = DIGI_AGUMON; // Fallback
+    }
+
+    // 2. Get Enemy Name String
+    std::string enemyNameStr = getDigimonNameForBattle(enemy_digimon_type_);
+
+    // 3. Load Enemy Animation
+    std::string enemyIdleAnimId = AnimationUtils::GetAnimationId(enemy_digimon_type_, "Idle");
+    const AnimationData* enemyIdleAnimData = animManager->getAnimationData(enemyIdleAnimId);
+    if (enemyIdleAnimData) {
+        enemy_animator_.setAnimation(enemyIdleAnimData);
+        enemy_animator_.update(0.0f); // Prime the animator for the first frame
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get idle animation '%s' for enemy type %d.", enemyIdleAnimId.c_str(), static_cast<int>(enemy_digimon_type_));
+    }
+
+    // 4. Create Enemy Name Texture
+    if (enemy_name_texture_) { 
+        SDL_DestroyTexture(enemy_name_texture_);
+        enemy_name_texture_ = nullptr;
+    }
+    SDL_Color textColor = {255, 255, 255, 255}; // White
+    enemy_name_texture_ = textRenderer->renderTextToTexture(display->getRenderer(), enemyNameStr, textColor);
+    if (!enemy_name_texture_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to render enemy name texture for '%s'.", enemyNameStr.c_str());
+    }
+
+    // 5. Define Positions
+    int screen_width = 0;
+    int screen_height = 0;
+    display->getWindowSize(screen_width, screen_height);
+
+    enemy_sprite_position_ = {screen_width / 2, screen_height / 2};
+
+    int sprite_frame_height = 0;
+    const AnimationData* currentEnemyAnimData = enemy_animator_.getCurrentAnimationData(); // Use a different variable name
+    if (currentEnemyAnimData && !currentEnemyAnimData->frameRects.empty()) {
+        sprite_frame_height = currentEnemyAnimData->frameRects[0].h; 
+    } else {
+        sprite_frame_height = 50; 
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Could not get enemy sprite height from animation, using fallback %dpx", sprite_frame_height);
+    }
+    
+    const int name_gap_pixels = 10; 
+    enemy_name_position_.x = enemy_sprite_position_.x; 
+    enemy_name_position_.y = enemy_sprite_position_.y + (sprite_frame_height / 2) + name_gap_pixels;
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Enemy setup complete. Enemy: %s, SpritePos: (%d,%d), NamePos: (%d,%d)", enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
+    // --- END MOVED ENEMY_REVEAL_SETUP LOGIC ---
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState enter: Initializing fade-in. Current phase: ENTERING_FADE_IN");
+    current_phase_ = VPetBattlePhase::ENTERING_FADE_IN;
     phase_timer_ = 0.0f;
-    // Initialization logic (formerly init())
 }
 
 void BattleState::exit() {
@@ -118,107 +206,27 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
 
     switch (current_phase_) {
         case VPetBattlePhase::ENTERING_FADE_IN:
-            phase_timer_ += delta_time;
+            enemy_animator_.update(delta_time); // Update enemy animation during fade-in
+            // phase_timer_ is incremented outside the switch.
             // Calculate alpha: starts at 255 (opaque) and goes to 0 (transparent)
             general_fade_alpha_ = 255.0f * (1.0f - (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS));
 
             if (general_fade_alpha_ <= 0.0f) {
                 general_fade_alpha_ = 0.0f; // Clamp to 0
-                phase_timer_ = 0.0f; // Reset timer for the next phase
-                current_phase_ = VPetBattlePhase::ENEMY_REVEAL_SETUP;
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade-in complete. Transitioning to ENEMY_REVEAL_SETUP.");
+                phase_timer_ = 0.0f; // Reset timer for the ENEMY_REVEAL_ANIM phase
+                current_phase_ = VPetBattlePhase::ENEMY_REVEAL_ANIM;
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade-in complete. Transitioning to ENEMY_REVEAL_ANIM.");
             }
             break;
 
-        case VPetBattlePhase::ENEMY_REVEAL_SETUP: {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Setting up enemy for reveal...");
-            PCDisplay* display = game_ptr->get_display();
-            AnimationManager* animManager = game_ptr->getAnimationManager();
-            TextRenderer* textRenderer = game_ptr->getTextRenderer();
-
-            if (!display || !animManager || !textRenderer) {
-                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::ENEMY_REVEAL_SETUP - Missing required game systems (display, animManager, or textRenderer).");
-                // Potentially transition to an error state or pop
-                current_phase_ = VPetBattlePhase::OUTCOME_DISPLAY; // Or some error/end phase
-                return;
-            }
-
-            // 1. Determine Enemy Type (Hardcoded for now)
-            if (enemy_id_ == "DefaultEnemy") { // Removed this->
-                enemy_digimon_type_ = DIGI_GABUMON; // Example
-            } else {
-                // Future: Implement logic to determine enemy type from enemy_id_
-                enemy_digimon_type_ = DIGI_AGUMON; // Fallback
-            }
-
-            // 2. Get Enemy Name String
-            // This is a placeholder. Ideally, you'd have a utility function like AnimationUtils::GetDigimonName(DigimonType type)
-            std::string enemyNameStr = "UNKNOWN";
-            switch(enemy_digimon_type_) {
-                case DIGI_AGUMON: enemyNameStr = "AGUMON"; break;
-                case DIGI_GABUMON: enemyNameStr = "GABUMON"; break;
-                // ... add other Digimon types
-                default: enemyNameStr = "ENEMY"; break;
-            }
-
-            // 3. Load Enemy Animation
-            std::string enemyIdleAnimId = AnimationUtils::GetAnimationId(enemy_digimon_type_, "Idle");
-            const AnimationData* enemyIdleAnimData = animManager->getAnimationData(enemyIdleAnimId);
-            if (enemyIdleAnimData) {
-                enemy_animator_.setAnimation(enemyIdleAnimData);
-            } else {
-                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::ENEMY_REVEAL_SETUP - Failed to get idle animation '%s' for enemy type %d.", enemyIdleAnimId.c_str(), static_cast<int>(enemy_digimon_type_));
-                // Use a fallback animation or handle error
-            }
-
-            // 4. Create Enemy Name Texture
-            if (enemy_name_texture_) { // Release old texture if any
-                SDL_DestroyTexture(enemy_name_texture_);
-                enemy_name_texture_ = nullptr;
-            }
-            SDL_Color textColor = {255, 255, 255, 255}; // White
-            // Pass the renderer from the display object
-            enemy_name_texture_ = textRenderer->renderTextToTexture(display->getRenderer(), enemyNameStr, textColor);
-            if (!enemy_name_texture_) {
-                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::ENEMY_REVEAL_SETUP - Failed to render enemy name texture for '%s'.", enemyNameStr.c_str());
-            }
-
-            // 5. Define Positions
-            int screen_width = 0;
-            int screen_height = 0;
-            display->getWindowSize(screen_width, screen_height);
-
-            // Center enemy sprite on the screen
-            enemy_sprite_position_ = {screen_width / 2, screen_height / 2};
-
-            // Position name texture below the sprite
-            int sprite_frame_height = 0;
-            const AnimationData* currentEnemyAnimData = enemy_animator_.getCurrentAnimationData();
-            if (currentEnemyAnimData && !currentEnemyAnimData->frameRects.empty()) {
-                sprite_frame_height = currentEnemyAnimData->frameRects[0].h; // Height of the first frame
-            } else {
-                sprite_frame_height = 50; // Fallback height if animation data not available or empty
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "BattleState::ENEMY_REVEAL_SETUP - Could not get enemy sprite height from animation, using fallback %dpx", sprite_frame_height);
-            }
-            
-            const int name_gap_pixels = 10; // Gap between bottom of sprite and top of name text
-
-            enemy_name_position_.x = enemy_sprite_position_.x; // Center X for name is same as sprite's center X
-            enemy_name_position_.y = enemy_sprite_position_.y + (sprite_frame_height / 2) + name_gap_pixels; // Y for name (top of name texture)
-
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Enemy reveal setup complete. Enemy: %s, SpritePos: (%d,%d), NamePos: (%d,%d)", enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
-
-            current_phase_ = VPetBattlePhase::ENEMY_REVEAL_ANIM;
-            phase_timer_ = 0.0f; // Reset timer for the new phase (e.g., if ENEMY_REVEAL_ANIM has a duration)
-            }
-            break;
+        // Note: ENEMY_REVEAL_SETUP case is now removed from update()
         
         case VPetBattlePhase::ENEMY_REVEAL_ANIM:
             // Update enemy animation
             enemy_animator_.update(delta_time);
-            // This phase currently waits for player input, handled in handle_input
+            // This phase currently waits for player input or timer, handled in handle_input or below
             if (phase_timer_ >= ENEMY_REVEAL_ANIM_DURATION_SECONDS) { // Wait for a couple of seconds
-                SDL_Log("Enemy reveal animation/pause complete. Awaiting player input.");
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy reveal animation/pause complete. Awaiting player input."); // Changed SDL_Log to SDL_LogInfo
                 current_phase_ = VPetBattlePhase::BATTLE_AWAITING_PLAYER_COMMAND; // Transition to awaiting input
             }
             break;
@@ -239,120 +247,140 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
 }
 
 void BattleState::render(PCDisplay& display) {
-    // Get window/logical screen dimensions
+    // Get window/logical screen dimensions first
     int screen_width = 0;
     int screen_height = 0;
     display.getWindowSize(screen_width, screen_height);
+
+    // Ensure the fade overlay is rendered during the first frame of ENTERING_FADE_IN
+    if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN && general_fade_alpha_ > 0.0f) {
+        display.setDrawBlendMode(SDL_BLENDMODE_BLEND);
+        display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
+        SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height}; // Now screen_width and screen_height are declared
+        display.fillRect(&fullScreenRect);
+    }
+
     // If PCDisplay manages a separate logical size that differs from window size,
     // we might need a display.getLogicalWidth()/Height() or similar in the future.
     // For now, using window size.
 
-    // 1. Render Background Layers (Parallax, similar to AdventureState)
-    SDL_Rect srcRect = {0, 0, 0, 0}; 
-    SDL_Rect destRect = {0, 0, screen_width, screen_height}; // Default dest to full screen
+    // Determine if scene elements (background, enemy) should be rendered
+    bool allow_scene_rendering = false;
+    if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN) {
+        // Always render scene elements; the overlay will manage actual visibility.
+        allow_scene_rendering = true; 
+    } else if (current_phase_ > VPetBattlePhase::ENTERING_FADE_IN && 
+               current_phase_ < VPetBattlePhase::EXITING_FADE_OUT) {
+        // Always render scene if past fade-in and not yet fading out
+        allow_scene_rendering = true;
+    }
 
-    // Layer 2 (Farthest)
-    if (bg_texture_layer2_) {
-        SDL_QueryTexture(bg_texture_layer2_, nullptr, nullptr, &srcRect.w, &srcRect.h);
-        if (srcRect.w > 0) { // Ensure texture width is valid to prevent division by zero or weird behavior
-            // Ensure offset is positive for modulo, or handle negative offsets if they can occur
-            float positive_offset_2 = bg_scroll_offset_2_;
-            while(positive_offset_2 < 0) positive_offset_2 += srcRect.w; // Ensure positive for modulo
-            int bg2_x = static_cast<int>(positive_offset_2) % srcRect.w;
-            
-            destRect.w = srcRect.w; // Use actual texture width for drawing parts
-            destRect.h = srcRect.h; // Use actual texture height
-            // Adjust destRect y if backgrounds are not full height, for now assume they are or fill screen_height
-            destRect.y = (screen_height - srcRect.h) / 2; // Example: center vertically if not full height
-            if (srcRect.h >= screen_height) destRect.y = 0; // If texture taller or same, start at top
-            destRect.h = std::min(srcRect.h, screen_height); // Clip height to screen
-            
-            SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
-            SDL_Rect currentDestRect = destRect;
+    if (allow_scene_rendering) {
+        // 1. Render Background Layers (Parallax, similar to AdventureState)
+        SDL_Rect srcRect = {0, 0, 0, 0}; 
+        SDL_Rect destRect = {0, 0, screen_width, screen_height}; // Default dest to full screen
 
-            currentDestRect.x = -bg2_x;
-            currentDestRect.w = srcRect.w; // Draw full width of texture initially
-            display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+        // Layer 2 (Farthest)
+        if (bg_texture_layer2_) {
+            SDL_QueryTexture(bg_texture_layer2_, nullptr, nullptr, &srcRect.w, &srcRect.h);
+            if (srcRect.w > 0) { // Ensure texture width is valid to prevent division by zero or weird behavior
+                // Ensure offset is positive for modulo, or handle negative offsets if they can occur
+                float positive_offset_2 = bg_scroll_offset_2_;
+                while(positive_offset_2 < 0) positive_offset_2 += srcRect.w; // Ensure positive for modulo
+                int bg2_x = static_cast<int>(positive_offset_2) % srcRect.w;
+                
+                destRect.w = srcRect.w; // Use actual texture width for drawing parts
+                destRect.h = srcRect.h; // Use actual texture height
+                // Adjust destRect y if backgrounds are not full height, for now assume they are or fill screen_height
+                destRect.y = (screen_height - srcRect.h) / 2; // Example: center vertically if not full height
+                if (srcRect.h >= screen_height) destRect.y = 0; // If texture taller or same, start at top
+                destRect.h = std::min(srcRect.h, screen_height); // Clip height to screen
+                
+                SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
+                SDL_Rect currentDestRect = destRect;
 
-            // Draw the wrapped part if visible
-            if (bg2_x != 0) { // If scrolled at all
-                currentDestRect.x = srcRect.w - bg2_x;
-                // Only draw if it's on screen
-                if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                     display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+                currentDestRect.x = -bg2_x;
+                currentDestRect.w = srcRect.w; // Draw full width of texture initially
+                display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+
+                // Draw the wrapped part if visible
+                if (bg2_x != 0) { // If scrolled at all
+                    currentDestRect.x = srcRect.w - bg2_x;
+                    // Only draw if it's on screen
+                    if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                         display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+                    }
+                    // Also handle if the initial part scrolled completely off left
+                    currentDestRect.x = -bg2_x - srcRect.w;
+                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                         display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+                     }
                 }
-                // Also handle if the initial part scrolled completely off left
-                currentDestRect.x = -bg2_x - srcRect.w;
-                 if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                     display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
-                 }
             }
         }
-    }
-    // Layer 1 (Middle)
-    if (bg_texture_layer1_) {
-        SDL_QueryTexture(bg_texture_layer1_, nullptr, nullptr, &srcRect.w, &srcRect.h);
-        if (srcRect.w > 0) {
-            float positive_offset_1 = bg_scroll_offset_1_;
-            while(positive_offset_1 < 0) positive_offset_1 += srcRect.w;
-            int bg1_x = static_cast<int>(positive_offset_1) % srcRect.w;
+        // Layer 1 (Middle)
+        if (bg_texture_layer1_) {
+            SDL_QueryTexture(bg_texture_layer1_, nullptr, nullptr, &srcRect.w, &srcRect.h);
+            if (srcRect.w > 0) {
+                float positive_offset_1 = bg_scroll_offset_1_;
+                while(positive_offset_1 < 0) positive_offset_1 += srcRect.w;
+                int bg1_x = static_cast<int>(positive_offset_1) % srcRect.w;
 
-            destRect.w = srcRect.w;
-            destRect.h = srcRect.h;
-            destRect.y = (screen_height - srcRect.h) / 2;
-            if (srcRect.h >= screen_height) destRect.y = 0;
-            destRect.h = std::min(srcRect.h, screen_height);
-            SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
-            SDL_Rect currentDestRect = destRect;
+                destRect.w = srcRect.w;
+                destRect.h = srcRect.h;
+                destRect.y = (screen_height - srcRect.h) / 2;
+                if (srcRect.h >= screen_height) destRect.y = 0;
+                destRect.h = std::min(srcRect.h, screen_height);
+                SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
+                SDL_Rect currentDestRect = destRect;
 
-            currentDestRect.x = -bg1_x;
-            display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-            if (bg1_x != 0) {
-                currentDestRect.x = srcRect.w - bg1_x;
-                 if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                    display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-                 }
-                currentDestRect.x = -bg1_x - srcRect.w;
-                 if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                     display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-                 }
+                currentDestRect.x = -bg1_x;
+                display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                if (bg1_x != 0) {
+                    currentDestRect.x = srcRect.w - bg1_x;
+                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                        display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                     }
+                    currentDestRect.x = -bg1_x - srcRect.w;
+                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                         display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                     }
+                }
             }
         }
-    }
-    // Layer 0 (Nearest)
-    if (bg_texture_layer0_) {
-        SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
-        if (srcRect.w > 0) {
-            float positive_offset_0 = bg_scroll_offset_0_;
-            while(positive_offset_0 < 0) positive_offset_0 += srcRect.w;
-            int bg0_x = static_cast<int>(positive_offset_0) % srcRect.w;
+        // Layer 0 (Nearest)
+        if (bg_texture_layer0_) {
+            SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
+            if (srcRect.w > 0) {
+                float positive_offset_0 = bg_scroll_offset_0_;
+                while(positive_offset_0 < 0) positive_offset_0 += srcRect.w;
+                int bg0_x = static_cast<int>(positive_offset_0) % srcRect.w;
 
-            destRect.w = srcRect.w;
-            destRect.h = srcRect.h;
-            destRect.y = (screen_height - srcRect.h) / 2;
-            if (srcRect.h >= screen_height) destRect.y = 0;
-            destRect.h = std::min(srcRect.h, screen_height);
-            SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
-            SDL_Rect currentDestRect = destRect;
+                destRect.w = srcRect.w;
+                destRect.h = srcRect.h;
+                destRect.y = (screen_height - srcRect.h) / 2;
+                if (srcRect.h >= screen_height) destRect.y = 0;
+                destRect.h = std::min(srcRect.h, screen_height);
+                SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
+                SDL_Rect currentDestRect = destRect;
 
-            currentDestRect.x = -bg0_x;
-            display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-            if (bg0_x != 0) {
-                currentDestRect.x = srcRect.w - bg0_x;
-                 if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                    display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-                 }
-                currentDestRect.x = -bg0_x - srcRect.w;
-                 if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                     display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-                 }
+                currentDestRect.x = -bg0_x;
+                display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                if (bg0_x != 0) {
+                    currentDestRect.x = srcRect.w - bg0_x;
+                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                        display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                     }
+                    currentDestRect.x = -bg0_x - srcRect.w;
+                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                         display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                     }
+                }
             }
-        }
-    }
+        } // End of Layer 0 rendering
 
-    // --- NEW: Render Enemy and Name (after backgrounds, before fade overlay if any) ---
-    if (current_phase_ >= VPetBattlePhase::ENEMY_REVEAL_ANIM && current_phase_ < VPetBattlePhase::EXITING_FADE_OUT) { // Only render if setup is done and not yet fading out
-        // Render Enemy Sprite
+        // Render Enemy Sprite and Name (now inside the same conditional as background)
+        // The previous specific 'if' condition for enemy rendering is removed as it's covered by allow_scene_rendering.
         const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
         if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { // Changed textureSheet to textureAtlas
             SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
@@ -379,10 +407,10 @@ void BattleState::render(PCDisplay& display) {
             };
             display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
         }
-    }
-    // --- END NEW ---
+    } // End of if (allow_scene_rendering)
 
     // 2. Render Fade-In Overlay (if active)
+    // This overlay is drawn on top of everything else during the fade-in.
     if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN && general_fade_alpha_ > 0.0f) {
         display.setDrawBlendMode(SDL_BLENDMODE_BLEND); // Corrected method name
         display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));

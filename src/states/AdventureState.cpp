@@ -111,11 +111,13 @@ void AdventureState::enter() {
 
         if (!idleAnimData) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter - Failed to set animation for new partner %d", (int)current_digimon_);
-        } else {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter - Updated partner to %d and set animation to %s", (int)current_digimon_, idleAnimId.c_str());
-        }
+        } else { /* Intentional empty else based on provided code */ }
     }
     firstWalkUpdate_ = true;
+
+    // Reset fade state upon entering AdventureState
+    is_fading_to_battle_ = false;
+    battle_fade_alpha_ = 0.0f;
 }
 
 
@@ -206,35 +208,36 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     if (is_fading_to_battle_) {
         battle_fade_alpha_ += (255.0f / BATTLE_FADE_DURATION_SECONDS) * delta_time;
         if (battle_fade_alpha_ >= 255.0f) {
-            battle_fade_alpha_ = 255.0f;
+            battle_fade_alpha_ = 255.0f; // Cap alpha at 255
             // Transition to BattleState
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Fade to black complete. Requesting BattleState.");
-            // Ensure PlayerData is available for BattleState
+            
             PlayerData* pd = game_ptr->getPlayerData();
             if (!pd) {
                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: PlayerData is null, cannot start battle.");
-                // Potentially handle this error, e.g., by not starting the battle
-                is_fading_to_battle_ = false; // Reset fade
+                is_fading_to_battle_ = false; // Reset fade as battle cannot start
                 battle_fade_alpha_ = 0.0f;
-                total_steps_taken_in_area_ = 0; // Reset steps to avoid immediate re-trigger
+                total_steps_taken_in_area_ = 0; 
                 return;
             }
-            // Pass background textures and current scroll offsets to BattleState
+
             game_ptr->requestPushState(std::make_unique<BattleState>(
                 game_ptr, 
                 pd->currentPartner, 
                 current_area_enemy_id_,
-                bgTexture0_, // Pass background layer 0
-                bgTexture1_, // Pass background layer 1
-                bgTexture2_, // Pass background layer 2
-                bg_scroll_offset_0_, // Pass scroll offset for layer 0
-                bg_scroll_offset_1_, // Pass scroll offset for layer 1
-                bg_scroll_offset_2_  // Pass scroll offset for layer 2
+                bgTexture0_, 
+                bgTexture1_, 
+                bgTexture2_, 
+                bg_scroll_offset_0_, 
+                bg_scroll_offset_1_, 
+                bg_scroll_offset_2_
             ));
             
             total_steps_taken_in_area_ = 0; // Reset steps for the area
-            is_fading_to_battle_ = false; // Reset fade state
-            // battle_fade_alpha_ is reset when fade completes or if battle starts and AdventureState re-enters
+            // DO NOT set is_fading_to_battle_ to false here.
+            // Let AdventureState::enter() handle resetting the fade status
+            // when this state becomes active again.
+            // battle_fade_alpha_ remains 255.0f to keep the screen black.
         }
         return; // Don't process other game logic while fading to battle
     }
