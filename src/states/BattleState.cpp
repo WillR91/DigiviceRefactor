@@ -363,7 +363,8 @@ void BattleState::render(PCDisplay& display) {
             display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR, SDL_FLIP_HORIZONTAL); 
         }
 
-        // Render Enemy Name
+        // Render Enemy Name -- MOVED AFTER LAYER 0
+        /* 
         if (enemy_name_texture_) {
             int name_w, name_h;
             SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_w, &name_h);
@@ -376,6 +377,7 @@ void BattleState::render(PCDisplay& display) {
             };
             display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
         }
+        */
 
         // Layer 0 (Nearest)
         if (bg_texture_layer0_) {
@@ -407,6 +409,20 @@ void BattleState::render(PCDisplay& display) {
                 }
             }
         } // End of Layer 0 rendering
+
+        // Render Enemy Name (AFTER Layer 0)
+        if (enemy_name_texture_) {
+            int name_w, name_h;
+            SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_w, &name_h);
+            // Center the name texture horizontally at enemy_name_position_.x, use enemy_name_position_.y as top
+            SDL_Rect nameDestR = {
+                enemy_name_position_.x - name_w / 2, 
+                enemy_name_position_.y, 
+                name_w, 
+                name_h
+            };
+            display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
+        }
 
         // Render Enemy Sprite and Name (now inside the same conditional as background)
         // The previous specific 'if' condition for enemy rendering is removed as it's covered by allow_scene_rendering.
