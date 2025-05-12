@@ -36,9 +36,13 @@ public:
     virtual void enter() {}; // Default empty implementation
     // Called when the state is about to be removed or covered
     virtual void exit() {};  // Default empty implementation
+    // Called when the state is paused (another state is pushed on top)
+    virtual void pause() {}; // Default empty implementation
+    // Called when the state is resumed (the state on top is popped)
+    virtual void resume() {}; // Default empty implementation
     // <<< ----------------------------- >>>
 
-    // <<<--- MODIFIED function signatures (already present) --->>>
+    // <<<--- MODIFIED function signatures (already present) --->>
     virtual void handle_input(InputManager& inputManager, PlayerData* playerData) = 0;
     virtual void update(float delta_time, PlayerData* playerData) = 0;
     virtual void render(PCDisplay& display) = 0; // Assuming render needs the display object

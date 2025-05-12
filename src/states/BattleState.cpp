@@ -22,6 +22,16 @@ void BattleState::exit() {
     // Cleanup logic (formerly close())
 }
 
+void BattleState::pause() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState pause");
+    // Pause logic
+}
+
+void BattleState::resume() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState resume");
+    // Resume logic
+}
+
 void BattleState::handle_input(InputManager& inputManager, PlayerData* playerData) {
     // Input handling logic
 }

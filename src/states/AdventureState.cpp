@@ -142,6 +142,7 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
         SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Input: STEP pressed");
         if (stepsInWindow_ < MAX_STEPS_PER_WINDOW) {
             stepsInWindow_++; // Consume a slot in the window
+            queued_steps_++; // Actually queue the step to be processed
             if (playerData) {
                 playerData->stepsTakenThisChapter++;
                 playerData->totalSteps++;
@@ -354,11 +355,11 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
 // --- render ---
 void AdventureState::render(PCDisplay& display) {
     // Add debugging to verify rendering is happening
-    static int frameCount = 0;
-    if (frameCount % 60 == 0) { // Log every 60 frames to avoid spamming
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState rendering frame: %d", frameCount);
-    }
-    frameCount++;
+    // static int frameCount = 0; // Commented out
+    // if (frameCount % 60 == 0) { // Log every 60 frames to avoid spamming // Commented out
+    //     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState rendering frame: %d", frameCount); // Commented out
+    // } // Commented out
+    // frameCount++; // Commented out
 
     SDL_Renderer* renderer = display.getRenderer();
     if (!renderer) {
