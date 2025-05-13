@@ -83,38 +83,69 @@ namespace Digivice {
     // --- Private Helper Methods --- 
 
     void MapSystemState::load_map_data() {
-        // For now, this will contain hardcoded data for File Island and its nodes
-        // This will be expanded significantly
-        continents_.clear(); // Clear any existing data
+        continents_.clear(); 
 
         // --- Define File Island ---
         ContinentData fileIsland;
         fileIsland.id = "file_island";
         fileIsland.name = "File Island";
-        fileIsland.mapImagePath = "assets/backgrounds/environments/file_island/file_island_map.png"; // Placeholder path
+        fileIsland.mapImagePath = "assets/backgrounds/environments/file_island/file_island_map.png";
 
-        // TODO: Define NodeData for File Island's nodes here later
-        // Example for one node (to be filled with actual data from your assets folder):
-        /*
-        NodeData node1;
-        node1.id = "file_island_node_01";
-        node1.name = "Native Forest"; // Or whatever your first node is called
-        node1.continentId = fileIsland.id;
-        node1.mapPositionX = 100.0f; // Placeholder
-        node1.mapPositionY = 100.0f; // Placeholder
-        node1.unlockedSpritePath = "assets/ui/node_white.png"; // Placeholder
-        node1.bossSpritePath = "assets/sprites/enemies/some_boss_idle.png"; // Placeholder
-        node1.totalSteps = 500;
-        // Background Layers (Foreground, Midground, Background)
-        node1.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/01_native_forest/layer_0.png"}, 0.5f)); // FG
-        node1.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/01_native_forest/layer_1.png"}, 0.25f)); // MG
-        node1.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/01_native_forest/layer_2.png"}, 0.1f)); // BG
-        fileIsland.nodes.push_back(node1);
-        */
+        // --- Define Node: 01_tropical_jungle ---
+        NodeData tropicalJungleNode;
+        tropicalJungleNode.id = "file_island_node_01";
+        tropicalJungleNode.name = "Tropical Jungle";
+        tropicalJungleNode.continentId = fileIsland.id;
+        tropicalJungleNode.mapPositionX = 100.0f; // Placeholder X on continent map
+        tropicalJungleNode.mapPositionY = 150.0f; // Placeholder Y on continent map
+        tropicalJungleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png"; // Placeholder
+        tropicalJungleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_tj_idle.png"; // Placeholder
+        tropicalJungleNode.totalSteps = 400;    // Placeholder
+        tropicalJungleNode.isUnlocked = true;   // Unlocked for prototype
+
+        // Background Layers for Tropical Jungle (Order: FG, MG, BG as per docs)
+        // Layer 0: Foreground
+        tropicalJungleNode.adventureBackgroundLayers.push_back(
+            BackgroundLayerData(
+                {"assets/backgrounds/environments/file_island/01_tropical_jungle/layer_0.png"}, // texturePaths
+                0.5f,  // parallaxFactorX
+                0.0f   // parallaxFactorY (assuming horizontal scroll only)
+            )
+        );
+        // Layer 1: Midground
+        tropicalJungleNode.adventureBackgroundLayers.push_back(
+            BackgroundLayerData(
+                {"assets/backgrounds/environments/file_island/01_tropical_jungle/layer_1.png"}, // texturePaths
+                0.25f, // parallaxFactorX
+                0.0f   // parallaxFactorY
+            )
+        );
+        // Layer 2: Background
+        tropicalJungleNode.adventureBackgroundLayers.push_back(
+            BackgroundLayerData(
+                {"assets/backgrounds/environments/file_island/01_tropical_jungle/layer_2.png"}, // texturePaths
+                0.1f,  // parallaxFactorX
+                0.0f   // parallaxFactorY
+            )
+        );
+        fileIsland.nodes.push_back(tropicalJungleNode);
+
+        // TODO: Add other nodes for File Island here later (Lake, Gear Savannah, etc.)
 
         continents_.push_back(fileIsland);
-        currentContinentIndex_ = 0; // Default to the first continent
-        currentNodeIndex_ = 0;    // Default to the first node if any exist
+
+        // Initialize indices
+        if (!continents_.empty()) {
+            currentContinentIndex_ = 0;
+            if (!continents_[0].nodes.empty()) {
+                currentNodeIndex_ = 0;
+            } else {
+                currentNodeIndex_ = -1; // No nodes on the current continent
+            }
+        } else {
+            currentContinentIndex_ = -1; // No continents
+            currentNodeIndex_ = -1;    // No nodes
+        }
     }
 
     void MapSystemState::handle_input_continent_selection(float dt) {}
