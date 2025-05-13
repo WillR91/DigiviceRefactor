@@ -1,0 +1,39 @@
+{
+  "frames": {
+    "1505_5_0.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 1420.8000000000002,
+        "h": 399.6
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 74,
+        "w": 1420.8000000000002,
+        "h": 399.6
+      },
+      "sourceSize": {
+        "w": 1420.8000000000002,
+        "h": 473.6
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "texture4.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1421,
+      "h": 400
+    },
+    "scale": 3.7
+  }
+}

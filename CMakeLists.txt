@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME}
     src/states/PartnerSelectState.cpp
     src/states/ProgressState.cpp
     src/states/BattleState.cpp
+    src/States/MapSystemState.cpp
 )
 
 # --- Include Directories --- 

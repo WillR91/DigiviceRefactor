@@ -52,6 +52,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\States\MapSystemState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Z:\DigiviceRefactor\CMakeLists.txt" />

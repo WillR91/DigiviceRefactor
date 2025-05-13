@@ -16,7 +16,8 @@ enum class StateType {
     PartnerSelect,
     Transition,
     Progress,       // New state for tracking progress/achievements
-    Battle          // <<< ADDED Battle state type
+    Battle,         // <<< ADDED Battle state type // <<< COMMA ADDED HERE
+    MAP_SYSTEM
     // Add future states here:
     // Status,
     // MapView,
