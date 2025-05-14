@@ -302,8 +302,9 @@ namespace Digivice {
             // Corrected: getTextWidth to getTextDimensions().x
             SDL_Point textSize = textRenderer->getTextDimensions(continent.name); // getTextDimensions returns SDL_Point {w, h}
             int textX = (screenWidth - textSize.x) / 2;
+            int textY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - static_cast<float>(textSize.y) / 2.0f); // Centered around 75% mark
             // Corrected: renderText to drawText
-            textRenderer->drawText(display.getRenderer(), continent.name, textX, 20, 1.5f); // Increased scale for visibility
+            textRenderer->drawText(display.getRenderer(), continent.name, textX, textY, 0.5f); // Adjusted Y position
         }
     }
 
@@ -353,7 +354,7 @@ namespace Digivice {
         
         // Render continent name (already uppercase from load_map_data)
         SDL_Point continentNameSize = textRenderer->getTextDimensions(continent.name);
-        textRenderer->drawText(display.getRenderer(), continent.name, (screenWidth - continentNameSize.x) / 2, 20, 1.5f);
+        textRenderer->drawText(display.getRenderer(), continent.name, (screenWidth - continentNameSize.x) / 2, 20, 1.5f); // Kept at top
 
 
         if (continent.nodes.empty()) {
@@ -376,7 +377,9 @@ namespace Digivice {
         const auto& selectedNode = continent.nodes[currentNodeIndex_];
         std::string selectedNodeText = "SELECTED: " + selectedNode.name; // Node name is already uppercase
         SDL_Point nodeTextSize = textRenderer->getTextDimensions(selectedNodeText);
-        textRenderer->drawText(display.getRenderer(), selectedNodeText, (screenWidth - nodeTextSize.x) / 2, screenHeight - 50, 1.0f);
+        int nodeTextX = (screenWidth - nodeTextSize.x) / 2;
+        int nodeTextY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - static_cast<float>(nodeTextSize.y) / 2.0f); // Centered around 75% mark
+        textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, 1.0f); // Adjusted Y position
 
         // TODO: Render node sprites on the map
         // TODO: Implement selection highlighting
