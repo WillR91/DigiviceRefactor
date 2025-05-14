@@ -1,9 +1,9 @@
-#include "States/BattleState.h"
+#include "states/BattleState.h"
 #include "Core/Game.h"
 #include "Core/InputManager.h"
 #include "Core/PlayerData.h" 
-#include "Platform/PC/pc_display.h"
-#include "Utils/AnimationUtils.h" // Added
+#include "platform/pc/pc_display.h"
+#include "utils/AnimationUtils.h" // Added
 #include "Core/AnimationManager.h" // Added (ensure it's here)
 #include "graphics/AnimationData.h"  // Added (ensure it's here)
 #include "ui/TextRenderer.h"    // Corrected Path

@@ -9,18 +9,19 @@
 #include "core/AssetManager.h"
 #include "states/GameState.h"       // Includes StateType enum now
 #include "states/TransitionState.h" // <<< ADDED to make TransitionEffectType visible
-#include "States/MapSystemState.h" // Added for MapSystemState
+#include "states/MapSystemState.h" // Fixed capitalization
 #include "core/InputManager.h"
 #include "core/PlayerData.h"
 #include "core/GraphicsTypes.h" // For Color struct
+#include "utils/ConfigManager.h" // For configuration access
 
 // Forward declarations
 class TextRenderer;
 class AnimationManager;
 
-// Define screen size constants
-const int SMALL_SCREEN_WIDTH = 172;
-const int SMALL_SCREEN_HEIGHT = 172;
+// These constants will be used as defaults if the configuration file doesn't specify values
+const int DEFAULT_SMALL_SCREEN_WIDTH = 172;
+const int DEFAULT_SMALL_SCREEN_HEIGHT = 172;
 
 // Add this near the top of the file, after includes but before any class definitions
 enum class FadeSequenceStep {

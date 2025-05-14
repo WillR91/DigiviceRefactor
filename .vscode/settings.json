@@ -3,6 +3,7 @@
     "files.associations": {
         "memory": "cpp",
         "vector": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "xstring": "cpp"
     }
 }

@@ -9,7 +9,7 @@
 #include "graphics/AnimationData.h"
 #include "ui/TextRenderer.h"
 #include "platform/pc/pc_display.h"
-#include "Utils/AnimationUtils.h"
+#include "utils/AnimationUtils.h"
 #include "core/GameConstants.h" // Added include
 #include <SDL_log.h>
 #include <string> // For std::to_string

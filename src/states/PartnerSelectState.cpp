@@ -11,7 +11,7 @@
 #include "graphics/Animator.h"         // For digimonAnimator_
 #include "graphics/AnimationData.h"    // For AnimationData struct
 #include "core/AnimationManager.h"     // To get AnimationData
-#include "Utils/AnimationUtils.h"      // <<< ADDED THIS INCLUDE >>>
+#include "utils/AnimationUtils.h"      // <<< ADDED THIS INCLUDE >>>
 #include <SDL_log.h>
 #include <stdexcept>                   // For runtime_error
 // Removed fstream, map, nlohmann/json as they are not used directly for font loading anymore

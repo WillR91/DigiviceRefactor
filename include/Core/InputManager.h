@@ -22,6 +22,12 @@ public:
     // void update();
 
     // --- Query Methods (Called by game states) ---
+    
+    // Save current key bindings to config file
+    bool saveKeyBindingsToConfig();
+    
+    // Rebind a specific action to a new key
+    bool rebindAction(GameAction action, SDL_Scancode newKey);
 
     // Check if an action was just triggered in the current frame
     bool isActionJustPressed(GameAction action) const;
@@ -38,13 +44,11 @@ private:
     // Maps an abstract GameAction to its current state
     std::map<GameAction, bool> currentActionState_;
     // Maps an abstract GameAction to its state in the *previous* frame
-    std::map<GameAction, bool> previousActionState_;
-
-    // Maps SDL Scancodes to our GameActions
+    std::map<GameAction, bool> previousActionState_;    // Maps SDL Scancodes to our GameActions
     // Customize this mapping!
-    std::map<SDL_Scancode, GameAction> keyToActionMap_;
-
-    // Helper to initialize the key map
+    std::map<SDL_Scancode, GameAction> keyToActionMap_;    // Helper methods to initialize key mappings
     void initializeDefaultKeyMap();
+    void loadKeysFromConfig();
+    SDL_Scancode stringToScancode(const std::string& keyName);
     void handleToggleScreenSizeAction(); // Added to handle screen size toggle
 };

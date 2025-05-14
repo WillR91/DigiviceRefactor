@@ -1,5 +1,5 @@
 // src/Utils/AnimationUtils.cpp
-#include "Utils/AnimationUtils.h" // Include the header we just created
+#include "utils/AnimationUtils.h" // Include the header we just created
 #include <SDL_log.h>              // For logging warnings on unknown types
 
 // Note: "../entities/Digimon.h" is already included via AnimationUtils.h

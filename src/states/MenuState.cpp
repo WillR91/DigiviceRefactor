@@ -19,9 +19,8 @@
 // #include "vendor/nlohmann/json.hpp" // No longer needed for loadFontDataFromJson
 
 #include "states/MapSystemState.h" // Added include for MapSystemState
-
-// Need to potentially include PartnerSelectState.h if pushing it directly
-#include "states/PartnerSelectState.h"
+#include "states/PartnerSelectState.h" // For PartnerSelectState
+#include "states/SettingsState.h" // For SettingsState
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
     GameState(game),
@@ -99,12 +98,16 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
             } else if (selectedOption == "TRAVEL") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for TRAVEL not implemented.");
                 // Potentially another state or direct action
-            } else if (selectedOption == "ITEMS") {
-                std::vector<std::string> opts = {"VIEW", "USE", "DROP", "BACK"};
+            } else if (selectedOption == "ITEMS") {                std::vector<std::string> opts = {"VIEW", "USE", "DROP", "BACK"};
                 auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
                 game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "SAVE") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for SAVE not implemented.");
+            } else if (selectedOption == "SETTINGS") {
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Opening Settings menu");
+                // Create and transition to a settings state
+                auto settingsState = std::make_unique<SettingsState>(game_ptr);
+                game_ptr->requestFadeToState(std::move(settingsState), 0.3f, false);
             } else if (selectedOption == "BACK") {
                 // Fade out current sub-menu, pop it, then fade in the parent menu below
                 game_ptr->requestFadeToState(nullptr, 0.3f, true); 

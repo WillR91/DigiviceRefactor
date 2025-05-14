@@ -387,23 +387,26 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\Game_fade.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\AnimationManager.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\Utils\AnimationUtils.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\ui\TextRenderer.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\bitmapfont.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\assetmanager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\game.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\game_fade.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animation.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animation.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\Animator.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\TransitionState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\PartnerSelectState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\ProgressState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\States\MapSystemState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\mapsystemstate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\menustate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\utils\animationutils.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\widget.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

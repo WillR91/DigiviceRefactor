@@ -13,7 +13,7 @@ public:
     PCDisplay();
     ~PCDisplay() override;
 
-    bool init(const char* title, int width, int height) override;
+    bool init(const char* title, int width, int height, bool vsync = true) override;
     void clear(uint16_t color) override; // Can be updated to use SDL_Color for consistency
     void clear(Uint8 r, Uint8 g, Uint8 b, Uint8 a); // Overload for RGBA clear
 

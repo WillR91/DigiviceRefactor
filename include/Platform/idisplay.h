@@ -7,7 +7,7 @@ class IDisplay {
 public:
     virtual ~IDisplay() = default;
 
-    virtual bool init(const char* title, int width, int height) = 0;
+    virtual bool init(const char* title, int width, int height, bool vsync = true) = 0;
     virtual void clear(uint16_t color) = 0;
     // Added to get window dimensions for dynamic layout calculations
     void getWindowSize(int& width, int& height) const; // Changed to const as it doesn't modify the display object

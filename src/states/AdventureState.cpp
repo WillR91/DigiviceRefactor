@@ -12,9 +12,9 @@
 #include "core/InputManager.h"
 #include "core/GameAction.h"
 #include "core/PlayerData.h"
-#include "Utils/AnimationUtils.h"
+#include "utils/AnimationUtils.h"
 #include "core/GameConstants.h"     // Added for game constants
-#include "States/BattleState.h"       // Forward declare or include for BattleState later
+#include "states/BattleState.h"       // Forward declare or include for BattleState later
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -123,12 +123,10 @@ void AdventureState::enter() {
 
 // --- handle_input ---
 void AdventureState::handle_input(InputManager& inputManager, PlayerData* playerData) {
-    if (!game_ptr || game_ptr->getCurrentState() != this) return;
-
-    // Menu Activation
+    if (!game_ptr || game_ptr->getCurrentState() != this) return;    // Menu Activation
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "AdventureState: Confirm action. Requesting fade to MenuState.");
-        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "EXIT"};
+        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "SETTINGS", "EXIT"};
         auto menuState = std::make_unique<MenuState>(game_ptr, mainMenuItems);
         game_ptr->requestFadeToState(std::move(menuState), 0.3f, false); // Fade for 0.3s, pop AdventureState
         return;

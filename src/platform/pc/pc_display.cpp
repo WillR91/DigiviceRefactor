@@ -10,7 +10,7 @@ PCDisplay::~PCDisplay() {
     close(); 
 }
 
-bool PCDisplay::init(const char* title, int width, int height) {
+bool PCDisplay::init(const char* title, int width, int height, bool vsync) {
     if (initialized_) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay::init called when already initialized.");
         return true;
@@ -28,7 +28,16 @@ bool PCDisplay::init(const char* title, int width, int height) {
         return false; 
     }
 
-    renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    // Set up renderer flags based on vsync preference
+    Uint32 rendererFlags = SDL_RENDERER_ACCELERATED;
+    if (vsync) {
+        rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VSync enabled");
+    } else {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VSync disabled");
+    }
+
+    renderer_ = SDL_CreateRenderer(window_, -1, rendererFlags);
     if (!renderer_) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Renderer could not be created! SDL Error: %s", SDL_GetError());
         SDL_DestroyWindow(window_); 

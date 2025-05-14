@@ -10,6 +10,7 @@
 #include "core/AssetManager.h"
 #include "ui/TextRenderer.h"
 #include "core/AnimationManager.h"
+#include "utils/ConfigManager.h" // Add ConfigManager include
 
 #include <SDL_log.h>
 #include <stdexcept>
@@ -44,10 +45,22 @@ bool Game::init(const std::string& title, int width, int height) {
     else { SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "SDL_HINT_RENDER_SCALE_QUALITY set to 0 (Nearest Neighbor)."); }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL Initialized.");
 
-    if (!display.init(title.c_str(), width, height)) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); SDL_Quit(); return false; }
-    original_width_ = width; // Store original width
-    original_height_ = height; // Store original height
+    // Get small screen size from config (if not found, use defaults)
+    int smallScreenWidth = ConfigManager::getValue<int>("display.smallScreenWidth", DEFAULT_SMALL_SCREEN_WIDTH);
+    int smallScreenHeight = ConfigManager::getValue<int>("display.smallScreenHeight", DEFAULT_SMALL_SCREEN_HEIGHT);
+    bool vsync = ConfigManager::getValue<bool>("display.vsync", true);
+    
+    // Store the original received dimensions (from main)
+    original_width_ = width;
+    original_height_ = height;
     is_small_screen_ = false; // Ensure it starts with normal size
+    
+    // Pass vsync setting from config
+    if (!display.init(title.c_str(), width, height, vsync)) { 
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); 
+        SDL_Quit(); 
+        return false; 
+    }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
 
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
@@ -186,15 +199,19 @@ void Game::run() {
                 quit_game();
             }
             inputManager.processEvent(event);
-        }
-
-        // Handle screen toggle action
+        }        // Handle screen toggle action
         if (inputManager.isActionJustPressed(GameAction::TOGGLE_SCREEN_SIZE)) {
             is_small_screen_ = !is_small_screen_;
             if (is_small_screen_) {
-                display.setWindowSize(SMALL_SCREEN_WIDTH, SMALL_SCREEN_HEIGHT);
+                // Get small screen size from config
+                int smallScreenWidth = ConfigManager::getValue<int>("display.smallScreenWidth", DEFAULT_SMALL_SCREEN_WIDTH);
+                int smallScreenHeight = ConfigManager::getValue<int>("display.smallScreenHeight", DEFAULT_SMALL_SCREEN_HEIGHT);
+                
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Toggling to small screen mode: %dx%d", smallScreenWidth, smallScreenHeight);
+                display.setWindowSize(smallScreenWidth, smallScreenHeight);
                 display.setLogicalSize(original_width_, original_height_); // Render at original size, scale down
             } else {
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Toggling to normal screen mode: %dx%d", original_width_, original_height_);
                 display.setWindowSize(original_width_, original_height_);
                 display.setLogicalSize(original_width_, original_height_); // Reset logical size
             }

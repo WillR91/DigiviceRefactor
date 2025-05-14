@@ -20,26 +20,17 @@ message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 message(STATUS "SDL2 Include Dirs: ${SDL2_INCLUDE_DIRS}")
 message(STATUS "SDL2 Libraries: ${SDL2_LIBRARIES}")
 
+# --- Collect Source Files ---
+file(GLOB_RECURSE SOURCE_FILES 
+    "src/*.cpp"
+    "src/*/*.cpp"
+    "src/*/*/*.cpp" # Handles src/platform/pc/*.cpp
+)
+
 # --- Add Your Source Files ---
 add_executable(${PROJECT_NAME}
     main.cpp
-    src/core/Game.cpp
-    src/core/Game_fade.cpp
-    src/core/InputManager.cpp
-    src/core/AnimationManager.cpp
-    src/Utils/AnimationUtils.cpp
-    src/ui/TextRenderer.cpp
-    src/platform/pc/pc_display.cpp
-    src/core/AssetManager.cpp
-    src/graphics/Animation.cpp 
-    src/graphics/Animator.cpp
-    src/states/AdventureState.cpp
-    src/states/MenuState.cpp
-    src/states/TransitionState.cpp
-    src/states/PartnerSelectState.cpp
-    src/states/ProgressState.cpp
-    src/states/BattleState.cpp
-    src/States/MapSystemState.cpp
+    ${SOURCE_FILES}
 )
 
 # --- Include Directories --- 
