@@ -38,18 +38,19 @@ namespace Digivice {
         int currentContinentIndex_;
         int currentNodeIndex_;
 
-        // Helper methods for each view (to be implemented later)
-        void handle_input_continent_selection(float dt);
-        void handle_input_node_selection(float dt);
-        void handle_input_node_detail(float dt);
+        // Helper methods for each view
+        // Corrected signatures to take InputManager&
+        void handle_input_continent_selection(InputManager& inputManager);
+        void handle_input_node_selection(InputManager& inputManager);
+        void handle_input_node_detail(InputManager& inputManager);
 
         void update_continent_selection(float dt);
         void update_node_selection(float dt);
         void update_node_detail(float dt);
 
-        void render_continent_selection();
-        void render_node_selection();
-        void render_node_detail();
+        void render_continent_selection(PCDisplay& display); // Added PCDisplay& display
+        void render_node_selection(PCDisplay& display);   // Added PCDisplay& display (proactively)
+        void render_node_detail(PCDisplay& display);    // Added PCDisplay& display (proactively)
 
         void load_map_data(); // For initial hardcoded data loading
     };

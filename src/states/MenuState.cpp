@@ -18,6 +18,8 @@
 #include <memory>                 // Needed for std::make_unique
 // #include "vendor/nlohmann/json.hpp" // No longer needed for loadFontDataFromJson
 
+#include "states/MapSystemState.h" // Added include for MapSystemState
+
 // Need to potentially include PartnerSelectState.h if pushing it directly
 #include "states/PartnerSelectState.h"
 
@@ -85,6 +87,18 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
                 std::vector<std::string> opts = {"VIEW MAP", "TRAVEL", "BACK"};
                 auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
                 game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
+            } else if (selectedOption == "VIEW MAP") { // This is the option within the "MAP" submenu
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VIEW MAP selected. Changing state to MapSystemState.");
+                // Fade out current MenuState (the "VIEW MAP" submenu), pop it, then fade to MapSystemState
+                // To achieve this, we first request the MapSystemState. The fade system should handle the current.
+                // We want to pop the current submenu and then push MapSystemState.
+                // The requestFadeToState with popCurrent=true will pop the current (sub-menu)
+                // and then push the new state (MapSystemState).
+                game_ptr->requestFadeToState(std::make_unique<Digivice::MapSystemState>(game_ptr), 0.3f, true);
+
+            } else if (selectedOption == "TRAVEL") {
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for TRAVEL not implemented.");
+                // Potentially another state or direct action
             } else if (selectedOption == "ITEMS") {
                 std::vector<std::string> opts = {"VIEW", "USE", "DROP", "BACK"};
                 auto subMenu = std::make_unique<MenuState>(game_ptr, opts);

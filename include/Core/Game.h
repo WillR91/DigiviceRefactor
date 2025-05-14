@@ -9,6 +9,7 @@
 #include "core/AssetManager.h"
 #include "states/GameState.h"       // Includes StateType enum now
 #include "states/TransitionState.h" // <<< ADDED to make TransitionEffectType visible
+#include "States/MapSystemState.h" // Added for MapSystemState
 #include "core/InputManager.h"
 #include "core/PlayerData.h"
 #include "core/GraphicsTypes.h" // For Color struct
