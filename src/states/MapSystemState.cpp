@@ -299,12 +299,14 @@ namespace Digivice {
         }
 
         if (textRenderer) {
-            // Corrected: getTextWidth to getTextDimensions().x
-            SDL_Point textSize = textRenderer->getTextDimensions(continent.name); // getTextDimensions returns SDL_Point {w, h}
-            int textX = (screenWidth - textSize.x) / 2;
-            int textY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - static_cast<float>(textSize.y) / 2.0f); // Centered around 75% mark
-            // Corrected: renderText to drawText
-            textRenderer->drawText(display.getRenderer(), continent.name, textX, textY, 0.5f); // Adjusted Y position
+            float scale = 0.65f; // Define the scale factor
+            SDL_Point unscaled_text_size = textRenderer->getTextDimensions(continent.name);
+            float scaled_text_width = static_cast<float>(unscaled_text_size.x) * scale;
+            float scaled_text_height = static_cast<float>(unscaled_text_size.y) * scale;
+
+            int textX = (screenWidth - static_cast<int>(scaled_text_width)) / 2;
+            int textY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - scaled_text_height / 2.0f);
+            textRenderer->drawText(display.getRenderer(), continent.name, textX, textY, scale);
         }
     }
 
@@ -352,10 +354,13 @@ namespace Digivice {
             textRenderer->drawText(display.getRenderer(), "ERROR: CONTINENT MAP MISSING", screenWidth / 2 - 100, screenHeight / 2, 1.0f); // Changed to uppercase
         }
         
-        // Render continent name (already uppercase from load_map_data)
-        SDL_Point continentNameSize = textRenderer->getTextDimensions(continent.name);
-        textRenderer->drawText(display.getRenderer(), continent.name, (screenWidth - continentNameSize.x) / 2, 20, 1.5f); // Kept at top
-
+        // Commenting out the rendering of the continent name at the top of the node selection view
+        /*
+        float continentNameScale = 1.5f;
+        SDL_Point unscaled_continent_name_size = textRenderer->getTextDimensions(continent.name);
+        float scaled_continent_name_width = static_cast<float>(unscaled_continent_name_size.x) * continentNameScale;
+        textRenderer->drawText(display.getRenderer(), continent.name, (screenWidth - static_cast<int>(scaled_continent_name_width)) / 2, 20, continentNameScale); 
+        */
 
         if (continent.nodes.empty()) {
             textRenderer->drawText(display.getRenderer(), "NO NODES ON THIS CONTINENT", 10, 100, 1.0f); // Changed to uppercase
@@ -375,11 +380,15 @@ namespace Digivice {
         // Iterate and render nodes (actual implementation for PENDING item 3)
         // For now, just display the name of the currently selected node as an example
         const auto& selectedNode = continent.nodes[currentNodeIndex_];
-        std::string selectedNodeText = "SELECTED: " + selectedNode.name; // Node name is already uppercase
-        SDL_Point nodeTextSize = textRenderer->getTextDimensions(selectedNodeText);
-        int nodeTextX = (screenWidth - nodeTextSize.x) / 2;
-        int nodeTextY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - static_cast<float>(nodeTextSize.y) / 2.0f); // Centered around 75% mark
-        textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, 1.0f); // Adjusted Y position
+        std::string selectedNodeText = selectedNode.name; // Node name is already uppercase
+        float nodeTextScale = 0.65f;
+        SDL_Point unscaled_node_text_size = textRenderer->getTextDimensions(selectedNodeText);
+        float scaled_node_text_width = static_cast<float>(unscaled_node_text_size.x) * nodeTextScale;
+        float scaled_node_text_height = static_cast<float>(unscaled_node_text_size.y) * nodeTextScale;
+
+        int nodeTextX = (screenWidth - static_cast<int>(scaled_node_text_width)) / 2;
+        int nodeTextY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - scaled_node_text_height / 2.0f); // Centered around 75% mark
+        textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, nodeTextScale);
 
         // TODO: Render node sprites on the map
         // TODO: Implement selection highlighting
@@ -415,21 +424,30 @@ namespace Digivice {
         display.getWindowSize(screenWidth, screenHeight);
 
         // Display Node Name
-        SDL_Point nodeNameSize = textRenderer->getTextDimensions(node.name); // Name is already uppercase
-        textRenderer->drawText(display.getRenderer(), node.name, (screenWidth - nodeNameSize.x) / 2, 30, 1.5f);
+        float nodeNameScale_detail = 1.5f;
+        SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name); // Name is already uppercase
+        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * nodeNameScale_detail;
+        // float scaled_node_name_height_detail = static_cast<float>(unscaled_node_name_size_detail.y) * nodeNameScale_detail; // Not needed if Y is fixed
+        textRenderer->drawText(display.getRenderer(), node.name, (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2, 30, nodeNameScale_detail);
 
         // Display "NODE DETAIL VIEW (WIP)" or more specific details
         // textRenderer->drawText(display.getRenderer(), "NODE DETAIL VIEW (WIP)", 10, 70, 1.0f); // Changed to uppercase
 
         // Display Step Count
         std::string stepsText = "STEPS: " + std::to_string(node.totalSteps);
-        SDL_Point stepsTextSize = textRenderer->getTextDimensions(stepsText);
-        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - stepsTextSize.x) / 2, screenHeight - 70, 1.0f);
+        float stepsTextScale = 1.0f;
+        SDL_Point unscaled_steps_text_size = textRenderer->getTextDimensions(stepsText);
+        float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * stepsTextScale;
+        // float scaled_steps_text_height = static_cast<float>(unscaled_steps_text_size.y) * stepsTextScale; // Not needed if Y is fixed
+        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);
         
         // Display "Confirm to Start" or similar prompt
         std::string promptText = "CONFIRM TO START ADVENTURE";
-        SDL_Point promptTextSize = textRenderer->getTextDimensions(promptText);
-        textRenderer->drawText(display.getRenderer(), promptText, (screenWidth - promptTextSize.x) / 2, screenHeight - 40, 1.0f);
+        float promptTextScale = 1.0f;
+        SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
+        float scaled_prompt_text_width = static_cast<float>(unscaled_prompt_text_size.x) * promptTextScale;
+        // float scaled_prompt_text_height = static_cast<float>(unscaled_prompt_text_size.y) * promptTextScale; // Not needed if Y is fixed
+        textRenderer->drawText(display.getRenderer(), promptText, (screenWidth - static_cast<int>(scaled_prompt_text_width)) / 2, screenHeight - 40, promptTextScale);
 
 
         // TODO: Render boss sprite
