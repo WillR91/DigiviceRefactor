@@ -148,9 +148,89 @@ namespace Digivice {
                 0.0f   // parallaxFactorY
             )
         );
-        fileIsland.nodes.push_back(tropicalJungleNode);
 
-        // TODO: Add other nodes for File Island here later (Lake, Gear Savannah, etc.)
+        // --- Define Node: 02_lake ---
+        NodeData lakeNode;
+        lakeNode.id = "file_island_node_02";
+        lakeNode.name = "LAKE";
+        lakeNode.continentId = fileIsland.id;
+        lakeNode.mapPositionX = 150.0f; // Placeholder X
+        lakeNode.mapPositionY = 150.0f; // Placeholder Y
+        lakeNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
+        lakeNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
+        lakeNode.totalSteps = 300; // Placeholder steps
+        lakeNode.isUnlocked = false;
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_0.png"}, 0.5f, 0.0f));
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_1.png"}, 0.25f, 0.0f));
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_2.png"}, 0.1f, 0.0f));
+
+        // --- Define Node: 03_gear_savannah ---
+        NodeData gearSavannahNode;
+        gearSavannahNode.id = "file_island_node_03";
+        gearSavannahNode.name = "GEAR SAVANNAH";
+        gearSavannahNode.continentId = fileIsland.id;
+        gearSavannahNode.mapPositionX = 200.0f; // Placeholder X
+        gearSavannahNode.mapPositionY = 150.0f; // Placeholder Y
+        gearSavannahNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
+        gearSavannahNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
+        gearSavannahNode.totalSteps = 350; // Placeholder steps
+        gearSavannahNode.isUnlocked = false;
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_0.png"}, 0.5f, 0.0f));
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_1.png"}, 0.25f, 0.0f));
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_2.png"}, 0.1f, 0.0f));
+
+        // --- Define Node: 04_factorial_town ---
+        NodeData factorialTownNode;
+        factorialTownNode.id = "file_island_node_04";
+        factorialTownNode.name = "FACTORIAL TOWN";
+        factorialTownNode.continentId = fileIsland.id;
+        factorialTownNode.mapPositionX = 250.0f; // Placeholder X
+        factorialTownNode.mapPositionY = 150.0f; // Placeholder Y
+        factorialTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
+        factorialTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
+        factorialTownNode.totalSteps = 450; // Placeholder steps
+        factorialTownNode.isUnlocked = false;
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_0.png"}, 0.5f, 0.0f));
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_1.png"}, 0.25f, 0.0f));
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_2.png"}, 0.1f, 0.0f));
+
+        // --- Define Node: 05_toy_town ---
+        NodeData toyTownNode;
+        toyTownNode.id = "file_island_node_05";
+        toyTownNode.name = "TOY TOWN";
+        toyTownNode.continentId = fileIsland.id;
+        toyTownNode.mapPositionX = 300.0f; // Placeholder X
+        toyTownNode.mapPositionY = 150.0f; // Placeholder Y
+        toyTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
+        toyTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
+        toyTownNode.totalSteps = 320; // Placeholder steps
+        toyTownNode.isUnlocked = false;
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_0.png"}, 0.5f, 0.0f));
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_1.png"}, 0.25f, 0.0f));
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_2.png"}, 0.1f, 0.0f));
+
+        // --- Define Node: 06_infinity_mountain ---
+        NodeData infinityMountainNode;
+        infinityMountainNode.id = "file_island_node_06";
+        infinityMountainNode.name = "INFINITY MOUNTAIN";
+        infinityMountainNode.continentId = fileIsland.id;
+        infinityMountainNode.mapPositionX = 350.0f; // Placeholder X
+        infinityMountainNode.mapPositionY = 150.0f; // Placeholder Y
+        infinityMountainNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
+        infinityMountainNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
+        infinityMountainNode.totalSteps = 600; // Placeholder steps
+        infinityMountainNode.isUnlocked = false;
+        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_0.png"}, 0.5f, 0.0f));
+        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_1.png"}, 0.25f, 0.0f));
+        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_2.png"}, 0.1f, 0.0f));
+
+        // Add all nodes to File Island
+        fileIsland.nodes.push_back(tropicalJungleNode);
+        fileIsland.nodes.push_back(lakeNode);
+        fileIsland.nodes.push_back(gearSavannahNode);
+        fileIsland.nodes.push_back(factorialTownNode);
+        fileIsland.nodes.push_back(toyTownNode);
+        fileIsland.nodes.push_back(infinityMountainNode);
 
         continents_.push_back(fileIsland);
 
