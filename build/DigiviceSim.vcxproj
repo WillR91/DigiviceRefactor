@@ -120,9 +120,18 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Debug/assets...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Debug/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Debug/config...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/Debug/assets
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/Debug/config
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -181,9 +190,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Release/assets...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Release/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Release/config...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/Release/assets
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/Release/config
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -242,9 +260,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/MinSizeRel/assets...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/MinSizeRel/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/MinSizeRel/config...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/MinSizeRel/assets
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/MinSizeRel/config
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -303,9 +330,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/RelWithDebInfo/assets...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/RelWithDebInfo/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/RelWithDebInfo/config...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/RelWithDebInfo/assets
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/RelWithDebInfo/config
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -388,6 +424,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\bitmapfont.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\assetmanager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game.cpp" />
@@ -397,6 +435,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\mapsystemstate.cpp" />
@@ -405,6 +444,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\animationutils.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\widget.cpp" />
   </ItemGroup>

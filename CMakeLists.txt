@@ -57,6 +57,16 @@ add_custom_command(
     VERBATIM
 )
 
+# --- Copy Config to Output Directory Post-Build ---
+set(CONFIG_SOURCE_DIR "${CMAKE_SOURCE_DIR}/config")
+set(CONFIG_DESTINATION_DIR "$<TARGET_FILE_DIR:${PROJECT_NAME}>/config")
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CONFIG_SOURCE_DIR}" "${CONFIG_DESTINATION_DIR}"
+    COMMENT "Copying config from ${CONFIG_SOURCE_DIR} to ${CONFIG_DESTINATION_DIR}..."
+    VERBATIM
+)
+
 # --- Optional: Add build options for debugging ---
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT CMAKE_BUILD_TYPE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)

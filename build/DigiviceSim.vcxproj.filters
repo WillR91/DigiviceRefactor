@@ -7,6 +7,12 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\bitmapfont.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,6 +40,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -56,6 +65,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\animationutils.cpp">

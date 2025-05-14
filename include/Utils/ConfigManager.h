@@ -13,7 +13,7 @@
 class ConfigManager {
 public:
     // Initialize configuration from JSON file
-    static bool initialize(const std::string& configPath = "assets/config/game_config.json");
+    static bool initialize(const std::string& configPath = "config/game_config.json");
     
     // Free resources and save any pending changes
     static void shutdown();

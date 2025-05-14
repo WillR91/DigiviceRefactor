@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "Debug/DigiviceSim.exe"
+			"path" : "RelWithDebInfo/DigiviceSim.exe"
 		},
 		{
-			"path" : "Debug/DigiviceSim.pdb"
+			"path" : "RelWithDebInfo/DigiviceSim.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -38,7 +38,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 65,
+				"line" : 75,
 				"parent" : 0
 			},
 			{
@@ -50,13 +50,13 @@
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 64,
+				"line" : 74,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 62,
+				"line" : 72,
 				"parent" : 0
 			},
 			{
@@ -73,7 +73,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -std:c++17 -MDd"
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MD /Zi /O2 /Ob1 /DNDEBUG -std:c++17 -MD"
 				},
 				{
 					"backtrace" : 4,
@@ -134,7 +134,11 @@
 				17,
 				18,
 				19,
-				20
+				20,
+				21,
+				22,
+				23,
+				24
 			]
 		}
 	],
@@ -150,7 +154,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 -MDd",
+				"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MD /Zi /O2 /Ob1 /DNDEBUG -MD",
 				"role" : "flags"
 			},
 			{
@@ -221,7 +225,11 @@
 				17,
 				18,
 				19,
-				20
+				20,
+				21,
+				22,
+				23,
+				24
 			]
 		}
 	],
@@ -237,6 +245,18 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/bitmapfont.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/core/InputManager_keybind.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/core/InputManager_rebind.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
@@ -296,6 +316,12 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "src/states/SettingsState.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "src/states/adventurestate.cpp",
 			"sourceGroupIndex" : 0
 		},
@@ -339,6 +365,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "src/ui/textrenderer.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/utils/ConfigManager.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
