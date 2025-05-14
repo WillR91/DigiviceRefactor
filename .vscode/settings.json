@@ -2,6 +2,7 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "files.associations": {
         "memory": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "map": "cpp"
     }
 }
