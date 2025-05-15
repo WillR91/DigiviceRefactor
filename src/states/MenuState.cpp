@@ -21,6 +21,7 @@
 #include "states/MapSystemState.h" // Added include for MapSystemState
 #include "states/PartnerSelectState.h" // For PartnerSelectState
 #include "states/SettingsState.h" // For SettingsState
+#include "../../include/states/MapSystemState.h"  // Add this at the top with other includes
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
     GameState(game),
@@ -59,79 +60,41 @@ MenuState::~MenuState() {
 }
 
 void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData) {
-    if (!game_ptr) return;
+    if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
+        game_ptr->requestPopState();
+        return;
+    }
 
-    bool navUp = inputManager.isActionJustPressed(GameAction::NAV_UP);
-    bool navDown = inputManager.isActionJustPressed(GameAction::NAV_DOWN);
-    bool confirm = inputManager.isActionJustPressed(GameAction::CONFIRM);
-    bool cancel = inputManager.isActionJustPressed(GameAction::CANCEL);
-
-    if (navUp || navDown || confirm || cancel || inputManager.isActionHeld(GameAction::NAV_UP) || inputManager.isActionHeld(GameAction::NAV_DOWN) || inputManager.isActionHeld(GameAction::CONFIRM) || inputManager.isActionHeld(GameAction::CANCEL) ) { SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "MenuState Input Check: JustPressed(Up=%d, Down=%d, Confirm=%d, Cancel=%d)", navUp, navDown, confirm, cancel); }
-
-    if (navUp) { if (!menuOptions_.empty()) { currentSelection_ = (currentSelection_ == 0) ? menuOptions_.size() - 1 : currentSelection_ - 1; SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Menu: Selected option %zu - '%s'", currentSelection_, menuOptions_[currentSelection_].c_str()); } }
-    else if (navDown) { if (!menuOptions_.empty()) { currentSelection_ = (currentSelection_ + 1) % menuOptions_.size(); SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Menu: Selected option %zu - '%s'", currentSelection_, menuOptions_[currentSelection_].c_str()); } }
-    else if (confirm) {
-        if (!menuOptions_.empty()) {
-            const std::string& selectedOption = menuOptions_[currentSelection_];
-            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu: Confirmed '%s'", selectedOption.c_str());
-
-            if (selectedOption == "EXIT") {
-                // Fade out current MenuState, pop it, then fade in the state below (e.g., AdventureState)
-                game_ptr->requestFadeToState(nullptr, 0.3f, true); 
-            } else if (selectedOption == "DIGIMON") {
-                std::vector<std::string> opts = {"PARTNER", "STATUS", "EVOLVE", "BACK"};
-                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
-                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
-            } else if (selectedOption == "MAP") {
-                std::vector<std::string> opts = {"VIEW MAP", "TRAVEL", "BACK"};
-                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
-                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
-            } else if (selectedOption == "VIEW MAP") { // This is the option within the "MAP" submenu
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VIEW MAP selected. Changing state to MapSystemState.");
-                // Fade out current MenuState (the "VIEW MAP" submenu), pop it, then fade to MapSystemState
-                // To achieve this, we first request the MapSystemState. The fade system should handle the current.
-                // We want to pop the current submenu and then push MapSystemState.
-                // The requestFadeToState with popCurrent=true will pop the current (sub-menu)
-                // and then push the new state (MapSystemState).
-                game_ptr->requestFadeToState(std::make_unique<Digivice::MapSystemState>(game_ptr), 0.3f, true);
-
-            } else if (selectedOption == "TRAVEL") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for TRAVEL not implemented.");
-                // Potentially another state or direct action
-            } else if (selectedOption == "SAVE") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for SAVE not implemented.");
-            } else if (selectedOption == "SETTINGS") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Opening Settings menu");
-                // Create and transition to a settings state
-                auto settingsState = std::make_unique<SettingsState>(game_ptr);
-                game_ptr->requestFadeToState(std::move(settingsState), 0.3f, false);
-            } else if (selectedOption == "BACK") {
-                // Fade out current sub-menu, pop it, then fade in the parent menu below
-                game_ptr->requestFadeToState(nullptr, 0.3f, true); 
-            } else if (selectedOption == "PARTNER") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Menu: Fading to PartnerSelectState.");
-                auto partnerSelectState = std::make_unique<PartnerSelectState>(game_ptr);
-                game_ptr->requestFadeToState(std::move(partnerSelectState), 0.3f, false); // Fade, don't pop current
-            } else if (selectedOption == "STATUS") {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for STATUS not implemented.");
-                // If STATUS leads to another state, use requestFadeToState:
-                // auto statusState = std::make_unique<StatusState>(game_ptr); // Assuming StatusState exists
-                // game_ptr->requestFadeToState(std::move(statusState), 0.3f, false);
-            } else if (selectedOption == "EVOLVE") {
-                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for EVOLVE not implemented.");
-                // If EVOLVE leads to another state, use requestFadeToState:
-                // auto evolveState = std::make_unique<EvolveState>(game_ptr); // Assuming EvolveState exists
-                // game_ptr->requestFadeToState(std::move(evolveState), 0.3f, false);
+    if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
+        if (currentSelection_ >= 0 && currentSelection_ < menuOptions_.size()) {
+            const std::string& selectedItem = menuOptions_[currentSelection_];
+            
+            if (selectedItem == "MAP") {
+                // Use full namespace if necessary (e.g., Digivice::MapSystemState)
+                auto mapState = std::make_unique<Digivice::MapSystemState>(game_ptr);
+                game_ptr->requestFadeToState(std::move(mapState));
+                return;
+            } 
+            else if (selectedItem == "DIGIMON") {
+                // Existing DIGIMON handling code
             }
-            else {
-                SDL_LogWarn(SDL_LOG_CATEGORY_INPUT, "Selected option '%s' has no defined action yet.", selectedOption.c_str());
-            }
+            // Other menu options handling...
         }
     }
-    else if (cancel) { 
-        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Cancel action detected in MenuState, requesting fade and pop."); 
-        // Fade out current MenuState, pop it, then fade in the state below
-        game_ptr->requestFadeToState(nullptr, 0.5f, true); 
+
+    // Navigate through menu options
+    if (inputManager.isActionJustPressed(GameAction::NAV_UP)) {
+        if (currentSelection_ > 0) {
+            currentSelection_--;
+        } else {
+            currentSelection_ = menuOptions_.size() - 1;
+        }
+    } else if (inputManager.isActionJustPressed(GameAction::NAV_DOWN)) {
+        if (currentSelection_ < menuOptions_.size() - 1) {
+            currentSelection_++;
+        } else {
+            currentSelection_ = 0;
+        }
     }
 }
 
