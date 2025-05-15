@@ -35,7 +35,14 @@ public:
     void render(PCDisplay& display) override;
     StateType getType() const override;
 
-private:
+private:    // Structure to hold texture variant information for a layer
+    struct LayerVariants {
+        std::vector<SDL_Texture*> textures; // All texture variants for this layer
+        std::vector<int> widths;            // Width of each texture variant
+        std::vector<int> effectiveWidths;   // Effective width for scrolling (2/3 of actual width)
+        size_t currentVariantIndex = 0;     // Index of the current variant being displayed
+    };
+
     // Animator
     Animator partnerAnimator_;
 
@@ -49,9 +56,15 @@ private:
     const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition
 
     // Other Data Members
+    LayerVariants bgLayer0_; // Foreground layer variants
+    LayerVariants bgLayer1_; // Middleground layer variants
+    LayerVariants bgLayer2_; // Background layer variants
+    
+    // Legacy textures (kept for backward compatibility with BattleState)
     SDL_Texture* bgTexture0_ = nullptr;
     SDL_Texture* bgTexture1_ = nullptr;
     SDL_Texture* bgTexture2_ = nullptr;
+    
     DigimonType current_digimon_;
     PlayerState current_state_ = STATE_IDLE;
     int queued_steps_ = 0;
@@ -76,5 +89,15 @@ private:
     // Private Helpers
     std::string getAnimationIdForCurrentState() const;
     std::string getDigimonTextureId(DigimonType type) const;
+    
+    // Helper for loading texture variants
+    void loadTextureVariantsForLayer(LayerVariants& layer, 
+                                    const std::vector<std::string>& texturePaths, 
+                                    const std::string& baseTextureId);
+                                    
+    // Helper for rendering a background layer with variants
+    void renderBackgroundLayerVariants(PCDisplay& display, 
+                                      const LayerVariants& layer, 
+                                      float scrollOffset);
 
 }; // End of AdventureState class definition

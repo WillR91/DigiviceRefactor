@@ -40,19 +40,19 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\mapsystemstate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\menustate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp">

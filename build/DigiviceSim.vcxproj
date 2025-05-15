@@ -443,11 +443,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\mapsystemstate.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\menustate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />

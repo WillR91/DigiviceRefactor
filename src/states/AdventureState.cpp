@@ -74,45 +74,90 @@ AdventureState::AdventureState(Game* game) :
     const Digivice::NodeData& nodeData = pd->getCurrentNodeData();
     current_area_step_goal_ = nodeData.totalSteps > 0 ? nodeData.totalSteps : GameConstants::getCurrentChapterStepGoal();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Loaded node '%s' with step goal: %d", 
-                nodeData.name.c_str(), current_area_step_goal_);
-    
-    // Load background textures from the node data
+                nodeData.name.c_str(), current_area_step_goal_);    // Load background textures from the node data
     if (!nodeData.adventureBackgroundLayers.empty()) {
-        // Load foreground texture (layer 0)
-        if (nodeData.adventureBackgroundLayers.size() > 0 && !nodeData.adventureBackgroundLayers[0].texturePaths.empty()) {
-            std::string bgTexId0 = nodeData.id + "_bg_0";
-            if (!assets->getTexture(bgTexId0)) {
-                if (assets->loadTexture(bgTexId0, nodeData.adventureBackgroundLayers[0].texturePaths[0])) {
-                    bgTexture0_ = assets->getTexture(bgTexId0);
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: NodeData '%s' has %zu background layers defined", 
+            nodeData.id.c_str(), nodeData.adventureBackgroundLayers.size());
+            
+        // Load foreground texture variants (layer 0)
+        if (nodeData.adventureBackgroundLayers.size() > 0) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Layer 0 has %zu texture paths", 
+                nodeData.adventureBackgroundLayers[0].texturePaths.size());
+                
+            if (!nodeData.adventureBackgroundLayers[0].texturePaths.empty()) {
+                std::string baseTexId0 = nodeData.id + "_bg_0";
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Will load Layer 0 variants with base ID '%s'", baseTexId0.c_str());
+                    
+                loadTextureVariantsForLayer(bgLayer0_, nodeData.adventureBackgroundLayers[0].texturePaths, baseTexId0);
+                
+                // Set the first texture as the default for backward compatibility with BattleState
+                if (!bgLayer0_.textures.empty()) {
+                    bgTexture0_ = bgLayer0_.textures[0];
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Set legacy bgTexture0_ = first variant of Layer 0");
+                } else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Layer 0 has no loaded textures!");
                 }
-            } else {
-                bgTexture0_ = assets->getTexture(bgTexId0);
             }
         }
         
-        // Load midground texture (layer 1)
-        if (nodeData.adventureBackgroundLayers.size() > 1 && !nodeData.adventureBackgroundLayers[1].texturePaths.empty()) {
-            std::string bgTexId1 = nodeData.id + "_bg_1";
-            if (!assets->getTexture(bgTexId1)) {
-                if (assets->loadTexture(bgTexId1, nodeData.adventureBackgroundLayers[1].texturePaths[0])) {
-                    bgTexture1_ = assets->getTexture(bgTexId1);
+        // Load midground texture variants (layer 1)
+        if (nodeData.adventureBackgroundLayers.size() > 1) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Layer 1 has %zu texture paths", 
+                nodeData.adventureBackgroundLayers[1].texturePaths.size());
+                
+            if (!nodeData.adventureBackgroundLayers[1].texturePaths.empty()) {
+                std::string baseTexId1 = nodeData.id + "_bg_1";
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Will load Layer 1 variants with base ID '%s'", baseTexId1.c_str());
+                    
+                loadTextureVariantsForLayer(bgLayer1_, nodeData.adventureBackgroundLayers[1].texturePaths, baseTexId1);
+                
+                // Set the first texture as the default for backward compatibility with BattleState
+                if (!bgLayer1_.textures.empty()) {
+                    bgTexture1_ = bgLayer1_.textures[0];
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Set legacy bgTexture1_ = first variant of Layer 1");
+                } else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Layer 1 has no loaded textures!");
                 }
-            } else {
-                bgTexture1_ = assets->getTexture(bgTexId1);
             }
         }
         
-        // Load background texture (layer 2)
-        if (nodeData.adventureBackgroundLayers.size() > 2 && !nodeData.adventureBackgroundLayers[2].texturePaths.empty()) {
-            std::string bgTexId2 = nodeData.id + "_bg_2";
-            if (!assets->getTexture(bgTexId2)) {
-                if (assets->loadTexture(bgTexId2, nodeData.adventureBackgroundLayers[2].texturePaths[0])) {
-                    bgTexture2_ = assets->getTexture(bgTexId2);
+        // Load background texture variants (layer 2)
+        if (nodeData.adventureBackgroundLayers.size() > 2) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Layer 2 has %zu texture paths", 
+                nodeData.adventureBackgroundLayers[2].texturePaths.size());
+                
+            if (!nodeData.adventureBackgroundLayers[2].texturePaths.empty()) {
+                std::string baseTexId2 = nodeData.id + "_bg_2";
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Will load Layer 2 variants with base ID '%s'", baseTexId2.c_str());
+                    
+                loadTextureVariantsForLayer(bgLayer2_, nodeData.adventureBackgroundLayers[2].texturePaths, baseTexId2);
+                
+                // Set the first texture as the default for backward compatibility with BattleState
+                if (!bgLayer2_.textures.empty()) {
+                    bgTexture2_ = bgLayer2_.textures[0];
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Set legacy bgTexture2_ = first variant of Layer 2");
+                } else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                        "DEBUG: Layer 2 has no loaded textures!");
                 }
-            } else {
-                bgTexture2_ = assets->getTexture(bgTexId2);
             }
         }
+    } else {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: NodeData '%s' has NO background layers defined", 
+            nodeData.id.c_str());
     }
       // Fallback to default backgrounds if loading fails
     if (!bgTexture0_) {
@@ -397,45 +442,135 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         battle_fade_alpha_ = 0.0f; // Start fade from transparent
         // current_state_ = STATE_IDLE; // Optionally stop walking animation
         // queued_steps_ = 0;
-    }
-
-    // Scroll Background (Only if walking and not fading to battle)
+    }    // Scroll Background (Only if walking and not fading to battle)
     if (current_state_ == STATE_WALKING && !is_fading_to_battle_) {
         float scrollAmount0 = SCROLL_SPEED_0 * delta_time;
         float scrollAmount1 = SCROLL_SPEED_1 * delta_time;
-        float scrollAmount2 = SCROLL_SPEED_2 * delta_time;
-        int effW0 = 0, effW1 = 0, effW2 = 0;
-
-        if (bgTexture0_) {
+        float scrollAmount2 = SCROLL_SPEED_2 * delta_time;        // DEBUG: Log scroll status periodically
+        static int frameCounter = 0;
+        frameCounter = (frameCounter + 1) % 120;  // Log every 120 frames
+        bool shouldLog = (frameCounter == 0);
+        
+        if (shouldLog) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Background scroll update - Layer 0: %.2f, Layer 1: %.2f, Layer 2: %.2f",
+                bg_scroll_offset_0_, bg_scroll_offset_1_, bg_scroll_offset_2_);
+                
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Layer variants status - Layer 0: %zu textures, Layer 1: %zu textures, Layer 2: %zu textures",
+                bgLayer0_.textures.size(), bgLayer1_.textures.size(), bgLayer2_.textures.size());
+                
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Current variant indices - Layer 0: %zu/%zu, Layer 1: %zu/%zu, Layer 2: %zu/%zu",
+                bgLayer0_.currentVariantIndex, bgLayer0_.textures.size() > 0 ? bgLayer0_.textures.size() : 0,
+                bgLayer1_.currentVariantIndex, bgLayer1_.textures.size() > 0 ? bgLayer1_.textures.size() : 0,
+                bgLayer2_.currentVariantIndex, bgLayer2_.textures.size() > 0 ? bgLayer2_.textures.size() : 0);
+        }
+        
+        // Update layer 0 (foreground)
+        if (!bgLayer0_.textures.empty()) {
+            size_t currentIdx = bgLayer0_.currentVariantIndex;
+            int effW0 = bgLayer0_.effectiveWidths[currentIdx];
+            
+            // Update scroll position
+            float previousOffset = bg_scroll_offset_0_;
+            bg_scroll_offset_0_ -= scrollAmount0;
+              // Check if we've scrolled past the edge of the current variant
+            // We check if we've scrolled from less than the effective width to more than the effective width
+            if ((int)previousOffset % effW0 > (int)bg_scroll_offset_0_ % effW0) {
+                // Advance to the next variant
+                bgLayer0_.currentVariantIndex = (currentIdx + 1) % bgLayer0_.textures.size();
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                    "Switching to next variant for layer 0: %zu", 
+                    bgLayer0_.currentVariantIndex);
+            }
+            
+            // Wrap the scroll offset
+            bg_scroll_offset_0_ = std::fmod(bg_scroll_offset_0_ + effW0, (float)effW0);
+        } else if (bgTexture0_) {
+            // Legacy scrolling for single texture
             int w;
-            SDL_QueryTexture(bgTexture0_, 0, 0, &w, 0);
-            effW0 = w * 2/3;
+            SDL_QueryTexture(bgTexture0_, nullptr, nullptr, &w, nullptr);
+            int effW0 = w * 2/3;
             if (effW0 <= 0) effW0 = w;
-        }
-        if (bgTexture1_) {
-            int w;
-            SDL_QueryTexture(bgTexture1_, 0, 0, &w, 0);
-            effW1 = w * 2/3;
-            if (effW1 <= 0) effW1 = w;
-        }
-        if (bgTexture2_) {
-            int w;
-            SDL_QueryTexture(bgTexture2_, 0, 0, &w, 0);
-            effW2 = w * 2/3;
-            if (effW2 <= 0) effW2 = w;
-        }
-
-        if (effW0 > 0) {
+            
             bg_scroll_offset_0_ -= scrollAmount0;
             bg_scroll_offset_0_ = std::fmod(bg_scroll_offset_0_ + effW0, (float)effW0);
+            
+            if (shouldLog) {
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Layer 0 using legacy single texture scrolling (no variants)");
+            }
         }
-        if (effW1 > 0) {
+        
+        // Update layer 1 (middleground)
+        if (!bgLayer1_.textures.empty()) {
+            size_t currentIdx = bgLayer1_.currentVariantIndex;
+            int effW1 = bgLayer1_.effectiveWidths[currentIdx];
+            
+            // Update scroll position
+            float previousOffset = bg_scroll_offset_1_;
+            bg_scroll_offset_1_ -= scrollAmount1;
+              // Check if we've scrolled past the edge of the current variant
+            if ((int)previousOffset % effW1 > (int)bg_scroll_offset_1_ % effW1) {
+                // Advance to the next variant
+                bgLayer1_.currentVariantIndex = (currentIdx + 1) % bgLayer1_.textures.size();
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                    "Switching to next variant for layer 1: %zu", 
+                    bgLayer1_.currentVariantIndex);
+            }
+            
+            // Wrap the scroll offset
+            bg_scroll_offset_1_ = std::fmod(bg_scroll_offset_1_ + effW1, (float)effW1);
+        } else if (bgTexture1_) {
+            // Legacy scrolling for single texture
+            int w;
+            SDL_QueryTexture(bgTexture1_, nullptr, nullptr, &w, nullptr);
+            int effW1 = w * 2/3;
+            if (effW1 <= 0) effW1 = w;
+            
             bg_scroll_offset_1_ -= scrollAmount1;
             bg_scroll_offset_1_ = std::fmod(bg_scroll_offset_1_ + effW1, (float)effW1);
+            
+            if (shouldLog) {
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Layer 1 using legacy single texture scrolling (no variants)");
+            }
         }
-        if (effW2 > 0) {
+        
+        // Update layer 2 (background)
+        if (!bgLayer2_.textures.empty()) {
+            size_t currentIdx = bgLayer2_.currentVariantIndex;
+            int effW2 = bgLayer2_.effectiveWidths[currentIdx];
+            
+            // Update scroll position
+            float previousOffset = bg_scroll_offset_2_;
+            bg_scroll_offset_2_ -= scrollAmount2;
+              // Check if we've scrolled past the edge of the current variant
+            if ((int)previousOffset % effW2 > (int)bg_scroll_offset_2_ % effW2) {
+                // Advance to the next variant
+                bgLayer2_.currentVariantIndex = (currentIdx + 1) % bgLayer2_.textures.size();
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                    "Switching to next variant for layer 2: %zu", 
+                    bgLayer2_.currentVariantIndex);
+            }
+            
+            // Wrap the scroll offset
+            bg_scroll_offset_2_ = std::fmod(bg_scroll_offset_2_ + effW2, (float)effW2);
+        } else if (bgTexture2_) {
+            // Legacy scrolling for single texture
+            int w;
+            SDL_QueryTexture(bgTexture2_, nullptr, nullptr, &w, nullptr);
+            int effW2 = w * 2/3;
+            if (effW2 <= 0) effW2 = w;
+            
             bg_scroll_offset_2_ -= scrollAmount2;
             bg_scroll_offset_2_ = std::fmod(bg_scroll_offset_2_ + effW2, (float)effW2);
+            
+            if (shouldLog) {
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Layer 2 using legacy single texture scrolling (no variants)");
+            }
         }
     }
 
@@ -484,16 +619,64 @@ void AdventureState::render(PCDisplay& display) {
             SDL_Rect dst3 = { drawX3, 0, texW, texH }; 
             display.drawTexture(tex, NULL, &dst3); 
         } 
-    }; 
+    };     // DEBUG: Add static counter to limit logging frequency in render
+    static int renderFrameCounter = 0;
+    renderFrameCounter = (renderFrameCounter + 1) % 60;  // Log every 60 frames
+    bool shouldLogRender = (renderFrameCounter == 0);
+    
+    // Get dimensions for legacy textures if needed
+    int bgW0=0, bgH0=0, effW0=0, bgW1=0, bgH1=0, effW1=0, bgW2=0, bgH2=0, effW2=0;
+    if(bgTexture0_) { SDL_QueryTexture(bgTexture0_, nullptr, nullptr, &bgW0, &bgH0); effW0=bgW0*2/3; if(effW0<=0) effW0=bgW0; }
+    if(bgTexture1_) { SDL_QueryTexture(bgTexture1_, nullptr, nullptr, &bgW1, &bgH1); effW1=bgW1*2/3; if(effW1<=0) effW1=bgW1; }
+    if(bgTexture2_) { SDL_QueryTexture(bgTexture2_, nullptr, nullptr, &bgW2, &bgH2); effW2=bgW2*2/3; if(effW2<=0) effW2=bgW2; }
 
-    int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
-    if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
-    if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
-    if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
+    if (shouldLogRender) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: RENDER - Layer variants count - L0: %zu, L1: %zu, L2: %zu", 
+            bgLayer0_.textures.size(), bgLayer1_.textures.size(), bgLayer2_.textures.size());
+    }
 
-    drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
+    // Background layer (layer 2 - furthest back)
+    if (!bgLayer2_.textures.empty()) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 2 with variant system (%zu textures, current: %zu)", 
+                bgLayer2_.textures.size(), bgLayer2_.currentVariantIndex);
+        }
+        renderBackgroundLayerVariants(display, bgLayer2_, bg_scroll_offset_2_);
+    } else if (bgTexture2_) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 2 with legacy system (single texture)");
+        }
+        drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
+    } else {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "DEBUG: No texture for Layer 2");
+        }
+    }
+    
+    // Midground layer (layer 1)
+    if (!bgLayer1_.textures.empty()) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 1 with variant system (%zu textures, current: %zu)", 
+                bgLayer1_.textures.size(), bgLayer1_.currentVariantIndex);
+        }
+        renderBackgroundLayerVariants(display, bgLayer1_, bg_scroll_offset_1_);
+    } else if (bgTexture1_) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 1 with legacy system (single texture)");
+        }
+        drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
+    } else {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "DEBUG: No texture for Layer 1");
+        }
+    }
 
+    // Draw the character
     SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
     SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
 
@@ -505,8 +688,26 @@ void AdventureState::render(PCDisplay& display) {
 
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     }
-
-    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+    
+    // Foreground layer (layer 0 - closest to the camera)
+    if (!bgLayer0_.textures.empty()) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 0 with variant system (%zu textures, current: %zu)", 
+                bgLayer0_.textures.size(), bgLayer0_.currentVariantIndex);
+        }
+        renderBackgroundLayerVariants(display, bgLayer0_, bg_scroll_offset_0_);
+    } else if (bgTexture0_) {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Rendering Layer 0 with legacy system (single texture)");
+        }
+        drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+    } else {
+        if (shouldLogRender) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "DEBUG: No texture for Layer 0");
+        }
+    }
 
     // Render fade_to_battle overlay if active
     if (is_fading_to_battle_ && battle_fade_alpha_ > 0.0f) {
@@ -520,4 +721,155 @@ void AdventureState::render(PCDisplay& display) {
 
 StateType AdventureState::getType() const {
     return StateType::Adventure;
+}
+
+// Helper method to load texture variants for a layer
+void AdventureState::loadTextureVariantsForLayer(LayerVariants& layer, 
+                                              const std::vector<std::string>& texturePaths, 
+                                              const std::string& baseTextureId) {
+    // Clear any existing data
+    layer.textures.clear();
+    layer.widths.clear();
+    layer.effectiveWidths.clear();
+    layer.currentVariantIndex = 0;
+    
+    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+        "DEBUG: loadTextureVariantsForLayer - Loading %zu textures for layer %s", 
+        texturePaths.size(), baseTextureId.c_str());
+    
+    if (texturePaths.empty()) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: loadTextureVariantsForLayer - No textures to load for %s", 
+            baseTextureId.c_str());
+        return;
+    }
+    
+    AssetManager* assets = game_ptr->getAssetManager();
+    if (!assets) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::loadTextureVariantsForLayer - AssetManager is NULL!");
+        return;
+    }
+    
+    // Loop through each texture path and log what we're trying to load
+    for (size_t i = 0; i < texturePaths.size(); i++) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: Attempting to load variant %zu for %s: '%s'", 
+            i, baseTextureId.c_str(), texturePaths[i].c_str());
+    }
+    
+    // Loop through each texture path and load it
+    for (size_t i = 0; i < texturePaths.size(); i++) {
+        const std::string& texturePath = texturePaths[i];
+        std::string variantTexId = baseTextureId;
+        
+        // For variant textures (after the first one), append the variant index to the ID
+        if (i > 0) {
+            variantTexId += "_" + std::to_string(i);
+        }
+        
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+            "DEBUG: Loading texture variant %zu for %s - ID: '%s', Path: '%s'", 
+            i, baseTextureId.c_str(), variantTexId.c_str(), texturePath.c_str());
+            
+        // Check if texture is already loaded
+        SDL_Texture* tex = assets->getTexture(variantTexId);
+        if (tex) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Texture '%s' already loaded in AssetManager", variantTexId.c_str());
+        } else {
+            // Try to load the texture
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                "DEBUG: Attempting to load texture '%s' from path '%s'", 
+                variantTexId.c_str(), texturePath.c_str());
+                
+            if (assets->loadTexture(variantTexId, texturePath)) {
+                tex = assets->getTexture(variantTexId);
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Successfully loaded texture '%s'", variantTexId.c_str());
+            } else {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                    "DEBUG: Failed to load texture '%s' from path '%s'", 
+                    variantTexId.c_str(), texturePath.c_str());
+            }
+        }
+        
+        if (tex) {
+            // Add texture to the layer's variants
+            layer.textures.push_back(tex);
+            
+            // Get texture width and calculate effective width
+            int width = 0, height = 0;
+            SDL_QueryTexture(tex, nullptr, nullptr, &width, &height);
+            layer.widths.push_back(width);
+            
+            // Set effective width to 2/3 of the actual width (for better scrolling effect)
+            int effectiveWidth = width * 2/3;
+            if (effectiveWidth <= 0) effectiveWidth = width;
+            layer.effectiveWidths.push_back(effectiveWidth);
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                "Loaded texture variant %d for layer %s: %dx%d (effective width: %d)", 
+                (int)i, baseTextureId.c_str(), width, height, effectiveWidth);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                "Failed to load texture variant %d for layer %s: %s", 
+                (int)i, baseTextureId.c_str(), texturePath.c_str());
+        }
+    }
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+        "Loaded %d texture variants for layer %s", 
+        (int)layer.textures.size(), baseTextureId.c_str());
+}
+
+// Helper to render a background layer with its variants
+void AdventureState::renderBackgroundLayerVariants(PCDisplay& display, 
+                                                const LayerVariants& layer, 
+                                                float scrollOffset) {
+    if (layer.textures.empty()) return;
+    
+    const int windowW = WINDOW_WIDTH;
+    const int windowH = WINDOW_HEIGHT;
+    
+    // Get the current variant
+    size_t variantIndex = layer.currentVariantIndex % layer.textures.size();
+    SDL_Texture* currentTexture = layer.textures[variantIndex];
+    if (!currentTexture) return;
+    
+    int texW = layer.widths[variantIndex];
+    int texH = windowH; // Use window height for texture height
+    int effectiveWidth = layer.effectiveWidths[variantIndex];
+    
+    // Calculate where to draw the current texture
+    int drawX = -static_cast<int>(std::fmod(scrollOffset, (float)effectiveWidth));
+    if (drawX > 0) drawX -= effectiveWidth;
+    
+    // Draw the current texture
+    SDL_Rect dst = { drawX, 0, texW, texH };
+    display.drawTexture(currentTexture, nullptr, &dst);
+    
+    // Draw the next variant (or wrap back to the first if this is the last)
+    size_t nextVariantIndex = (variantIndex + 1) % layer.textures.size();
+    SDL_Texture* nextTexture = layer.textures[nextVariantIndex];
+    if (!nextTexture) return;
+    
+    int nextTexW = layer.widths[nextVariantIndex];
+    int nextEffectiveWidth = layer.effectiveWidths[nextVariantIndex];
+    
+    // Draw the next texture after the current one
+    int drawNextX = drawX + effectiveWidth;
+    SDL_Rect dstNext = { drawNextX, 0, nextTexW, texH };
+    display.drawTexture(nextTexture, nullptr, &dstNext);
+    
+    // Draw a third texture if needed (could be the first variant again)
+    if (drawNextX + nextTexW < windowW) {
+        size_t thirdVariantIndex = (nextVariantIndex + 1) % layer.textures.size();
+        SDL_Texture* thirdTexture = layer.textures[thirdVariantIndex];
+        if (!thirdTexture) return;
+        
+        int thirdTexW = layer.widths[thirdVariantIndex];
+        int drawThirdX = drawNextX + nextEffectiveWidth;
+        SDL_Rect dstThird = { drawThirdX, 0, thirdTexW, texH };
+        display.drawTexture(thirdTexture, nullptr, &dstThird);
+    }
 }

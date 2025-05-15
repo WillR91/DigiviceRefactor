@@ -156,10 +156,29 @@ namespace Digivice {
         lakeNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         lakeNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         lakeNode.totalSteps = 300; // Placeholder steps
-        lakeNode.isUnlocked = true; // Set to unlocked
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_0.png"}, 0.5f, 0.0f));
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_1.png"}, 0.25f, 0.0f));
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_2.png"}, 0.1f, 0.0f));        // --- Define Node: 03_gear_savannah ---
+        lakeNode.isUnlocked = true; // Set to unlocked        // Layer 0: Foreground (only one variant)
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData(
+            {"assets/backgrounds/environments/file_island/02_lake/layer_0.png"}, 
+            0.5f, 0.0f
+        ));
+        
+        // Layer 1: Midground (two variants)
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData(
+            {
+                "assets/backgrounds/environments/file_island/02_lake/layer_1_0.png",
+                "assets/backgrounds/environments/file_island/02_lake/layer_1_1.png"
+            }, 
+            0.25f, 0.0f
+        ));
+        
+        // Layer 2: Background (two variants)
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData(
+            {
+                "assets/backgrounds/environments/file_island/02_lake/layer_2_0.png",
+                "assets/backgrounds/environments/file_island/02_lake/layer_2_1.png"
+            }, 
+            0.1f, 0.0f
+        ));// --- Define Node: 03_gear_savannah ---
         NodeData gearSavannahNode;
         gearSavannahNode.id = "file_island_node_03";
         gearSavannahNode.name = "GEAR SAVANNAH";
