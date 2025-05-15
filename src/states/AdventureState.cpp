@@ -123,7 +123,7 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
     if (!game_ptr || game_ptr->getCurrentState() != this) return;    // Menu Activation
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
         SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "AdventureState: Confirm action. Requesting fade to MenuState.");
-        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "ITEMS", "SAVE", "SETTINGS", "EXIT"};
+        std::vector<std::string> mainMenuItems = {"DIGIMON", "MAP", "SAVE", "SETTINGS", "EXIT"};
         auto menuState = std::make_unique<MenuState>(game_ptr, mainMenuItems);
         game_ptr->requestFadeToState(std::move(menuState), 0.3f, false); // Fade for 0.3s, pop AdventureState
         return;

@@ -98,9 +98,6 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
             } else if (selectedOption == "TRAVEL") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for TRAVEL not implemented.");
                 // Potentially another state or direct action
-            } else if (selectedOption == "ITEMS") {                std::vector<std::string> opts = {"VIEW", "USE", "DROP", "BACK"};
-                auto subMenu = std::make_unique<MenuState>(game_ptr, opts);
-                game_ptr->requestFadeToState(std::move(subMenu), 0.3f, false); // Fade, don't pop current
             } else if (selectedOption == "SAVE") {
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Action for SAVE not implemented.");
             } else if (selectedOption == "SETTINGS") {

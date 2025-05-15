@@ -1,50 +1,48 @@
-{
-    "audio": {
-        "musicVolume": 0.7,
-        "muted": false,
-        "sfxVolume": 1.0
-    },
-    "debug": {
-        "logLevel": "info",
-        "showColliders": false,
-        "showFps": false
-    },
-    "display": {
-        "fullscreen": false,
+{    "display": {
+        "width": 466,
         "height": 466,
-        "smallScreenHeight": 172,
         "smallScreenWidth": 172,
+        "smallScreenHeight": 172,
         "title": "Digivice Sim",
-        "vsync": true,
-        "width": 466
-    },
-    "game": {
-        "debugMode": false,
-        "defaultPartner": "agumon",
-        "difficultyLevel": "normal",
-        "stepGoal": 10,
-        "transitionSpeed": 0.3
+        "fullscreen": false,
+        "vsync": true
     },
     "input": {
+        "moveKey": {
+            "up": "Up",
+            "down": "Down",
+            "left": "Left",
+            "right": "Right"
+        },
         "actionKey": "ENTER",
         "backKey": "BACKSPACE",
         "menuKey": "C",
-        "moveKey": {
-            "down": "Down",
-            "left": "Left",
-            "right": "Right",
-            "up": "Up"
-        },
         "toggleScreenKey": "F"
     },
-    "paths": {
-        "backgrounds": "assets/backgrounds/",
-        "fallback": "assets/fallback/",
-        "fonts": "assets/ui/fonts/",
-        "sprites": "assets/sprites/",
-        "ui": "assets/ui/"
+    "audio": {
+        "musicVolume": 0.7,
+        "sfxVolume": 1.0,
+        "muted": false
+    },    "game": {
+        "defaultPartner": "agumon",
+        "difficultyLevel": "normal",
+        "debugMode": false,
+        "transitionSpeed": 0.3,
+        "stepGoal": 10
     },
     "ui": {
-        "textScale": 0.9999997615814209
+        "textScale": 1.0
+    },
+    "paths": {
+        "sprites": "assets/sprites/",
+        "backgrounds": "assets/backgrounds/",
+        "ui": "assets/ui/",
+        "fonts": "assets/ui/fonts/",
+        "fallback": "assets/fallback/"
+    },
+    "debug": {
+        "showFps": false,
+        "logLevel": "info",
+        "showColliders": false
     }
 }
