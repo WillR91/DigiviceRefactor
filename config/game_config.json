@@ -14,8 +14,8 @@
             "left": "Left",
             "right": "Right"
         },
-        "actionKey": "Z",
-        "backKey": "X",
+        "actionKey": "ENTER",
+        "backKey": "BACKSPACE",
         "menuKey": "C",
         "toggleScreenKey": "F"
     },
@@ -29,7 +29,11 @@
         "debugMode": false,
         "transitionSpeed": 0.3,
         "stepGoal": 10
-    },"paths": {
+    },
+    "ui": {
+        "textScale": 1.0
+    },
+    "paths": {
         "sprites": "assets/sprites/",
         "backgrounds": "assets/backgrounds/",
         "ui": "assets/ui/",

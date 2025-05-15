@@ -9,7 +9,10 @@
 
 SettingsState::SettingsState(Game* game) : GameState(game) {
     // Initialize menu options
-    menuOptions_ = {"CONTROLS", "AUDIO", "DISPLAY", "RETURN TO MENU"};
+    menuOptions_ = {"CONTROLS", "AUDIO", "DISPLAY", "TEXT SCALE", "RETURN TO MENU"};
+    
+    // Get current text scale from config
+    textScaleValue_ = ConfigManager::getValue<float>("ui.textScale", 1.0f);
     
     // Load background texture
     if (game_ptr && game_ptr->getAssetManager()) {
@@ -44,9 +47,7 @@ void SettingsState::initializeKeyBindOptions() {
 }
 
 void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerData) {
-    if (!game_ptr) return;
-
-    // If in rebind mode, wait for any key press
+    if (!game_ptr) return;    // If in rebind mode, wait for any key press
     if (isRebindingKey_) {
         // Check for key presses
         SDL_Event event;
@@ -86,6 +87,47 @@ void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerD
         return;
     }
     
+    // If adjusting text scale
+    if (isAdjustingTextScale_) {
+        if (inputManager.isActionJustPressed(GameAction::NAV_LEFT)) {
+            // Decrease text scale (minimum 0.5)
+            textScaleValue_ = std::max(0.5f, textScaleValue_ - 0.1f);
+            
+            // Update the config
+            ConfigManager::setValue("ui.textScale", textScaleValue_);
+            ConfigManager::saveChanges();
+            
+            // Update the text renderer
+            if (game_ptr) {
+                game_ptr->updateFromConfig();
+            }
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text scale decreased to %.1f", textScaleValue_);
+        }
+        else if (inputManager.isActionJustPressed(GameAction::NAV_RIGHT)) {
+            // Increase text scale (maximum 2.0)
+            textScaleValue_ = std::min(2.0f, textScaleValue_ + 0.1f);
+            
+            // Update the config
+            ConfigManager::setValue("ui.textScale", textScaleValue_);
+            ConfigManager::saveChanges();
+            
+            // Update the text renderer
+            if (game_ptr) {
+                game_ptr->updateFromConfig();
+            }
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text scale increased to %.1f", textScaleValue_);
+        }
+        else if (inputManager.isActionJustPressed(GameAction::CONFIRM) || 
+                 inputManager.isActionJustPressed(GameAction::CANCEL)) {
+            // Exit text scale adjustment mode
+            isAdjustingTextScale_ = false;
+        }
+        
+        return;
+    }
+    
     // Normal menu navigation
     if (inputManager.isActionJustPressed(GameAction::NAV_UP)) {
         if (currentSelection_ == 0) {
@@ -109,13 +151,17 @@ void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerD
             }
             menuOptions_.push_back("BACK");
             currentSelection_ = 0;
-        } 
-        else if (selected == "AUDIO") {
+        }        else if (selected == "AUDIO") {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Audio settings not implemented yet");
         } 
         else if (selected == "DISPLAY") {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Display settings not implemented yet");
-        } 
+        }
+        else if (selected == "TEXT SCALE") {
+            // Enter text scale adjustment mode
+            isAdjustingTextScale_ = true;
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Adjusting text scale (current: %.1f)", textScaleValue_);
+        }
         else if (selected == "RETURN TO MENU" || selected == "BACK") {
             // Return to previous state
             game_ptr->requestFadeToState(nullptr, 0.3f, true);
@@ -167,16 +213,35 @@ void SettingsState::render(PCDisplay& display) {
     if (!textRenderer) return;
     
     // Draw title
-    textRenderer->drawText(renderer, "SETTINGS", MENU_START_X, TITLE_Y, 1.0f);
-      // Draw menu options
+    textRenderer->drawText(renderer, "SETTINGS", MENU_START_X, TITLE_Y, 1.0f);    // Special case for text scale adjustment mode
+    if (isAdjustingTextScale_) {
+        textRenderer->drawText(renderer, "TEXT SCALE ADJUSTMENT", MENU_START_X, MENU_START_Y, 1.2f);
+        
+        char valueText[64];
+        sprintf(valueText, "Current Scale: %.1f", textScaleValue_);
+        textRenderer->drawText(renderer, valueText, MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT, 1.0f);
+        
+        textRenderer->drawText(renderer, "Use LEFT/RIGHT arrows to adjust", MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT * 2, 0.8f);
+        textRenderer->drawText(renderer, "Press CONFIRM/CANCEL when done", MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT * 3, 0.8f);
+        
+        return;
+    }
+
+    // Draw menu options
     for (size_t i = 0; i < menuOptions_.size(); i++) {
         float scale = (i == currentSelection_) ? 1.2f : 0.9f;
         int y = MENU_START_Y + (static_cast<int>(i) * MENU_ITEM_HEIGHT);
         
         std::string displayText = menuOptions_[i];
         
+        // If this is the text scale option, show the current value
+        if (displayText == "TEXT SCALE") {
+            char valueText[64];
+            sprintf(valueText, "%.1f", textScaleValue_);
+            displayText += ": " + std::string(valueText);
+        }
         // If we're showing key bindings and this is a key binding option
-        if (i < keyBindOptions_.size() && displayText == keyBindOptions_[i].displayName) {
+        else if (i < keyBindOptions_.size() && displayText == keyBindOptions_[i].displayName) {
             std::string keyName;
             if (isRebindingKey_ && i == currentSelection_) {
                 keyName = "Press a key...";

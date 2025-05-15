@@ -1,6 +1,7 @@
 // src/ui/TextRenderer.cpp
 #include "ui/TextRenderer.h"      // Include own header
 #include "vendor/nlohmann/json.hpp" // Full JSON header needed for implementation
+#include "utils/ConfigManager.h"  // For loading global text scale from config
 #include <SDL_log.h>
 #include <fstream>
 #include <stdexcept>               // For errors during loading maybe
@@ -8,12 +9,28 @@
 
 TextRenderer::TextRenderer(SDL_Texture* fontTexture) :
     fontTexture_(fontTexture),
-    defaultKerning_(-15) // Set default based on previous usage in MenuState
+    defaultKerning_(-15), // Set default based on previous usage in MenuState
+    globalTextScale_(1.0f) // Default scale
 {
     if (!fontTexture_) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer created with null font texture!");
     }
-     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer instance created.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer instance created.");
+    
+    // Load the global text scale from config
+    updateGlobalTextScaleFromConfig();
+}
+
+// Update the global text scale from game config
+void TextRenderer::updateGlobalTextScaleFromConfig() {
+    if (ConfigManager::isInitialized()) {
+        // Get the global text scale from config, default to 1.0 if not found
+        globalTextScale_ = ConfigManager::getValue<float>("ui.textScale", 1.0f);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer: Global text scale set to %.2f", globalTextScale_);
+    } else {
+        globalTextScale_ = 1.0f;
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer: ConfigManager not initialized, using default text scale (1.0)");
+    }
 }
 
 // Loads the character mapping from the JSON file
@@ -175,11 +192,14 @@ void TextRenderer::drawText(SDL_Renderer* renderer, const std::string& text, int
                    static_cast<const void*>(fontTexture_), fontCharMap_.empty(), static_cast<const void*>(renderer), scale);
         return;
     }
-
+    
+    // Apply global text scale
+    float finalScale = scale * globalTextScale_;
+    
     int currentX = x;
     // Use default kerning if -1 is passed
     int effectiveKerning = (kerning == -1) ? defaultKerning_ : kerning;
-    float scaledKerning = static_cast<float>(effectiveKerning) * scale;
+    float scaledKerning = static_cast<float>(effectiveKerning) * finalScale;
     bool firstChar = true;
 
     for (char c : text) {
@@ -230,6 +250,9 @@ SDL_Texture* TextRenderer::renderTextToTexture(SDL_Renderer* renderer, const std
                    static_cast<const void*>(fontTexture_), fontCharMap_.empty(), static_cast<const void*>(renderer), scale, text.empty());
         return nullptr;
     }
+    
+    // Apply global text scale
+    float finalScale = scale * globalTextScale_;
 
     // 1. Calculate dimensions
     SDL_Point dimensions = getTextDimensions(text, kerning);
@@ -238,8 +261,8 @@ SDL_Texture* TextRenderer::renderTextToTexture(SDL_Renderer* renderer, const std
         return nullptr;
     }
 
-    int finalWidth = static_cast<int>(static_cast<float>(dimensions.x) * scale);
-    int finalHeight = static_cast<int>(static_cast<float>(dimensions.y) * scale);
+    int finalWidth = static_cast<int>(static_cast<float>(dimensions.x) * finalScale);
+    int finalHeight = static_cast<int>(static_cast<float>(dimensions.y) * finalScale);
 
     if (finalWidth <= 0 || finalHeight <= 0) {
         SDL_LogError(SDL_LOG_CATEGORY_RENDER, "TextRenderer::renderTextToTexture: Scaled text dimensions are invalid (w=%d, h=%d) for text: %s", finalWidth, finalHeight, text.c_str());
@@ -264,10 +287,8 @@ SDL_Texture* TextRenderer::renderTextToTexture(SDL_Renderer* renderer, const std
     SDL_SetTextureColorMod(fontTexture_, color.r, color.g, color.b);
     // Note: Alpha modulation (SDL_SetTextureAlphaMod) might also be useful if the color.a is intended to make the whole text semi-transparent.
     // However, for typical text rendering, color.a in SDL_Color is often ignored unless specifically handled.
-    // The created texture (newTexture) will handle overall transparency via its pixel data and blend mode.
-
-    // 4. Draw the text onto the new texture
-    // The drawText method handles scaling internally, so we pass the original scale.
+    // The created texture (newTexture) will handle overall transparency via its pixel data and blend mode.    // 4. Draw the text onto the new texture
+    // The drawText method handles scaling internally, so we pass the scale.
     // We draw at (0,0) on the new texture.
     drawText(renderer, text, 0, 0, scale, kerning);
 

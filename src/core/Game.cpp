@@ -633,6 +633,28 @@ GameState* Game::getUnderlyingState(const GameState* currentState) {
     return nullptr;
 }
 
+// Update game settings from configuration
+void Game::updateFromConfig() {
+    if (textRenderer_) {
+        textRenderer_->updateGlobalTextScaleFromConfig();
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text renderer updated from config.");
+    }
+    
+    // Other configuration updates can be added here in the future
+}
+
+// Reload configuration and update settings
+bool Game::reloadConfig() {
+    bool success = ConfigManager::reload();
+    if (success) {
+        updateFromConfig();
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Configuration reloaded and settings updated.");
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to reload configuration.");
+    }
+    return success;
+}
+
 
 // --- close ---
 void Game::close() {

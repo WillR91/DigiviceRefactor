@@ -30,10 +30,18 @@ public:
     // Draws the text using the loaded font data
     void drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale = 1.0f, int kerning = -1) const; // Default kerning?
 
+    // Get and set the global text scale factor
+    float getGlobalTextScale() const { return globalTextScale_; }
+    void setGlobalTextScale(float scale) { globalTextScale_ = scale; }
+
+    // Update global text scale from configuration
+    void updateGlobalTextScaleFromConfig();
+
 private:
     SDL_Texture* fontTexture_; // Non-owning pointer to the font atlas
     std::map<char, SDL_Rect> fontCharMap_; // Map from character to source Rect on atlas
     int defaultKerning_; // Store default kerning (Maybe -15 based on MenuState?)
+    float globalTextScale_; // Global scaling factor for all text rendering
 
     // Internal helper to get the source rect for a character
     const SDL_Rect* getCharRect(char c) const;

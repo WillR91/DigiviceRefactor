@@ -52,12 +52,15 @@ public:
     void requestFadeToState(std::unique_ptr<GameState> targetState, float duration = 0.5f, bool popCurrent = true); // <<< NEW
 
     // Request a fade to black without immediately changing state
-    void requestFadeToBlack(float duration = 0.3f);
-
-    // Get current fade step to check progress
+    void requestFadeToBlack(float duration = 0.3f);    // Get current fade step to check progress
     FadeSequenceStep getFadeStep() const {
         return fade_step_;
     }
+      // Update game settings from configuration
+    void updateFromConfig();
+    
+    // Reload configuration and update settings
+    bool reloadConfig();
 
     // --- Getters for Core Systems/Data ---
     void quit_game();

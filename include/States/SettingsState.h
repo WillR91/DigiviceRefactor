@@ -39,15 +39,17 @@ private:
     const int MENU_ITEM_HEIGHT = 30;
     
     // Textures
-    SDL_Texture* backgroundTexture_ = nullptr;
-
-    // Menu settings
+    SDL_Texture* backgroundTexture_ = nullptr;    // Menu settings
     std::vector<std::string> menuOptions_;
     size_t currentSelection_ = 0;
     
     // Key rebinding mode
     bool isRebindingKey_ = false;
     GameAction currentRebindAction_ = GameAction::_ACTION_COUNT;
+    
+    // Text scale adjustment
+    bool isAdjustingTextScale_ = false;
+    float textScaleValue_ = 1.0f;
     
     // Key binding options
     std::vector<KeyBindOption> keyBindOptions_;
