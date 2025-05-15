@@ -5,6 +5,7 @@
 #include "Core/AssetManager.h" // Added for loading textures
 #include "UI/TextRenderer.h"   // Added for rendering text
 #include "platform/pc/pc_display.h" // Corrected path for PCDisplay.h
+#include "../../include/states/adventurestate.h" // Ensure AdventureState is included
 
 namespace Digivice {
 
@@ -287,52 +288,41 @@ namespace Digivice {
                 }
             }
         }
-    }    void MapSystemState::handle_input_node_detail(InputManager& inputManager) {
-        if (currentContinentIndex_ < 0 || currentContinentIndex_ >= static_cast<int>(continents_.size()) || 
-            currentNodeIndex_ < 0 || currentNodeIndex_ >= static_cast<int>(continents_[currentContinentIndex_].nodes.size())) return;
+    }
 
-        const auto& selectedNode = continents_[currentContinentIndex_].nodes[currentNodeIndex_];
+    void MapSystemState::handle_input_node_detail(InputManager& inputManager) {
+    // Check for cancel to return to node selection
+    if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
+        currentView_ = MapView::NODE_SELECTION;
+        SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: CANCELLED from Node Detail to Node Selection.");
+        return;
+    }
 
-        if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node '%s' Detail CONFIRMED. Initiating adventure...", selectedNode.name.c_str());
+    // Check for confirm button press to enter the selected node
+    if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
+        if (currentContinentIndex_ >= 0 && currentContinentIndex_ < static_cast<int>(continents_.size()) &&
+            currentNodeIndex_ >= 0 && currentNodeIndex_ < static_cast<int>(continents_[currentContinentIndex_].nodes.size())) {
             
-            if (game_ptr) {
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Setting node background layers for adventure");
-                
-                // Store the selected node's adventure data in PlayerData for the Adventure state to use
-                PlayerData* playerData = game_ptr->getPlayerData();
-                if (playerData) {
-                    playerData->setCurrentMapNode(selectedNode.id);
-                    playerData->setStepGoal(selectedNode.totalSteps);
-                    
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Set current node to %s with %d steps", 
-                               selectedNode.id.c_str(), selectedNode.totalSteps);
+            // Get the selected node
+            const NodeData& selectedNode = continents_[currentContinentIndex_].nodes[currentNodeIndex_];
+            
+            // Only proceed if the node is unlocked
+            if (selectedNode.isUnlocked) {
+                // Save the selected node to player data for the AdventureState to use
+                if (game_ptr && game_ptr->getPlayerData()) {
+                    game_ptr->getPlayerData()->setCurrentMapNode(selectedNode);
                 }
                 
-                // Set up the background layers in AssetManager
-                AssetManager* assetManager = game_ptr->getAssetManager();
-                if (assetManager && !selectedNode.adventureBackgroundLayers.empty()) {
-                    for (size_t i = 0; i < selectedNode.adventureBackgroundLayers.size(); ++i) {
-                        const auto& layer = selectedNode.adventureBackgroundLayers[i];
-                        if (!layer.texturePaths.empty()) {
-                            std::string layerId = selectedNode.id + "_layer_" + std::to_string(i);
-                            assetManager->loadTexture(layerId, layer.texturePaths[0]);
-                            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Loaded background layer %zu for node %s", 
-                                       i, selectedNode.id.c_str());
-                        }
-                    }
-                }
-                
-                // TODO: Create and transition to an AdventureState once implemented
-                // For now, return to node selection view with a message
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Map: AdventureState not yet fully implemented. Returning to Node Selection.");
-                currentView_ = MapView::NODE_SELECTION;
-                
-                // When AdventureState is implemented:
-                // game_ptr->requestFadeToState(std::make_unique<AdventureState>(game_ptr), 0.3f, true);
+                // Create and transition to an AdventureState using the normal constructor
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Transitioning to AdventureState for node: %s", selectedNode.name.c_str());
+                auto newState = std::make_unique<AdventureState>(game_ptr);
+                game_ptr->requestFadeToState(std::move(newState));
+            } else {
+                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node '%s' is locked. Cannot enter.", selectedNode.name.c_str());
             }
         }
     }
+}
 
     void MapSystemState::update_continent_selection(float dt) {}
     void MapSystemState::update_node_selection(float dt) {}

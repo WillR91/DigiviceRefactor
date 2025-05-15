@@ -47,10 +47,11 @@ AdventureState::AdventureState(Game* game) :
     bg_scroll_offset_0_(0.0f),
     bg_scroll_offset_1_(0.0f),
     bg_scroll_offset_2_(0.0f),
-    timeSinceLastStep_(0.0f),    stepWindowTimer_(0.0f),
+    timeSinceLastStep_(0.0f),
+    stepWindowTimer_(0.0f),
     stepsInWindow_(0),
     // Initialize new battle trigger members
-    current_area_step_goal_(GameConstants::getCurrentChapterStepGoal()), // Get dynamic value from config
+    current_area_step_goal_(0),
     total_steps_taken_in_area_(0),
     current_area_enemy_id_("DefaultEnemy"), // Placeholder
     is_fading_to_battle_(false),
@@ -66,11 +67,68 @@ AdventureState::AdventureState(Game* game) :
     PlayerData* pd = game_ptr->getPlayerData();
     current_digimon_ = pd->currentPartner;
 
+    // Load data from the current map node
     AssetManager* assets = game_ptr->getAssetManager();
-    bgTexture0_ = assets->getTexture("castle_bg_0");
-    bgTexture1_ = assets->getTexture("castle_bg_1");
-    bgTexture2_ = assets->getTexture("castle_bg_2");
     
+    // Get node data from player data
+    const Digivice::NodeData& nodeData = pd->getCurrentNodeData();
+    current_area_step_goal_ = nodeData.totalSteps > 0 ? nodeData.totalSteps : GameConstants::getCurrentChapterStepGoal();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Loaded node '%s' with step goal: %d", 
+                nodeData.name.c_str(), current_area_step_goal_);
+    
+    // Load background textures from the node data
+    if (!nodeData.adventureBackgroundLayers.empty()) {
+        // Load foreground texture (layer 0)
+        if (nodeData.adventureBackgroundLayers.size() > 0 && !nodeData.adventureBackgroundLayers[0].texturePaths.empty()) {
+            std::string bgTexId0 = nodeData.id + "_bg_0";
+            if (!assets->getTexture(bgTexId0)) {
+                if (assets->loadTexture(bgTexId0, nodeData.adventureBackgroundLayers[0].texturePaths[0])) {
+                    bgTexture0_ = assets->getTexture(bgTexId0);
+                }
+            } else {
+                bgTexture0_ = assets->getTexture(bgTexId0);
+            }
+        }
+        
+        // Load midground texture (layer 1)
+        if (nodeData.adventureBackgroundLayers.size() > 1 && !nodeData.adventureBackgroundLayers[1].texturePaths.empty()) {
+            std::string bgTexId1 = nodeData.id + "_bg_1";
+            if (!assets->getTexture(bgTexId1)) {
+                if (assets->loadTexture(bgTexId1, nodeData.adventureBackgroundLayers[1].texturePaths[0])) {
+                    bgTexture1_ = assets->getTexture(bgTexId1);
+                }
+            } else {
+                bgTexture1_ = assets->getTexture(bgTexId1);
+            }
+        }
+        
+        // Load background texture (layer 2)
+        if (nodeData.adventureBackgroundLayers.size() > 2 && !nodeData.adventureBackgroundLayers[2].texturePaths.empty()) {
+            std::string bgTexId2 = nodeData.id + "_bg_2";
+            if (!assets->getTexture(bgTexId2)) {
+                if (assets->loadTexture(bgTexId2, nodeData.adventureBackgroundLayers[2].texturePaths[0])) {
+                    bgTexture2_ = assets->getTexture(bgTexId2);
+                }
+            } else {
+                bgTexture2_ = assets->getTexture(bgTexId2);
+            }
+        }
+    }
+      // Fallback to default backgrounds if loading fails
+    if (!bgTexture0_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load foreground from node data, using default");
+        bgTexture0_ = assets->getTexture("castle_bg_0");
+    }
+    if (!bgTexture1_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load midground from node data, using default");
+        bgTexture1_ = assets->getTexture("castle_bg_1");
+    }
+    if (!bgTexture2_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load background from node data, using default");
+        bgTexture2_ = assets->getTexture("castle_bg_2");
+    }
+    
+    // Load initial animation for the partner Digimon
     std::string initialAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
     AnimationManager* animManager = game_ptr->getAnimationManager();
     const AnimationData* initialAnimData = animManager->getAnimationData(initialAnimId);
