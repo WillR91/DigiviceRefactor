@@ -109,19 +109,17 @@ namespace Digivice {
         ContinentData fileIsland;
         fileIsland.id = "file_island";
         fileIsland.name = "FILE ISLAND"; // Changed to uppercase
-        fileIsland.mapImagePath = "assets/backgrounds/environments/file_island/file_island_map.png";
-
-        // --- Define Node: 01_tropical_jungle ---
+        fileIsland.mapImagePath = "assets/backgrounds/environments/file_island/file_island_map.png";        // --- Define Node: 01_tropical_jungle ---
         NodeData tropicalJungleNode;
         tropicalJungleNode.id = "file_island_node_01";
         tropicalJungleNode.name = "TROPICAL JUNGLE"; // Changed to uppercase
         tropicalJungleNode.continentId = fileIsland.id;
-        tropicalJungleNode.mapPositionX = 100.0f; // Placeholder X on continent map
-        tropicalJungleNode.mapPositionY = 150.0f; // Placeholder Y on continent map
+        tropicalJungleNode.mapPositionX = 120.0f; // Positioned on left side of map
+        tropicalJungleNode.mapPositionY = 150.0f; // Positioned at center height
         tropicalJungleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png"; // Placeholder
         tropicalJungleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_tj_idle.png"; // Placeholder
         tropicalJungleNode.totalSteps = 400;    // Placeholder
-        tropicalJungleNode.isUnlocked = true;   // Unlocked for prototype
+        tropicalJungleNode.isUnlocked = true;// Unlocked for prototype
 
         // Background Layers for Tropical Jungle (Order: FG, MG, BG as per docs)
         // Layer 0: Foreground
@@ -147,79 +145,69 @@ namespace Digivice {
                 0.1f,  // parallaxFactorX
                 0.0f   // parallaxFactorY
             )
-        );
-
-        // --- Define Node: 02_lake ---
+        );        // --- Define Node: 02_lake ---
         NodeData lakeNode;
         lakeNode.id = "file_island_node_02";
         lakeNode.name = "LAKE";
         lakeNode.continentId = fileIsland.id;
-        lakeNode.mapPositionX = 150.0f; // Placeholder X
-        lakeNode.mapPositionY = 150.0f; // Placeholder Y
+        lakeNode.mapPositionX = 200.0f; // Positioned to the right of Tropical Jungle
+        lakeNode.mapPositionY = 100.0f; // Positioned above the center line
         lakeNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         lakeNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         lakeNode.totalSteps = 300; // Placeholder steps
-        lakeNode.isUnlocked = false;
+        lakeNode.isUnlocked = true; // Set to unlocked
         lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_0.png"}, 0.5f, 0.0f));
         lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_1.png"}, 0.25f, 0.0f));
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_2.png"}, 0.1f, 0.0f));
-
-        // --- Define Node: 03_gear_savannah ---
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/02_lake/layer_2.png"}, 0.1f, 0.0f));        // --- Define Node: 03_gear_savannah ---
         NodeData gearSavannahNode;
         gearSavannahNode.id = "file_island_node_03";
         gearSavannahNode.name = "GEAR SAVANNAH";
         gearSavannahNode.continentId = fileIsland.id;
-        gearSavannahNode.mapPositionX = 200.0f; // Placeholder X
-        gearSavannahNode.mapPositionY = 150.0f; // Placeholder Y
+        gearSavannahNode.mapPositionX = 300.0f; // Positioned to the right of Lake
+        gearSavannahNode.mapPositionY = 180.0f; // Positioned below center line
         gearSavannahNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         gearSavannahNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         gearSavannahNode.totalSteps = 350; // Placeholder steps
-        gearSavannahNode.isUnlocked = false;
+        gearSavannahNode.isUnlocked = true; // Set to unlocked
         gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_0.png"}, 0.5f, 0.0f));
         gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_1.png"}, 0.25f, 0.0f));
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_2.png"}, 0.1f, 0.0f));
-
-        // --- Define Node: 04_factorial_town ---
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/03_gear_savannah/layer_2.png"}, 0.1f, 0.0f));        // --- Define Node: 04_factorial_town ---
         NodeData factorialTownNode;
         factorialTownNode.id = "file_island_node_04";
         factorialTownNode.name = "FACTORIAL TOWN";
         factorialTownNode.continentId = fileIsland.id;
-        factorialTownNode.mapPositionX = 250.0f; // Placeholder X
-        factorialTownNode.mapPositionY = 150.0f; // Placeholder Y
+        factorialTownNode.mapPositionX = 350.0f; // Positioned to the right of Gear Savannah
+        factorialTownNode.mapPositionY = 120.0f; // Positioned near top center
         factorialTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         factorialTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         factorialTownNode.totalSteps = 450; // Placeholder steps
-        factorialTownNode.isUnlocked = false;
+        factorialTownNode.isUnlocked = true; // Set to unlocked
         factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_0.png"}, 0.5f, 0.0f));
         factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_1.png"}, 0.25f, 0.0f));
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_2.png"}, 0.1f, 0.0f));
-
-        // --- Define Node: 05_toy_town ---
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/04_factorial_town/layer_2.png"}, 0.1f, 0.0f));        // --- Define Node: 05_toy_town ---
         NodeData toyTownNode;
         toyTownNode.id = "file_island_node_05";
         toyTownNode.name = "TOY TOWN";
         toyTownNode.continentId = fileIsland.id;
-        toyTownNode.mapPositionX = 300.0f; // Placeholder X
-        toyTownNode.mapPositionY = 150.0f; // Placeholder Y
+        toyTownNode.mapPositionX = 250.0f; // Positioned to the right of center
+        toyTownNode.mapPositionY = 220.0f; // Positioned below center
         toyTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         toyTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         toyTownNode.totalSteps = 320; // Placeholder steps
-        toyTownNode.isUnlocked = false;
+        toyTownNode.isUnlocked = true; // Set to unlocked
         toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_0.png"}, 0.5f, 0.0f));
         toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_1.png"}, 0.25f, 0.0f));
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_2.png"}, 0.1f, 0.0f));
-
-        // --- Define Node: 06_infinity_mountain ---
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/05_toy_town/layer_2.png"}, 0.1f, 0.0f));        // --- Define Node: 06_infinity_mountain ---
         NodeData infinityMountainNode;
         infinityMountainNode.id = "file_island_node_06";
         infinityMountainNode.name = "INFINITY MOUNTAIN";
         infinityMountainNode.continentId = fileIsland.id;
-        infinityMountainNode.mapPositionX = 350.0f; // Placeholder X
-        infinityMountainNode.mapPositionY = 150.0f; // Placeholder Y
+        infinityMountainNode.mapPositionX = 400.0f; // Positioned at far right
+        infinityMountainNode.mapPositionY = 220.0f; // Positioned at bottom right
         infinityMountainNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         infinityMountainNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; // Generic placeholder
         infinityMountainNode.totalSteps = 600; // Placeholder steps
-        infinityMountainNode.isUnlocked = false;
+        infinityMountainNode.isUnlocked = true; // Set to unlocked
         infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_0.png"}, 0.5f, 0.0f));
         infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_1.png"}, 0.25f, 0.0f));
         infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/file_island/06_infinity_mountain/layer_2.png"}, 0.1f, 0.0f));
@@ -299,9 +287,7 @@ namespace Digivice {
                 }
             }
         }
-    }
-
-    void MapSystemState::handle_input_node_detail(InputManager& inputManager) {
+    }    void MapSystemState::handle_input_node_detail(InputManager& inputManager) {
         if (currentContinentIndex_ < 0 || currentContinentIndex_ >= static_cast<int>(continents_.size()) || 
             currentNodeIndex_ < 0 || currentNodeIndex_ >= static_cast<int>(continents_[currentContinentIndex_].nodes.size())) return;
 
@@ -309,8 +295,42 @@ namespace Digivice {
 
         if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node '%s' Detail CONFIRMED. Initiating adventure...", selectedNode.name.c_str());
-            currentView_ = MapView::NODE_SELECTION; 
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Map: AdventureState transition not yet implemented. Returning to Node Selection.");
+            
+            if (game_ptr) {
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Setting node background layers for adventure");
+                
+                // Store the selected node's adventure data in PlayerData for the Adventure state to use
+                PlayerData* playerData = game_ptr->getPlayerData();
+                if (playerData) {
+                    playerData->setCurrentMapNode(selectedNode.id);
+                    playerData->setStepGoal(selectedNode.totalSteps);
+                    
+                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Set current node to %s with %d steps", 
+                               selectedNode.id.c_str(), selectedNode.totalSteps);
+                }
+                
+                // Set up the background layers in AssetManager
+                AssetManager* assetManager = game_ptr->getAssetManager();
+                if (assetManager && !selectedNode.adventureBackgroundLayers.empty()) {
+                    for (size_t i = 0; i < selectedNode.adventureBackgroundLayers.size(); ++i) {
+                        const auto& layer = selectedNode.adventureBackgroundLayers[i];
+                        if (!layer.texturePaths.empty()) {
+                            std::string layerId = selectedNode.id + "_layer_" + std::to_string(i);
+                            assetManager->loadTexture(layerId, layer.texturePaths[0]);
+                            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map: Loaded background layer %zu for node %s", 
+                                       i, selectedNode.id.c_str());
+                        }
+                    }
+                }
+                
+                // TODO: Create and transition to an AdventureState once implemented
+                // For now, return to node selection view with a message
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Map: AdventureState not yet fully implemented. Returning to Node Selection.");
+                currentView_ = MapView::NODE_SELECTION;
+                
+                // When AdventureState is implemented:
+                // game_ptr->requestFadeToState(std::make_unique<AdventureState>(game_ptr), 0.3f, true);
+            }
         }
     }
 
@@ -453,25 +473,94 @@ namespace Digivice {
             if (!continent.nodes.empty()) currentNodeIndex_ = 0;
             else return; // No nodes to select
         }
+          // Render all nodes on the map
+        // Iterate through all nodes and render their icons
+        const int NODE_ICON_SIZE = 24; // Size for node icons - adjust as needed
+        const float SELECTED_SCALE = 1.5f; // Scale factor for the selected node
         
-        // Render "NODE SELECTION VIEW (WIP)" for now, or actual node names later
-        // textRenderer->drawText(display.getRenderer(), "NODE SELECTION VIEW (WIP)", 10, 50, 1.0f); // Changed to uppercase
-
-        // Iterate and render nodes (actual implementation for PENDING item 3)
-        // For now, just display the name of the currently selected node as an example
+        // First, render all nodes
+        for (size_t i = 0; i < continent.nodes.size(); i++) {
+            const auto& node = continent.nodes[i];
+            bool isSelected = (static_cast<int>(i) == currentNodeIndex_);
+            
+            // Calculate position for the node icon
+            int iconX = static_cast<int>(node.mapPositionX) - (NODE_ICON_SIZE / 2);
+            int iconY = static_cast<int>(node.mapPositionY) - (NODE_ICON_SIZE / 2);
+            
+            // Load the node sprite if needed
+            std::string nodeTextureId = node.id + "_icon";
+            SDL_Texture* nodeTexture = assetManager->getTexture(nodeTextureId);
+            if (!nodeTexture) {
+                // If we don't have a specific node icon yet, load the placeholder
+                if (assetManager->loadTexture(nodeTextureId, node.unlockedSpritePath)) {
+                    nodeTexture = assetManager->getTexture(nodeTextureId);
+                }
+            }
+            
+            if (nodeTexture) {
+                // Draw the node icon
+                SDL_Rect dstRect;
+                if (isSelected) {
+                    // Make the selected node larger for emphasis
+                    int selectedSize = static_cast<int>(NODE_ICON_SIZE * SELECTED_SCALE);
+                    dstRect = {iconX - (selectedSize - NODE_ICON_SIZE) / 2, 
+                               iconY - (selectedSize - NODE_ICON_SIZE) / 2, 
+                               selectedSize, selectedSize};
+                } else {
+                    dstRect = {iconX, iconY, NODE_ICON_SIZE, NODE_ICON_SIZE};
+                }
+                display.drawTexture(nodeTexture, nullptr, &dstRect);
+                
+                // If this node is locked, overlay a lock icon or gray it out
+                if (!node.isUnlocked) {
+                    // Here we could draw a lock icon or apply a gray/semi-transparent effect
+                    // For now, we'll just draw a black semi-transparent rectangle over it
+                    SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
+                    SDL_SetRenderDrawColor(display.getRenderer(), 0, 0, 0, 128); // Semi-transparent black
+                    SDL_RenderFillRect(display.getRenderer(), &dstRect);
+                    SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
+                }
+            } else {
+                // Fallback: draw a colored circle if texture isn't available
+                SDL_SetRenderDrawColor(display.getRenderer(), 255, 255, 255, 255);
+                int radius = isSelected ? NODE_ICON_SIZE/2 + 2 : NODE_ICON_SIZE/2;
+                // Basic circle drawing algorithm
+                for (int w = 0; w < radius * 2; w++) {
+                    for (int h = 0; h < radius * 2; h++) {
+                        int dx = radius - w;
+                        int dy = radius - h;
+                        if ((dx*dx + dy*dy) <= (radius * radius)) {
+                            SDL_RenderDrawPoint(display.getRenderer(), iconX + w, iconY + h);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Display the name of the selected node at the bottom of the screen
         const auto& selectedNode = continent.nodes[currentNodeIndex_];
         std::string selectedNodeText = selectedNode.name; // Node name is already uppercase
-        float nodeTextScale = 0.65f;
+        float nodeTextScale = 0.8f; // Increased size for better readability
         SDL_Point unscaled_node_text_size = textRenderer->getTextDimensions(selectedNodeText);
         float scaled_node_text_width = static_cast<float>(unscaled_node_text_size.x) * nodeTextScale;
         float scaled_node_text_height = static_cast<float>(unscaled_node_text_size.y) * nodeTextScale;
 
         int nodeTextX = (screenWidth - static_cast<int>(scaled_node_text_width)) / 2;
-        int nodeTextY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - scaled_node_text_height / 2.0f); // Centered around 75% mark
+        int nodeTextY = screenHeight - static_cast<int>(scaled_node_text_height) - 20; // Position at bottom with padding
+        
+        // Add a background behind the text for better readability
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(display.getRenderer(), 0, 0, 0, 180); // Semi-transparent black
+        SDL_Rect textBgRect = {
+            nodeTextX - 10, 
+            nodeTextY - 5, 
+            static_cast<int>(scaled_node_text_width) + 20, 
+            static_cast<int>(scaled_node_text_height) + 10
+        };
+        SDL_RenderFillRect(display.getRenderer(), &textBgRect);
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
+        
         textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, nodeTextScale);
-
-        // TODO: Render node sprites on the map
-        // TODO: Implement selection highlighting
     }
 
     void MapSystemState::render_node_detail(PCDisplay& display) {
@@ -520,18 +609,114 @@ namespace Digivice {
         float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * stepsTextScale;
         // float scaled_steps_text_height = static_cast<float>(unscaled_steps_text_size.y) * stepsTextScale; // Not needed if Y is fixed
         textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);
+          // Load and render the environment background as a preview
+        if (!node.adventureBackgroundLayers.empty() && node.adventureBackgroundLayers.size() >= 3) {
+            // Use the background layer (layer 2) as a preview
+            const auto& bgLayer = node.adventureBackgroundLayers[2]; // Background layer
+            
+            if (!bgLayer.texturePaths.empty()) {
+                std::string bgTextureId = node.id + "_bg_preview";
+                SDL_Texture* bgTexture = assetManager->getTexture(bgTextureId);
+                
+                if (!bgTexture) {
+                    // Load the texture if it's not already loaded
+                    if (assetManager->loadTexture(bgTextureId, bgLayer.texturePaths[0])) {
+                        bgTexture = assetManager->getTexture(bgTextureId);
+                    }
+                }
+                
+                if (bgTexture) {
+                    // Draw the background in the center area of the screen
+                    int previewWidth = screenWidth / 2;
+                    int previewHeight = screenHeight / 3;
+                    SDL_Rect dstRect = {
+                        (screenWidth - previewWidth) / 2,
+                        80, // Position below the title
+                        previewWidth,
+                        previewHeight
+                    };
+                    display.drawTexture(bgTexture, nullptr, &dstRect);
+                    
+                    // Draw a frame around the preview
+                    SDL_SetRenderDrawColor(display.getRenderer(), 255, 255, 255, 255);
+                    SDL_RenderDrawRect(display.getRenderer(), &dstRect);
+                }
+            }
+        }
         
-        // Display "Confirm to Start" or similar prompt
+        // Load and render the boss sprite
+        std::string bossTextureId = node.id + "_boss";
+        SDL_Texture* bossTexture = assetManager->getTexture(bossTextureId);
+        
+        if (!bossTexture) {
+            // Load the texture if it's not already loaded
+            if (assetManager->loadTexture(bossTextureId, node.bossSpritePath)) {
+                bossTexture = assetManager->getTexture(bossTextureId);
+            }
+        }
+        
+        if (bossTexture) {
+            // Get the texture dimensions
+            int texWidth, texHeight;
+            SDL_QueryTexture(bossTexture, nullptr, nullptr, &texWidth, &texHeight);
+            
+            // Calculate a reasonable size for the boss sprite
+            int maxHeight = screenHeight / 4;
+            float scale = static_cast<float>(maxHeight) / static_cast<float>(texHeight);
+            int scaledWidth = static_cast<int>(texWidth * scale);
+            int scaledHeight = maxHeight;
+            
+            // Position to the right of center
+            int bossX = (screenWidth / 2) + 50;
+            int bossY = screenHeight / 2 - scaledHeight / 2;
+            
+            SDL_Rect dstRect = {bossX, bossY, scaledWidth, scaledHeight};
+            display.drawTexture(bossTexture, nullptr, &dstRect);
+        }
+        
+        // Display additional information
+        int infoY = screenHeight / 2 + 20;
+        int infoX = screenWidth / 4;
+        int lineSpacing = 30;
+        
+        // Display steps required
+        std::string stepsInfo = "STEPS TO COMPLETE: " + std::to_string(node.totalSteps);
+        textRenderer->drawText(display.getRenderer(), stepsInfo, infoX, infoY, 0.8f);
+        
+        // Display location info
+        std::string locationInfo = "LOCATION: " + continents_[currentContinentIndex_].name;
+        textRenderer->drawText(display.getRenderer(), locationInfo, infoX, infoY + lineSpacing, 0.8f);
+        
+        // Display "Confirm to Start" prompt with a more prominent style
         std::string promptText = "CONFIRM TO START ADVENTURE";
         float promptTextScale = 1.0f;
         SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
         float scaled_prompt_text_width = static_cast<float>(unscaled_prompt_text_size.x) * promptTextScale;
-        // float scaled_prompt_text_height = static_cast<float>(unscaled_prompt_text_size.y) * promptTextScale; // Not needed if Y is fixed
-        textRenderer->drawText(display.getRenderer(), promptText, (screenWidth - static_cast<int>(scaled_prompt_text_width)) / 2, screenHeight - 40, promptTextScale);
-
-
-        // TODO: Render boss sprite
-        // TODO: Render other details (event list, etc.)
+        float scaled_prompt_text_height = static_cast<float>(unscaled_prompt_text_size.y) * promptTextScale;
+        
+        int promptX = (screenWidth - static_cast<int>(scaled_prompt_text_width)) / 2;
+        int promptY = screenHeight - 60;
+        
+        // Draw a highlight box around the prompt
+        SDL_Rect promptRect = {
+            promptX - 20,
+            promptY - 10,
+            static_cast<int>(scaled_prompt_text_width) + 40,
+            static_cast<int>(scaled_prompt_text_height) + 20
+        };
+        
+        // Pulse effect for the prompt (using SDL_GetTicks for animation)
+        float pulse = (sinf(static_cast<float>(SDL_GetTicks()) / 500.0f) + 1.0f) / 2.0f; // 0 to 1 pulse
+        Uint8 alpha = static_cast<Uint8>(128 + 127 * pulse); // 128-255 range for semi-transparency
+        
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(display.getRenderer(), 0, 0, 128, alpha); // Semi-transparent blue with pulse
+        SDL_RenderFillRect(display.getRenderer(), &promptRect);
+        SDL_SetRenderDrawColor(display.getRenderer(), 255, 255, 255, 255); // White border
+        SDL_RenderDrawRect(display.getRenderer(), &promptRect);
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
+        
+        textRenderer->drawText(display.getRenderer(), promptText, promptX, promptY, promptTextScale);
     }
 
 } // namespace Digivice

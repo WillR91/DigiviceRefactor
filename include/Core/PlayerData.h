@@ -14,6 +14,7 @@ public:
         currentPartner(DIGI_AGUMON), // Uses the enum member
         stepsTakenThisChapter(0),
         totalSteps(0),
+        stepGoal(0),
         dPower(0),
         currentMapNode("Chapter1_Area1")
     {}
@@ -22,8 +23,17 @@ public:
     DigimonType currentPartner; // Uses the enum type
     int stepsTakenThisChapter;
     int totalSteps;
+    int stepGoal;  // Goal for current node/chapter
     int dPower;
     std::string currentMapNode;
+    
+    // --- Methods for Map System Integration ---
+    const std::string& getCurrentMapNode() const { return currentMapNode; }
+    void setCurrentMapNode(const std::string& nodeId) { currentMapNode = nodeId; }
+    
+    int getStepGoal() const { return stepGoal; }
+    void setStepGoal(int goal) { stepGoal = goal; }
+    
     // ... Potential Future Methods ...
 };
 
