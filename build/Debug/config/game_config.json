@@ -23,13 +23,13 @@
         "musicVolume": 0.7,
         "sfxVolume": 1.0,
         "muted": false
-    },
-    "game": {
+    },    "game": {
         "defaultPartner": "agumon",
         "difficultyLevel": "normal",
         "debugMode": false,
-        "transitionSpeed": 0.3
-    },    "paths": {
+        "transitionSpeed": 0.3,
+        "stepGoal": 15
+    },"paths": {
         "sprites": "assets/sprites/",
         "backgrounds": "assets/backgrounds/",
         "ui": "assets/ui/",

@@ -1,6 +1,8 @@
-// include/core/GameConstants.h
+﻿// include/core/GameConstants.h
 #ifndef GAMECONSTANTS_H
 #define GAMECONSTANTS_H
+
+#include "utils/configmanager.h"
 
 namespace GameConstants {
 
@@ -8,8 +10,14 @@ namespace GameConstants {
     const int WINDOW_WIDTH = 466;  // ADDED
     const int WINDOW_HEIGHT = 466; // ADDED
 
-    // Gameplay Constants
-    const int CURRENT_CHAPTER_STEP_GOAL = 20; // Steps to complete a chapter/area
+    // Gameplay Constants - Get from config with fallback values
+    inline int getCurrentChapterStepGoal() {
+        return ConfigManager::isInitialized() ? 
+            ConfigManager::getValue<int>("game.stepGoal", 10) : 10;
+    }
+    
+    // Fallback constant for static contexts
+    const int CURRENT_CHAPTER_STEP_GOAL = 10; // Steps to complete a chapter/area
     const int STEPS_PER_RANDOM_ENCOUNTER_CHECK = 5; // How often to check for random encounters
 
     // You can add other game-wide constants here later
@@ -18,4 +26,4 @@ namespace GameConstants {
 
 } // namespace GameConstants
 
-#endif // GAMECONSTANTS_H   
+#endif // GAMECONSTANTS_H

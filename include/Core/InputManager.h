@@ -5,6 +5,7 @@
 #include <SDL.h>            // For SDL_Event, SDL_Scancode
 #include <vector>
 #include <map>
+#include <string>          // For std::string
 
 class InputManager {
 public:
@@ -39,14 +40,15 @@ public:
     bool isActionJustReleased(GameAction action) const;
 
 private:
-    // --- Internal State Tracking ---
-
-    // Maps an abstract GameAction to its current state
+    // --- Internal State Tracking ---    // Maps an abstract GameAction to its current state
     std::map<GameAction, bool> currentActionState_;
     // Maps an abstract GameAction to its state in the *previous* frame
-    std::map<GameAction, bool> previousActionState_;    // Maps SDL Scancodes to our GameActions
+    std::map<GameAction, bool> previousActionState_;    
+    // Maps SDL Scancodes to our GameActions
     // Customize this mapping!
-    std::map<SDL_Scancode, GameAction> keyToActionMap_;    // Helper methods to initialize key mappings
+    std::map<SDL_Scancode, GameAction> keyToActionMap_;
+    
+    // Helper methods to initialize key mappings
     void initializeDefaultKeyMap();
     void loadKeysFromConfig();
     SDL_Scancode stringToScancode(const std::string& keyName);

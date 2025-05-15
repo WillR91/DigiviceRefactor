@@ -118,15 +118,13 @@ void ProgressState::render(PCDisplay& display) {
          SDL_Rect placeholder = {x, y, w, h};
          SDL_RenderFillRect(renderer, &placeholder);
          SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "ProgressState: Drawing placeholder, animator returned invalid texture/rect.");
-    }
-
-    // 3. Draw Progress Text
+    }    // 3. Draw Progress Text
     TextRenderer* textRenderer = game_ptr ? game_ptr->getTextRenderer() : nullptr;
     PlayerData* playerData = game_ptr ? game_ptr->getPlayerData() : nullptr;
 
     if (textRenderer && playerData) {
         int steps_taken = playerData->stepsTakenThisChapter;
-        int goal_steps = GameConstants::CURRENT_CHAPTER_STEP_GOAL;
+        int goal_steps = GameConstants::getCurrentChapterStepGoal();
         int steps_remaining = goal_steps - steps_taken;
         if (steps_remaining < 0) steps_remaining = 0;
 

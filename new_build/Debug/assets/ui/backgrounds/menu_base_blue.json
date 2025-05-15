@@ -1,0 +1,40 @@
+{
+  "frames": [
+    {
+      "filename": "88_0_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 480,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 480,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 480,
+        "h": 480
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "menubackground.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 480,
+      "h": 480
+    },
+    "scale": 3.75
+  }
+}

@@ -77,6 +77,9 @@ private:
     // Private constructor for singleton
     ConfigManager() = default;
     
+    // Allow std::make_unique to access private constructor
+    friend std::unique_ptr<ConfigManager> std::make_unique<ConfigManager>();
+    
     // Split dot-notated key into vector of keys
     static std::vector<std::string> parseKey(const std::string& key);
     

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="Z:\DigiviceRefactor\new_build\CMakeFiles\a22b211c6025f66df0aa56ed8f69dc24\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{54EB9B34-D683-347A-B2B4-0D081A9BEA71}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

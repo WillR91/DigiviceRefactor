@@ -23,9 +23,7 @@
 #include <string>
 #include <cmath>
 #include <memory>
-
-// Step Goal Constant
-const int CURRENT_CHAPTER_STEP_GOAL = 10;
+#include "core/gameconstants.h"
 
 // Rate Limiting Constants
 const float STEP_WINDOW_DURATION = 1.0f; // Time window in seconds
@@ -49,11 +47,10 @@ AdventureState::AdventureState(Game* game) :
     bg_scroll_offset_0_(0.0f),
     bg_scroll_offset_1_(0.0f),
     bg_scroll_offset_2_(0.0f),
-    timeSinceLastStep_(0.0f),
-    stepWindowTimer_(0.0f),
+    timeSinceLastStep_(0.0f),    stepWindowTimer_(0.0f),
     stepsInWindow_(0),
     // Initialize new battle trigger members
-    current_area_step_goal_(CURRENT_CHAPTER_STEP_GOAL), // Using existing constant for now
+    current_area_step_goal_(GameConstants::getCurrentChapterStepGoal()), // Get dynamic value from config
     total_steps_taken_in_area_(0),
     current_area_enemy_id_("DefaultEnemy"), // Placeholder
     is_fading_to_battle_(false),

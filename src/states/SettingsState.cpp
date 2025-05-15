@@ -167,12 +167,11 @@ void SettingsState::render(PCDisplay& display) {
     if (!textRenderer) return;
     
     // Draw title
-    textRenderer->renderText(renderer, "SETTINGS", MENU_START_X, TITLE_Y, 1.0f);
-    
-    // Draw menu options
+    textRenderer->drawText(renderer, "SETTINGS", MENU_START_X, TITLE_Y, 1.0f);
+      // Draw menu options
     for (size_t i = 0; i < menuOptions_.size(); i++) {
         float scale = (i == currentSelection_) ? 1.2f : 0.9f;
-        int y = MENU_START_Y + (i * MENU_ITEM_HEIGHT);
+        int y = MENU_START_Y + (static_cast<int>(i) * MENU_ITEM_HEIGHT);
         
         std::string displayText = menuOptions_[i];
         
@@ -190,7 +189,7 @@ void SettingsState::render(PCDisplay& display) {
             }
         }
         
-        textRenderer->renderText(renderer, displayText, MENU_START_X, y, scale);
+        textRenderer->drawText(renderer, displayText, MENU_START_X, y, scale);
     }
 }
 
