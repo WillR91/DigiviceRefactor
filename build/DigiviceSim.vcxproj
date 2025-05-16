@@ -432,10 +432,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\bitmapfont.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\assetmanager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game_fade.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp" />
@@ -443,11 +443,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\adventurestate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\mapsystemstate.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\menustate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />

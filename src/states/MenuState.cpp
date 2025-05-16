@@ -76,7 +76,11 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
                 return;
             } 
             else if (selectedItem == "DIGIMON") {
-                // Existing DIGIMON handling code
+                // Transition to PartnerSelectState
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: DIGIMON selected. Pushing PartnerSelectState.");
+                auto partnerSelectState = std::make_unique<PartnerSelectState>(game_ptr);
+                game_ptr->requestPushState(std::move(partnerSelectState));
+                return; // Added return to exit after handling
             }
             // Other menu options handling...
         }
