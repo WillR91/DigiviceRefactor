@@ -38,6 +38,14 @@ namespace Digivice {
         int currentContinentIndex_;
         int currentNodeIndex_;
 
+        // Fade transition variables
+        bool isFading_;
+        bool fadingOut_;
+        float fadeAlpha_; // 0.0f (transparent) to 255.0f (opaque)
+        float fadeDuration_; // seconds
+        float fadeTimer_;
+        int targetContinentIndex_;
+
         // Helper methods for each view
         // Corrected signatures to take InputManager&
         void handle_input_continent_selection(InputManager& inputManager);

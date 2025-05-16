@@ -6,6 +6,7 @@
 #include "UI/TextRenderer.h"   // Added for rendering text
 #include "platform/pc/pc_display.h" // Corrected path for PCDisplay.h
 #include "../../include/states/adventurestate.h" // Ensure AdventureState is included
+#include <algorithm> // Added for std::min and std::max
 
 namespace Digivice {
 
@@ -13,7 +14,13 @@ namespace Digivice {
         : GameState(game), // Uncommented game, passing it to GameState constructor
           currentView_(MapView::CONTINENT_SELECTION),
           currentContinentIndex_(0),
-          currentNodeIndex_(0) {
+          currentNodeIndex_(0),
+          isFading_(false),
+          fadingOut_(false),
+          fadeAlpha_(0.0f),
+          fadeDuration_(0.25f), // A quarter of a second for a quick fade
+          fadeTimer_(0.0f),
+          targetContinentIndex_(-1) { // Initialize to an invalid index
         // Constructor body
     }
 
@@ -66,6 +73,31 @@ namespace Digivice {
 
     // Corrected signature
     void MapSystemState::update(float dt, PlayerData* playerData) {
+        if (isFading_ && currentView_ == MapView::CONTINENT_SELECTION) {
+            fadeTimer_ += dt;
+            if (fadingOut_) {
+                // Fading out (to black)
+                fadeAlpha_ = std::min(255.0f, (fadeTimer_ / fadeDuration_) * 255.0f);
+                if (fadeTimer_ >= fadeDuration_) {
+                    fadeAlpha_ = 255.0f; // Ensure fully opaque
+                    currentContinentIndex_ = targetContinentIndex_; // Change continent image now
+                    fadingOut_ = false;    // Switch to fading in
+                    fadeTimer_ = 0.0f;     // Reset timer for fade-in phase
+                    // The new continent's assets will be loaded/rendered in the render_continent_selection call
+                }
+            } else {
+                // Fading in (from black)
+                fadeAlpha_ = std::max(0.0f, 255.0f - (fadeTimer_ / fadeDuration_) * 255.0f);
+                if (fadeTimer_ >= fadeDuration_) {
+                    fadeAlpha_ = 0.0f; // Ensure fully transparent
+                    isFading_ = false;   // End the fade sequence
+                    fadeTimer_ = 0.0f;
+                }
+            }
+            // While fading in continent selection, we don't want other view-specific updates or input processing for this view.
+            return; 
+        }
+
         switch (currentView_) {
             case MapView::CONTINENT_SELECTION:
                 // update_continent_selection(dt, playerData);
@@ -740,14 +772,27 @@ namespace Digivice {
 
     // Replaced helper function definitions with corrected signatures and added input logic
     void MapSystemState::handle_input_continent_selection(InputManager& inputManager) {
-        if (continents_.empty()) return;
+        if (continents_.empty() || (isFading_ && currentView_ == MapView::CONTINENT_SELECTION)) return; // Prevent input during fade for this view
 
         if (inputManager.isActionJustPressed(GameAction::NAV_UP)) {
-            currentContinentIndex_ = (currentContinentIndex_ == 0) ? static_cast<int>(continents_.size()) - 1 : currentContinentIndex_ - 1;
-            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Continent NAV_UP. New Index: %d (%s)", currentContinentIndex_, continents_[currentContinentIndex_].name.c_str());
+            int newTargetIndex = (currentContinentIndex_ == 0) ? static_cast<int>(continents_.size()) - 1 : currentContinentIndex_ - 1;
+            if (newTargetIndex != currentContinentIndex_) {
+                targetContinentIndex_ = newTargetIndex;
+                isFading_ = true;
+                fadingOut_ = true;     // Start by fading out
+                fadeTimer_ = 0.0f;
+                // fadeAlpha_ is already 0 or will be set by the fade-out logic, starting from current screen then to black
+                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Continent NAV_UP. Start fade to Index: %d (%s)", targetContinentIndex_, continents_[targetContinentIndex_].name.c_str());
+            }
         } else if (inputManager.isActionJustPressed(GameAction::NAV_DOWN)) {
-            currentContinentIndex_ = (currentContinentIndex_ + 1) % static_cast<int>(continents_.size());
-            SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Continent NAV_DOWN. New Index: %d (%s)", currentContinentIndex_, continents_[currentContinentIndex_].name.c_str());
+            int newTargetIndex = (currentContinentIndex_ + 1) % static_cast<int>(continents_.size());
+            if (newTargetIndex != currentContinentIndex_) {
+                targetContinentIndex_ = newTargetIndex;
+                isFading_ = true;
+                fadingOut_ = true;     // Start by fading out
+                fadeTimer_ = 0.0f;
+                SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Continent NAV_DOWN. Start fade to Index: %d (%s)", targetContinentIndex_, continents_[targetContinentIndex_].name.c_str());
+            }
         } else if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
             if (currentContinentIndex_ >= 0 && currentContinentIndex_ < static_cast<int>(continents_.size())) {
                 if (!continents_[currentContinentIndex_].nodes.empty()){
@@ -899,6 +944,15 @@ namespace Digivice {
             int textY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - scaled_text_height / 2.0f);
             textRenderer->drawText(display.getRenderer(), continent.name, textX, textY, scale);
         }
+
+        // Render fade overlay if fading in the continent selection view
+        if (isFading_ && currentView_ == MapView::CONTINENT_SELECTION) {
+            SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(display.getRenderer(), 0, 0, 0, static_cast<Uint8>(fadeAlpha_));
+            SDL_Rect fadeRect = {0, 0, screenWidth, screenHeight};
+            SDL_RenderFillRect(display.getRenderer(), &fadeRect);
+            SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE); // Reset blend mode to opaque for other rendering
+        }
     }
 
     void MapSystemState::render_node_selection(PCDisplay& display) {
@@ -944,6 +998,7 @@ namespace Digivice {
         } else {
             textRenderer->drawText(display.getRenderer(), "ERROR: CONTINENT MAP MISSING", screenWidth / 2 - 100, screenHeight / 2, 1.0f); // Changed to uppercase
         }
+
         
         // Commenting out the rendering of the continent name at the top of the node selection view
         /*
