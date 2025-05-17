@@ -439,6 +439,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game_fade.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animation.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />

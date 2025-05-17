@@ -7,6 +7,7 @@ Z:\DigiviceRefactor\src\core\animationmanager.cpp;Z:\DigiviceRefactor\build\Digi
 Z:\DigiviceRefactor\src\core\game.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\game.obj
 Z:\DigiviceRefactor\src\core\game_fade.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\game_fade.obj
 Z:\DigiviceRefactor\src\core\inputmanager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\inputmanager.obj
+Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ManagedScrollingLayer.obj
 Z:\DigiviceRefactor\src\graphics\animation.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animation.obj
 Z:\DigiviceRefactor\src\graphics\animator.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animator.obj
 Z:\DigiviceRefactor\src\menu.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\menu.obj

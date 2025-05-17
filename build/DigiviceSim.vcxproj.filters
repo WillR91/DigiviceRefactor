@@ -28,6 +28,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

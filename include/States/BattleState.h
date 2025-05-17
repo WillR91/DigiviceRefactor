@@ -17,24 +17,61 @@ struct SDL_Texture; // Forward declare SDL_Texture
 const float BATTLE_STATE_FADE_DURATION_SECONDS = 0.75f; // Duration of fade in/out within BattleState
 
 enum class VPetBattlePhase {
-    ENTERING_FADE_IN,    // Fade in from black to battle scene
-    ENEMY_REVEAL_SETUP,  // Prepare enemy sprite and name
-    ENEMY_REVEAL_ANIM,   // Simple animation/timer for reveal
-    BATTLE_AWAITING_PLAYER_COMMAND, // Added new phase
-    PLAYER_ATTACK_SETUP,
-    PLAYER_ATTACK_ANIM,
-    ENEMY_ATTACK_SETUP,
-    ENEMY_ATTACK_ANIM,
-    ATTACKS_MEET_SETUP,
-    ATTACKS_MEET_ANIM,
-    MINIGAME_TAP_RACE_START,
-    MINIGAME_TAP_RACE_ACTIVE,
-    MINIGAME_RESOLVE,
-    PLAYER_HIT_ANIM,
-    ENEMY_HIT_ANIM,
-    OUTCOME_DISPLAY,
-    EXITING_FADE_OUT,    // Fade out from battle scene to black
-    BATTLE_OVER_POP_STATE // Signal to Game to pop this state
+    // Phase 1: Battle Start & Enemy Introduction
+    ENTERING_FADE_IN,           // Fade in from black to reveal enemy
+    ENEMY_REVEAL_SETUP,         // Prepare enemy sprite and name (occurs during/before fade-in)
+    ENEMY_REVEAL_DISPLAY,       // Enemy is visible, name shown, awaiting player confirm
+
+    // Phase 2: Battle Instructions Screen
+    TOOTH_TRANSITION_START,     // Start the jagged tooth closing transition
+    TOOTH_TRANSITION_CLOSING,   // Teeth are closing
+    TOOTH_TRANSITION_OPENING,   // Teeth are opening to reveal instruction screen
+    INSTRUCTION_SCREEN_DISPLAY, // Instruction screen is visible, awaiting player confirm
+
+    // Phase 3: Player Digimon Selection Screen
+    TO_SELECTION_FADE_OUT,      // Fade to black before selection screen
+    TO_SELECTION_FADE_IN,       // Fade in to selection screen
+    SELECTION_SCREEN_DISPLAY,   // Player Digimon selection screen visible, awaiting confirm (placeholder for now)
+
+    // Phase 4: Player Digimon Enters Battle Arena
+    TO_PLAYER_REVEAL_FADE_OUT,  // Fade to black before player Digimon reveal
+    TO_PLAYER_REVEAL_FADE_IN,   // Fade in to show player Digimon
+    PLAYER_REVEAL_DISPLAY,      // Player Digimon is visible, idle animation
+
+    // Phase 5: Player's Attack Sequence
+    PLAYER_ATTACK_BG_TRANSITION,// Transition to orange motion background
+    PLAYER_ATTACK_LARGE_SPRITE, // Display large full-screen attack sprite
+    PLAYER_ATTACK_PIXEL_SETUP,  // Setup for pixel sprite attack (HP bars, etc.)
+    PLAYER_ATTACK_ANIM,         // Player pixel sprite attack animation (jump back, fire projectile)
+
+    // Phase 6: Enemy's Attack Sequence (Mirrored)
+    TO_ENEMY_ATTACK_FADE_WHITE, // Quick fade to white
+    ENEMY_ATTACK_BG_TRANSITION, // Transition to orange motion background (mirrored)
+    ENEMY_ATTACK_LARGE_SPRITE,  // Display large full-screen attack sprite (mirrored)
+    ENEMY_ATTACK_PIXEL_SETUP,   // Setup for enemy pixel sprite attack (mirrored)
+    ENEMY_ATTACK_ANIM,          // Enemy pixel sprite attack animation (mirrored)
+
+    // Phase 7: Attack Clash & Duel Mechanic (Novel Implementation Area)
+    CLASH_DUEL_SETUP,           // Setup for the novel duel mechanic screen/state
+    CLASH_DUEL_ACTIVE,          // The duel mechanic is active
+    CLASH_DUEL_RESOLVE,         // Duel outcome is being determined/shown
+
+    // Phase 8: Health Points (HP) and Battle Conclusion (Hit Animations)
+    PLAYER_HIT_ANIM,            // Player's Digimon shows hit animation
+    ENEMY_HIT_ANIM,             // Enemy's Digimon shows hit animation
+
+    // Phase 9: Player Victory Sequence
+    VICTORY_DISPLAY,            // Player Digimon idle/celebrating
+    VICTORY_DEDIGIVOLVE_FADE,   // White fade for de-digivolution (if applicable)
+    VICTORY_DEDIGIVOLVE_REVEAL, // Show de-digivolved rookie
+    VICTORY_CLEAR_UI,           // Show "CLEAR" UI bar
+
+    // (Alternative) Player Defeat Sequence (To be detailed later)
+    DEFEAT_DISPLAY,
+
+    // Phase 10: Return to Overworld and Progression
+    EXITING_FADE_OUT,           // Fade out from battle scene to black (to map)
+    BATTLE_OVER_POP_STATE       // Signal to Game to pop this state
 };
 
 class BattleState : public GameState {
@@ -57,6 +94,8 @@ public:
 
 
 private:
+    void prepareInstructionScreenText(); // Helper to create text texture
+
     // Game systems
     // Game* game_ptr_ already in base GameState
     AssetManager* asset_manager_ptr_;
@@ -65,6 +104,14 @@ private:
     VPetBattlePhase current_phase_;
     float general_fade_alpha_; // For fade in/out effects (0 = transparent, 255 = opaque)
     float phase_timer_;        // Generic timer for phases that need one
+
+    // --- New variables for Jagged Tooth Transition ---
+    SDL_Texture* tooth_top_texture_;    // Texture for the top part of the teeth
+    SDL_Texture* tooth_bottom_texture_; // Texture for the bottom part of the teeth
+    float tooth_transition_progress_; // 0.0 to 1.0 for closing, then 1.0 to 0.0 for opening
+
+    // --- New variables for Instruction Screen ---
+    SDL_Texture* instruction_text_texture_; // Texture for the "Battle Instructions..." text
 
     // Combatant info (simplified for now)
     DigimonType player_digimon_type_;
