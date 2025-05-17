@@ -310,17 +310,27 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
         case VPetBattlePhase::TO_SELECTION_FADE_OUT:
             general_fade_alpha_ = std::min(255.0f, (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS) * 255.0f);
             if (general_fade_alpha_ >= 255.0f) {
-                general_fade_alpha_ = 255.0f;
+                general_fade_alpha_ = 255.0f; // Ensure it's fully black
                 phase_timer_ = 0.0f;
-                // For now, let's just loop back to enemy reveal for testing purposes
-                // current_phase_ = VPetBattlePhase::TO_SELECTION_FADE_IN; // Next logical step
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade to selection screen complete (placeholder). Looping for test.");
-                // Reset to beginning of battle flow for now to test loop
-                current_phase_ = VPetBattlePhase::ENTERING_FADE_IN; 
-                general_fade_alpha_ = 255.0f; // Reset for fade in
+                current_phase_ = VPetBattlePhase::TO_SELECTION_FADE_IN; // Next logical step
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade to black for selection screen complete. Transitioning to TO_SELECTION_FADE_IN.");
             }
             break;
 
+        case VPetBattlePhase::TO_SELECTION_FADE_IN:
+            general_fade_alpha_ = 255.0f * (1.0f - (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS));
+            if (general_fade_alpha_ <= 0.0f) {
+                general_fade_alpha_ = 0.0f;
+                phase_timer_ = 0.0f;
+                current_phase_ = VPetBattlePhase::SELECTION_SCREEN_DISPLAY;
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade in to selection screen complete. Transitioning to SELECTION_SCREEN_DISPLAY.");
+            }
+            break;
+
+        case VPetBattlePhase::SELECTION_SCREEN_DISPLAY:
+            // Placeholder: Waits for player input (to be implemented in handle_input)
+            // For now, does nothing in update.
+            break;
 
         // ... other phases ...
         default:
@@ -342,10 +352,13 @@ void BattleState::render(PCDisplay& display) {
         allow_scene_rendering = true; 
     } else if (current_phase_ > VPetBattlePhase::ENTERING_FADE_IN && 
                current_phase_ < VPetBattlePhase::EXITING_FADE_OUT &&
-               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_CLOSING && // Don't render scene when teeth are closing
-               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_OPENING && // Or opening (unless we want background visible through teeth)
-               current_phase_ != VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY && // Instruction screen is standalone
-               current_phase_ != VPetBattlePhase::TO_SELECTION_FADE_OUT // Not during fade out
+               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_CLOSING && 
+               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_OPENING && 
+               current_phase_ != VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY && 
+               current_phase_ != VPetBattlePhase::TO_SELECTION_FADE_OUT &&
+               current_phase_ != VPetBattlePhase::TO_SELECTION_FADE_IN &&   // Exclude: Selection fade in
+               current_phase_ != VPetBattlePhase::SELECTION_SCREEN_DISPLAY  // Exclude: Selection display
+               // Add other phases that don't show the main battle scene here
                ) {
         allow_scene_rendering = true;
     }
@@ -521,14 +534,27 @@ void BattleState::render(PCDisplay& display) {
             // You could use TextRenderer::drawText directly here for a fallback if it supports immediate mode.
         }
     }
+
+    // --- Selection Screen Background (Placeholder) & Fade In ---
+    if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN || current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) {
+        // Ensure black background if no specific content for selection screen yet
+        display.setDrawColor(0, 0, 0, 255); // Opaque Black
+        SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+        display.fillRect(&bgRect);
+        // Placeholder text for SELECTION_SCREEN_DISPLAY will be added later
+        // For TO_SELECTION_FADE_IN, the fade overlay will handle the visual transition from black
+    }
     
-    // --- Fade Overlays (ENTERING_FADE_IN or TO_SELECTION_FADE_OUT) ---
-    if ((current_phase_ == VPetBattlePhase::ENTERING_FADE_IN && general_fade_alpha_ > 0.0f) ||
-        (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT && general_fade_alpha_ > 0.0f)) {
-        display.setDrawBlendMode(SDL_BLENDMODE_BLEND); 
-        display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
-        SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
-        display.fillRect(&fullScreenRect); 
+    // --- Fade Overlays ---
+    if (general_fade_alpha_ > 0.0f) { 
+        if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
+            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT ||
+            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN) { // Added TO_SELECTION_FADE_IN
+            display.setDrawBlendMode(SDL_BLENDMODE_BLEND); 
+            display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
+            SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
+            display.fillRect(&fullScreenRect); 
+        }
     }
 }
 
