@@ -36,6 +36,7 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
       tooth_bottom_texture_(nullptr),   // Added initialization
       tooth_transition_progress_(0.0f), // Added initialization
       instruction_text_texture_(nullptr),// Added initialization
+      selection_screen_text_texture_(nullptr), // Added initialization
       bg_texture_layer0_(bgLayer0),
       bg_texture_layer1_(bgLayer1),
       bg_texture_layer2_(bgLayer2),
@@ -73,6 +74,10 @@ BattleState::~BattleState() {
     if (instruction_text_texture_) {
         SDL_DestroyTexture(instruction_text_texture_);
         instruction_text_texture_ = nullptr;
+    }
+    if (selection_screen_text_texture_) { // Added
+        SDL_DestroyTexture(selection_screen_text_texture_);
+        selection_screen_text_texture_ = nullptr;
     }
 }
 
@@ -217,10 +222,18 @@ void BattleState::handle_input(InputManager& inputManager, PlayerData* playerDat
         }
     } else if (current_phase_ == VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY) {
         if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed instruction screen. Transitioning to TO_SELECTION_FADE_OUT (placeholder).");
-            current_phase_ = VPetBattlePhase::TO_SELECTION_FADE_OUT; // Next logical step
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed instruction screen. Transitioning to TO_SELECTION_FADE_OUT."); // Updated log
+            current_phase_ = VPetBattlePhase::TO_SELECTION_FADE_OUT; 
             phase_timer_ = 0.0f;
             general_fade_alpha_ = 0.0f; // Start fade to black
+        }
+    } else if (current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) { // Added new else if block
+        if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed selection screen. Transitioning to TO_PLAYER_REVEAL_FADE_OUT (placeholder loop to start).");
+            // For now, loop back to the beginning of the battle for testing
+            current_phase_ = VPetBattlePhase::ENTERING_FADE_IN; 
+            phase_timer_ = 0.0f;
+            general_fade_alpha_ = 255.0f; // Reset for fade-in
         }
     }
     // ... other input handling ...
@@ -324,6 +337,26 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
                 phase_timer_ = 0.0f;
                 current_phase_ = VPetBattlePhase::SELECTION_SCREEN_DISPLAY;
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade in to selection screen complete. Transitioning to SELECTION_SCREEN_DISPLAY.");
+
+                // Create selection screen text texture
+                if (textRenderer && game_ptr->get_display()) {
+                    if (selection_screen_text_texture_) {
+                        SDL_DestroyTexture(selection_screen_text_texture_);
+                        selection_screen_text_texture_ = nullptr;
+                    }
+                    SDL_Color textColor = {255, 255, 255, 255}; // White
+                    std::string selectionText = "PLAYER SELECTION (PLACEHOLDER)";
+                    // Convert to uppercase (assuming font only supports uppercase)
+                    for (char &c : selectionText) {
+                        c = toupper(c);
+                    }
+                    selection_screen_text_texture_ = textRenderer->renderTextToTexture(game_ptr->get_display()->getRenderer(), selectionText, textColor);
+                    if (!selection_screen_text_texture_) {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Failed to render selection screen text texture.");
+                    }
+                } else {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState: TextRenderer or Display not available for selection screen text.");
+                }
             }
             break;
 
@@ -537,12 +570,23 @@ void BattleState::render(PCDisplay& display) {
 
     // --- Selection Screen Background (Placeholder) & Fade In ---
     if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN || current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) {
-        // Ensure black background if no specific content for selection screen yet
+        // Ensure black background
         display.setDrawColor(0, 0, 0, 255); // Opaque Black
         SDL_Rect bgRect = {0, 0, screen_width, screen_height};
         display.fillRect(&bgRect);
-        // Placeholder text for SELECTION_SCREEN_DISPLAY will be added later
-        // For TO_SELECTION_FADE_IN, the fade overlay will handle the visual transition from black
+
+        // Render selection screen text
+        if (current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY && selection_screen_text_texture_) {
+            int text_w, text_h;
+            SDL_QueryTexture(selection_screen_text_texture_, nullptr, nullptr, &text_w, &text_h);
+            SDL_Rect text_dest_rect = {
+                (screen_width - text_w) / 2,
+                (screen_height - text_h) / 2,
+                text_w,
+                text_h
+            };
+            display.drawTexture(selection_screen_text_texture_, nullptr, &text_dest_rect);
+        }
     }
     
     // --- Fade Overlays ---

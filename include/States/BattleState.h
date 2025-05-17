@@ -105,26 +105,25 @@ private:
     float general_fade_alpha_; // For fade in/out effects (0 = transparent, 255 = opaque)
     float phase_timer_;        // Generic timer for phases that need one
 
+    // Player and Enemy Info
+    DigimonType player_digimon_type_; // Stores the player's chosen Digimon
+    std::string enemy_id_;            // Identifier for the enemy
+    DigimonType enemy_digimon_type_;  // Resolved DigimonType for the enemy
+
+    // Enemy Visuals
+    Animator enemy_animator_;              // For enemy animations
+    SDL_Texture* enemy_name_texture_;      // Texture for the enemy's name
+    SDL_Point enemy_sprite_position_;      // Centered position for the enemy sprite
+    SDL_Point enemy_name_position_;        // Position for the enemy's name
+
     // --- New variables for Jagged Tooth Transition ---
     SDL_Texture* tooth_top_texture_;    // Texture for the top part of the teeth
     SDL_Texture* tooth_bottom_texture_; // Texture for the bottom part of the teeth
     float tooth_transition_progress_; // 0.0 to 1.0 for closing, then 1.0 to 0.0 for opening
 
     // --- New variables for Instruction Screen ---
-    SDL_Texture* instruction_text_texture_; // Texture for the "Battle Instructions..." text
-
-    // Combatant info (simplified for now)
-    DigimonType player_digimon_type_;
-    std::string enemy_id_;
-    DigimonType enemy_digimon_type_; // Added: Actual type of the enemy
-    Animator enemy_animator_;      // Added: Animator for the enemy
-    SDL_Texture* enemy_name_texture_ = nullptr; // Added: Texture for enemy's name
-    SDL_Point enemy_sprite_position_;
-    SDL_Point enemy_name_position_;
-    // SDL_Texture* player_sprite_texture_; // To be added
-    // SDL_Texture* enemy_sprite_texture_;  // To be added
-    // SDL_Texture* enemy_name_texture_;    // To be added
-    // Basic data for now, will expand with Combatant struct later
+    SDL_Texture* instruction_text_texture_;
+    SDL_Texture* selection_screen_text_texture_; // Added for selection screen text
 
     // Background Textures & Offsets
     SDL_Texture* bg_texture_layer0_;
