@@ -599,11 +599,9 @@ void BattleState::render(PCDisplay& display) {
             }
             
             // Render Enemy Sprite (if in ENEMY_REVEAL_DISPLAY or other relevant phases)
-            // Adjusted condition to include PLAYER_REVEAL_DISPLAY and TO_PLAYER_REVEAL_FADE_IN
-            if (current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY || 
-                current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
-                current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || // Enemy visible during fade-in to player reveal
-                current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {    // Enemy visible during player reveal
+            // Adjusted condition to only show enemy during its specific reveal phases
+            if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN || 
+                current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY) {    
                 const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
                 if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { 
                     SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
