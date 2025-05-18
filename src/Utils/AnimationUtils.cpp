@@ -16,6 +16,7 @@ namespace AnimationUtils {
             case DIGI_PALMON:   return "palmon_sheet";
             case DIGI_TENTOMON: return "tentomon_sheet";
             case DIGI_PATAMON:  return "patamon_sheet";
+            case DIGI_KUWAGAMON: return "kuwagamon_sheet";
             // Add cases for any other DigimonType values you have
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetDigimonBaseId - Unknown DigimonType: %d", static_cast<int>(type));

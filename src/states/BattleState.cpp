@@ -105,7 +105,7 @@ BattleState::~BattleState() {
 
 // Helper function to get Digimon name (similar to PartnerSelectState)
 // TODO: Consider moving this to a common utility if used in more places.
-std::string getDigimonNameForBattle(DigimonType type) {
+std::string BattleState::getDigimonNameForBattle(DigimonType type) {
     switch(type) {
         case DIGI_AGUMON: return "AGUMON";
         case DIGI_GABUMON: return "GABUMON";
@@ -115,6 +115,7 @@ std::string getDigimonNameForBattle(DigimonType type) {
         case DIGI_PALMON: return "PALMON";
         case DIGI_TENTOMON: return "TENTOMON";
         case DIGI_PATAMON: return "PATAMON";
+        case DIGI_KUWAGAMON: return "KUWAGAMON"; // <<< ADD THIS LINE
         default: return "UNKNOWN";
     }
 }
@@ -165,7 +166,7 @@ void BattleState::enter() {
 
     // 1. Determine Enemy Type (Hardcoded for now)
     if (enemy_id_ == "DefaultEnemy") {
-        enemy_digimon_type_ = DIGI_GABUMON; // Example
+        enemy_digimon_type_ = DIGI_KUWAGAMON; // Example
     } else {
         enemy_digimon_type_ = DIGI_AGUMON; // Fallback
     }

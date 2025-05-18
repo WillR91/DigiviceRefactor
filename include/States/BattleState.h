@@ -3,7 +3,7 @@
 #include <string> // Include for std::string
 #include <SDL_render.h> // For SDL_Texture*
 #include "GameState.h" // Corrected: GameState.h is in the same directory
-#include "../entities/Digimon.h" // For DigimonType enum
+#include "entities/Digimon.h" // Make sure DigimonType is known
 #include "graphics/Animator.h" // Ensure this is the correct Animator include
 
 // Forward declarations
@@ -92,6 +92,7 @@ public:
     void render(PCDisplay& display) override;
     StateType getType() const override;
 
+    std::string getDigimonNameForBattle(DigimonType type); // <<< ADD THIS DECLARATION
 
 private:
     void prepareInstructionScreenText(); // Helper to create text texture

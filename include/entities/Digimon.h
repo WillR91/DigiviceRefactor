@@ -13,6 +13,7 @@ enum DigimonType {
     DIGI_PALMON,
     DIGI_TENTOMON,
     DIGI_PATAMON,
+    DIGI_KUWAGAMON,
     DIGI_COUNT // Helper to get the number of digimon types (useful for loops/arrays)
 };
 

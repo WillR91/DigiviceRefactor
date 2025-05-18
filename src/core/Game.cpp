@@ -90,6 +90,7 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("palmon_sheet", "assets/sprites/palmon_sheet.png");
      assets_ok &= assetManager.loadTexture("tentomon_sheet", "assets/sprites/tentomon_sheet.png");
      assets_ok &= assetManager.loadTexture("patamon_sheet", "assets/sprites/patamon_sheet.png");
+     assets_ok &= assetManager.loadTexture("kuwagamon_sheet", "assets/sprites/digimon/kuwagamon/spritesheet.png");
      assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
      assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
@@ -131,6 +132,7 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/digimon/kuwagamon/animation.json", "kuwagamon_sheet");
 
         if (!anims_ok) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
