@@ -217,6 +217,28 @@ void BattleState::enter() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Enemy setup complete. Enemy: %s, SpritePos: (%d,%d), NamePos: (%d,%d)", enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
     // --- END MOVED ENEMY_REVEAL_SETUP LOGIC ---
 
+    // --- BEGIN PLAYER DIGIMON SETUP LOGIC ---
+    std::string playerDigimonNameStr = getDigimonNameForBattle(player_digimon_type_);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Setting up player Digimon: %s", playerDigimonNameStr.c_str());
+
+    std::string playerIdleAnimId = AnimationUtils::GetAnimationId(player_digimon_type_, "Idle");
+    const AnimationData* playerIdleAnimData = animManager->getAnimationData(playerIdleAnimId);
+    if (playerIdleAnimData) {
+        player_animator_.setAnimation(playerIdleAnimData);
+        player_animator_.update(0.0f); // Prime the animator
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Player idle animation '%s' loaded.", playerIdleAnimId.c_str());
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get idle animation '%s' for player type %d.", playerIdleAnimId.c_str(), static_cast<int>(player_digimon_type_));
+    }
+
+    // Define Player Sprite Position
+    // int player_sprite_pos_x = screen_width / 4; 
+    int player_sprite_pos_x = screen_width / 2; // Center horizontally
+    player_sprite_position_ = {player_sprite_pos_x, enemy_sprite_position_.y}; 
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Player Digimon setup complete. SpritePos: (%d,%d)", player_sprite_position_.x, player_sprite_position_.y);
+    // --- END PLAYER DIGIMON SETUP LOGIC ---
+
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState enter: Initializing fade-in. Current phase: ENTERING_FADE_IN");
     // current_phase_ = VPetBattlePhase::ENTERING_FADE_IN; // Already set
     // phase_timer_ = 0.0f; // Already set
@@ -288,6 +310,7 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
     switch (current_phase_) {
         case VPetBattlePhase::ENTERING_FADE_IN:
             enemy_animator_.update(delta_time); 
+            player_animator_.update(delta_time); 
             general_fade_alpha_ = 255.0f * (1.0f - (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS));
             if (general_fade_alpha_ <= 0.0f) {
                 general_fade_alpha_ = 0.0f; 
@@ -300,7 +323,8 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
         // ENEMY_REVEAL_SETUP is done in enter()
         // ENEMY_REVEAL_ANIM is effectively ENEMY_REVEAL_DISPLAY now, waiting for input.
         case VPetBattlePhase::ENEMY_REVEAL_DISPLAY:
-            enemy_animator_.update(delta_time); // Keep enemy animating
+            enemy_animator_.update(delta_time); 
+            player_animator_.update(delta_time); 
             // Waits for player input in handle_input
             break;
 
@@ -414,6 +438,7 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
 
         case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN:
             general_fade_alpha_ = 255.0f * (1.0f - (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS));
+            player_animator_.update(delta_time); // Update player animator during fade
             if (general_fade_alpha_ <= 0.0f) {
                 general_fade_alpha_ = 0.0f;
                 phase_timer_ = 0.0f;
@@ -424,15 +449,13 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
             break;
 
         case VPetBattlePhase::PLAYER_REVEAL_DISPLAY:
-            // For now, this phase just waits for player input (handled in handle_input).
-            // Player Digimon rendering and UI will be added here later.
-            // player_animator_.update(delta_time); // Will be needed when player sprite is shown
+            player_animator_.update(delta_time); 
             // enemy_animator_.update(delta_time); // Enemy might be visible in background or smaller
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: PLAYER_REVEAL_DISPLAY active. Waiting for input.");
             break;
 
         case VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION:
-            // player_animator_.update(delta_time); // Player likely static or has own anim during this
+            player_animator_.update(delta_time); 
             if (phase_timer_ >= PLAYER_ATTACK_BG_TRANSITION_DURATION_SECONDS) {
                 current_phase_ = VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE; 
                 phase_timer_ = 0.0f;
@@ -441,7 +464,7 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
             break;
 
         case VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE:
-            // player_animator_.update(delta_time); // Player likely static or has own anim during this
+            player_animator_.update(delta_time); 
             if (phase_timer_ >= PLAYER_ATTACK_LARGE_SPRITE_DURATION_SECONDS) {
                 current_phase_ = VPetBattlePhase::PLAYER_ATTACK_PIXEL_SETUP; // Transition to the next phase
                 phase_timer_ = 0.0f;
@@ -452,7 +475,8 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
         // ... other phases ...
         default:
             // Potentially log an unknown phase
-            enemy_animator_.update(delta_time); // Keep enemy animating if in an unknown/unhandled state
+            enemy_animator_.update(delta_time); 
+            player_animator_.update(delta_time); 
             break;
     }
 }
@@ -656,8 +680,41 @@ void BattleState::render(PCDisplay& display) {
         SDL_Rect player_reveal_bg_rect = {0, 0, screen_width, screen_height};
         display.fillRect(&player_reveal_bg_rect);
         scene_is_rendered_this_frame = false; // No parallax scene here for now
-        // TODO: Render Player Digimon sprite
+
+        // Render Player Digimon sprite
+        if (allow_player_digimon_rendering) { 
+            const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
+            if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
+                SDL_Rect srcR = player_animator_.getCurrentFrameRect();
+                SDL_Rect destR = {
+                    player_sprite_position_.x - srcR.w / 2, // Centered
+                    player_sprite_position_.y - srcR.h / 2, // Centered
+                    srcR.w,
+                    srcR.h
+                };
+                display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR); 
+            }
+        }
         // TODO: Render HP Bars and other UI
+    }
+
+    // Add player rendering for PLAYER_ATTACK_BG_TRANSITION and PLAYER_ATTACK_LARGE_SPRITE
+    if (current_phase_ == VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION ||
+        current_phase_ == VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE) {
+        if (allow_player_digimon_rendering) { // This flag is set true for these phases in the switch above
+            const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
+            if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
+                SDL_Rect srcR = player_animator_.getCurrentFrameRect();
+                SDL_Rect destR = {
+                    player_sprite_position_.x - srcR.w / 2,
+                    player_sprite_position_.y - srcR.h / 2,
+                    srcR.w,
+                    srcR.h
+                };
+                display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR);
+            }
+        }
+        // TODO: Render HP Bars here too
     }
 
     // --- Jagged Tooth Transition Rendering ---
