@@ -485,16 +485,10 @@ void BattleState::render(PCDisplay& display) {
     int screen_width = 0;
     int screen_height = 0;
     display.getWindowSize(screen_width, screen_height);
+    bool scene_is_rendered_this_frame = false; // Added: Declare and initialize
 
-    // --- Background Color Fill (Phase Dependant) ---
-    // Default to black unless a specific phase needs a different solid background
-    // or allows scene rendering.
-    bool scene_is_rendered_this_frame = false;
-
-    // --- Background and Scene Rendering ---
+    // --- Determine Rendering Flags based on Phase ---
     bool allow_scene_rendering = false;
-    bool allow_instruction_rendering = false;
-    bool allow_selection_rendering = false;
     bool allow_player_digimon_rendering = false;
     bool allow_hp_bar_rendering = false;
     bool render_orange_background = false;
@@ -503,17 +497,18 @@ void BattleState::render(PCDisplay& display) {
         case VPetBattlePhase::ENTERING_FADE_IN:
         case VPetBattlePhase::ENEMY_REVEAL_DISPLAY:
         case VPetBattlePhase::TOOTH_TRANSITION_START:     
-        case VPetBattlePhase::TOOTH_TRANSITION_CLOSING:  
-        // case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN: // Scene (enemy) was visible here, but now PLAYER_REVEAL is different
+        case VPetBattlePhase::TOOTH_TRANSITION_CLOSING:
+        case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN: // Allow scene for fade in to player reveal
+        case VPetBattlePhase::PLAYER_REVEAL_DISPLAY:    // Allow scene for player reveal
             allow_scene_rendering = true;
             break;
         // For PLAYER_REVEAL_DISPLAY, we will handle background differently for now.
         // TO_PLAYER_REVEAL_FADE_IN will fade *to* this new PLAYER_REVEAL_DISPLAY background.
-        case VPetBattlePhase::PLAYER_REVEAL_DISPLAY:
-            allow_player_digimon_rendering = true; // Prepare for player rendering
-            allow_hp_bar_rendering = true;         // and HP bars
-            // Background remains black for this phase as per previous logic
-            break;
+        // case VPetBattlePhase::PLAYER_REVEAL_DISPLAY: // This case is now handled above
+        //     allow_player_digimon_rendering = true; // Prepare for player rendering
+        //     allow_hp_bar_rendering = true;         // and HP bars
+        //     // Background remains black for this phase as per previous logic
+        //     break;
         case VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION:
             render_orange_background = true;
             allow_player_digimon_rendering = true;
@@ -524,8 +519,17 @@ void BattleState::render(PCDisplay& display) {
             break;
     }
 
+    // Set player digimon rendering flag also for PLAYER_REVEAL_DISPLAY and TO_PLAYER_REVEAL_FADE_IN
+    if (current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY || 
+        current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN ||
+        current_phase_ == VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION ||
+        current_phase_ == VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE) {
+        allow_player_digimon_rendering = true;
+        allow_hp_bar_rendering = true; // Assuming HP bars are shown whenever player is shown in these phases
+    }
+
     if (allow_scene_rendering) {
-        scene_is_rendered_this_frame = true;
+        scene_is_rendered_this_frame = true; // Added: Set when scene is being rendered
         // Render Background Layers (Parallax)
         SDL_Rect srcRect = {0, 0, 0, 0}; 
         SDL_Rect destRect = {0, 0, screen_width, screen_height}; 
@@ -555,134 +559,122 @@ void BattleState::render(PCDisplay& display) {
                     currentDestRect.x = srcRect.w - bg2_x;
                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
                          display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+                        }
+                        currentDestRect.x = -bg2_x - srcRect.w;
+                         if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                             display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
+                         }
                     }
-                    currentDestRect.x = -bg2_x - srcRect.w;
-                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                         display.drawTexture(bg_texture_layer2_, &currentSrcRect, &currentDestRect);
-                     }
                 }
             }
-        }
-        // Layer 1 (Middle)
-        if (bg_texture_layer1_) {
-            SDL_QueryTexture(bg_texture_layer1_, nullptr, nullptr, &srcRect.w, &srcRect.h);
-            if (srcRect.w > 0) {
-                float positive_offset_1 = bg_scroll_offset_1_;
-                while(positive_offset_1 < 0) positive_offset_1 += srcRect.w;
-                int bg1_x = static_cast<int>(positive_offset_1) % srcRect.w;
+            // Layer 1 (Middle)
+            if (bg_texture_layer1_) {
+                SDL_QueryTexture(bg_texture_layer1_, nullptr, nullptr, &srcRect.w, &srcRect.h);
+                if (srcRect.w > 0) {
+                    float positive_offset_1 = bg_scroll_offset_1_;
+                    while(positive_offset_1 < 0) positive_offset_1 += srcRect.w;
+                    int bg1_x = static_cast<int>(positive_offset_1) % srcRect.w;
 
-                destRect.w = srcRect.w;
-                destRect.h = srcRect.h;
-                destRect.y = (screen_height - srcRect.h) / 2;
-                if (srcRect.h >= screen_height) destRect.y = 0;
-                destRect.h = std::min(srcRect.h, screen_height);
-                SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
-                SDL_Rect currentDestRect = destRect;
+                    destRect.w = srcRect.w;
+                    destRect.h = srcRect.h;
+                    destRect.y = (screen_height - srcRect.h) / 2;
+                    if (srcRect.h >= screen_height) destRect.y = 0;
+                    destRect.h = std::min(srcRect.h, screen_height);
+                    SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
+                    SDL_Rect currentDestRect = destRect;
 
-                currentDestRect.x = -bg1_x;
-                display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-                if (bg1_x != 0) {
-                    currentDestRect.x = srcRect.w - bg1_x;
-                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                        display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-                     }
-                    currentDestRect.x = -bg1_x - srcRect.w;
-                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                         display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
-                     }
+                    currentDestRect.x = -bg1_x;
+                    display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                    if (bg1_x != 0) {
+                        currentDestRect.x = srcRect.w - bg1_x;
+                         if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                            display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                         }
+                        currentDestRect.x = -bg1_x - srcRect.w;
+                         if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                             display.drawTexture(bg_texture_layer1_, &currentSrcRect, &currentDestRect);
+                         }
+                    }
                 }
             }
-        }
-        
-        // Render Enemy Sprite (if in ENEMY_REVEAL_DISPLAY or other relevant phases)
-        // Adjusted condition to include PLAYER_REVEAL_DISPLAY and TO_PLAYER_REVEAL_FADE_IN
-        if (current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY || 
-            current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
-            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || // Enemy visible during fade-in to player reveal
-            current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {    // Enemy visible during player reveal
-            const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
-            if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { 
-                SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
-                SDL_Rect destR = {
-                    enemy_sprite_position_.x - srcR.w / 2,
-                    enemy_sprite_position_.y - srcR.h / 2,
-                    srcR.w,
-                    srcR.h
-                };
-                display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR, SDL_FLIP_HORIZONTAL); 
-            }
-            // Render Enemy Name
-            if (enemy_name_texture_) {
-                int name_w, name_h;
-                SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_w, &name_h);
-                SDL_Rect nameDestR = {
-                    enemy_name_position_.x - name_w / 2, 
-                    enemy_name_position_.y, 
-                    name_w, 
-                    name_h
-                };
-                display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
-            }
-        }
-        // Layer 0 (Nearest) - Now controlled by show_foreground_layer_
-        if (show_foreground_layer_ && bg_texture_layer0_) { 
-            SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
-            if (srcRect.w > 0) {
-                float positive_offset_0 = bg_scroll_offset_0_;
-                while(positive_offset_0 < 0) positive_offset_0 += srcRect.w;
-                int bg0_x = static_cast<int>(positive_offset_0) % srcRect.w;
-
-                destRect.w = srcRect.w;
-                destRect.h = srcRect.h;
-                destRect.y = (screen_height - srcRect.h) / 2;
-                if (srcRect.h >= screen_height) destRect.y = 0;
-                destRect.h = std::min(srcRect.h, screen_height);
-                SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
-                SDL_Rect currentDestRect = destRect;
-
-                currentDestRect.x = -bg0_x;
-                display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-                if (bg0_x != 0) {
-                    currentDestRect.x = srcRect.w - bg0_x;
-                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                        display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-                     }
-                    currentDestRect.x = -bg0_x - srcRect.w;
-                     if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
-                         display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
-                     }
+            
+            // Render Enemy Sprite (if in ENEMY_REVEAL_DISPLAY or other relevant phases)
+            // Adjusted condition to include PLAYER_REVEAL_DISPLAY and TO_PLAYER_REVEAL_FADE_IN
+            if (current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY || 
+                current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
+                current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || // Enemy visible during fade-in to player reveal
+                current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {    // Enemy visible during player reveal
+                const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
+                if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { 
+                    SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
+                    SDL_Rect destR = {
+                        enemy_sprite_position_.x - srcR.w / 2,
+                        enemy_sprite_position_.y - srcR.h / 2,
+                        srcR.w,
+                        srcR.h
+                    };
+                    display.drawTexture(currentEnemyAnim->textureAtlas, &srcR, &destR, SDL_FLIP_HORIZONTAL); 
+                }
+                // Render Enemy Name
+                if (enemy_name_texture_) {
+                    int name_w, name_h;
+                    SDL_QueryTexture(enemy_name_texture_, nullptr, nullptr, &name_w, &name_h);
+                    SDL_Rect nameDestR = {
+                        enemy_name_position_.x - name_w / 2, 
+                        enemy_name_position_.y, 
+                        name_w, 
+                        name_h
+                    };
+                    display.drawTexture(enemy_name_texture_, nullptr, &nameDestR);
                 }
             }
-        } 
-    } else {
-        // If scene is not rendered, determine background color
-        if (render_orange_background) {
-            display.setDrawColor(255, 165, 0, 255); // Orange
+            // Layer 0 (Nearest) - Now controlled by show_foreground_layer_
+            if (show_foreground_layer_ && bg_texture_layer0_) { 
+                SDL_QueryTexture(bg_texture_layer0_, nullptr, nullptr, &srcRect.w, &srcRect.h);
+                if (srcRect.w > 0) {
+                    float positive_offset_0 = bg_scroll_offset_0_;
+                    while(positive_offset_0 < 0) positive_offset_0 += srcRect.w;
+                    int bg0_x = static_cast<int>(positive_offset_0) % srcRect.w;
+
+                    destRect.w = srcRect.w;
+                    destRect.h = srcRect.h;
+                    destRect.y = (screen_height - srcRect.h) / 2;
+                    if (srcRect.h >= screen_height) destRect.y = 0;
+                    destRect.h = std::min(srcRect.h, screen_height);
+                    SDL_Rect currentSrcRect = {0, 0, srcRect.w, srcRect.h};
+                    SDL_Rect currentDestRect = destRect;
+
+                    currentDestRect.x = -bg0_x;
+                    display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                    if (bg0_x != 0) {
+                        currentDestRect.x = srcRect.w - bg0_x;
+                         if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                            display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                         }
+                        currentDestRect.x = -bg0_x - srcRect.w;
+                         if (currentDestRect.x < screen_width && (currentDestRect.x + srcRect.w) > 0) {
+                             display.drawTexture(bg_texture_layer0_, &currentSrcRect, &currentDestRect);
+                         }
+                    }
+                }
+            } 
         } else {
-            // For other phases without scene rendering (e.g., INSTRUCTION_SCREEN_DISPLAY,
-            // SELECTION_SCREEN_DISPLAY, or the initial black for PLAYER_REVEAL_DISPLAY before its specific draw call)
-            // Default to black. PLAYER_REVEAL_DISPLAY will draw its own black screen later anyway.
-            display.setDrawColor(0, 0, 0, 255); // Opaque Black
+            // If scene is not rendered, determine background color
+            if (render_orange_background) {
+                display.setDrawColor(255, 165, 0, 255); // Orange
+            } else {
+                // For other phases without scene rendering (e.g., INSTRUCTION_SCREEN_DISPLAY,
+                // SELECTION_SCREEN_DISPLAY, or the initial black for PLAYER_REVEAL_DISPLAY before its specific draw call)
+                // Default to black. PLAYER_REVEAL_DISPLAY will draw its own black screen later anyway.
+                display.setDrawColor(0, 0, 0, 255); // Opaque Black
+            }
+            SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+            display.fillRect(&bgRect);
+            scene_is_rendered_this_frame = false; 
         }
-        SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-        display.fillRect(&bgRect);
-        scene_is_rendered_this_frame = false; 
-    }
 
-    // --- Phase-Specific Overlays / Content ---
-
-    // --- Player Reveal Display Screen ---
-    if (current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || 
-        current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {
-        // For now, just a black screen. Later this will have player digimon and UI.
-        // This overrides the default black fill if allow_scene_rendering was false for these phases.
-        display.setDrawColor(0, 0, 0, 255); // Opaque Black for player reveal background
-        SDL_Rect player_reveal_bg_rect = {0, 0, screen_width, screen_height};
-        display.fillRect(&player_reveal_bg_rect);
-        scene_is_rendered_this_frame = false; // No parallax scene here for now
-
-        // Render Player Digimon sprite
-        if (allow_player_digimon_rendering) { 
+        // --- Render Player Digimon (if allowed) ---
+        if (allow_player_digimon_rendering) {
             const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
             if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
                 SDL_Rect srcR = player_animator_.getCurrentFrameRect();
@@ -694,111 +686,167 @@ void BattleState::render(PCDisplay& display) {
                 };
                 display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR); 
             }
-        }
-        // TODO: Render HP Bars and other UI
-    }
 
-    // Add player rendering for PLAYER_ATTACK_BG_TRANSITION and PLAYER_ATTACK_LARGE_SPRITE
-    if (current_phase_ == VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION ||
-        current_phase_ == VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE) {
-        if (allow_player_digimon_rendering) { // This flag is set true for these phases in the switch above
+            if (allow_hp_bar_rendering) {
+                // TODO: Placeholder for HP Bar rendering
+            }
+        }
+
+        // --- Phase-Specific Overlays / Content ---
+
+        // --- Player Reveal Display Screen ---
+        // The specific black background fill for PLAYER_REVEAL_DISPLAY is removed.
+        // Scene rendering is now controlled by allow_scene_rendering flag set above.
+        /*
+        if (current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || 
+            current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {
+            // For now, just a black screen. Later this will have player digimon and UI.
+            // This overrides the default black fill if allow_scene_rendering was false for these phases.
+            display.setDrawColor(0, 0, 0, 255); // Opaque Black for player reveal background
+            SDL_Rect player_reveal_bg_rect = {0, 0, screen_width, screen_height};
+            display.fillRect(&player_reveal_bg_rect);
+            scene_is_rendered_this_frame = false; // No parallax scene here for now
+
+            // Render Player Digimon sprite
+            if (allow_player_digimon_rendering) { 
+                const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
+                if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
+                    SDL_Rect srcR = player_animator_.getCurrentFrameRect();
+                    SDL_Rect destR = {
+                        player_sprite_position_.x - srcR.w / 2, // Centered
+                        player_sprite_position_.y - srcR.h / 2, // Centered
+                        srcR.w,
+                        srcR.h
+                    };
+                    display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR); 
+                }
+            }
+            // TODO: Render HP Bars and other UI
+        }
+        */
+
+        // Consolidated Player Digimon Rendering (and HP bars for now)
+        if (allow_player_digimon_rendering) {
             const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
             if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
                 SDL_Rect srcR = player_animator_.getCurrentFrameRect();
                 SDL_Rect destR = {
-                    player_sprite_position_.x - srcR.w / 2,
-                    player_sprite_position_.y - srcR.h / 2,
+                    player_sprite_position_.x - srcR.w / 2, // Centered
+                    player_sprite_position_.y - srcR.h / 2, // Centered
                     srcR.w,
                     srcR.h
                 };
-                display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR);
+                display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR); 
+            }
+
+            if (allow_hp_bar_rendering) {
+                // TODO: Placeholder for HP Bar rendering
             }
         }
-        // TODO: Render HP Bars here too
-    }
 
-    // --- Jagged Tooth Transition Rendering ---
-    if (current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_CLOSING || current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_OPENING) {
-        // Ensure a black background during tooth transition if no scene is rendered
-        if (!allow_scene_rendering) {
-            display.setDrawColor(0, 0, 0, 255); // Opaque Black
-            SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-            display.fillRect(&bgRect);
+        // Remove the now redundant player rendering block for PLAYER_ATTACK_BG_TRANSITION and PLAYER_ATTACK_LARGE_SPRITE
+        /*
+        if (current_phase_ == VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION ||
+            current_phase_ == VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE) {
+            if (allow_player_digimon_rendering) { // This flag is set true for these phases in the switch above
+                const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
+                if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
+                    SDL_Rect srcR = player_animator_.getCurrentFrameRect();
+                    SDL_Rect destR = {
+                        player_sprite_position_.x - srcR.w / 2,
+                        player_sprite_position_.y - srcR.h / 2,
+                        srcR.w,
+                        srcR.h
+                    };
+                    display.drawTexture(currentPlayerAnim->textureAtlas, &srcR, &destR);
+                }
+            }
+            // TODO: Render HP Bars here too
+        }
+        */
+
+        // --- Jagged Tooth Transition Rendering ---
+        if (current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_CLOSING || current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_OPENING) {
+            // Ensure a black background during tooth transition if no scene is rendered
+            if (!allow_scene_rendering) {
+                display.setDrawColor(0, 0, 0, 255); // Opaque Black
+                SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+                display.fillRect(&bgRect);
+            }
+
+            float tooth_height = (static_cast<float>(screen_height) / 2.0f) * tooth_transition_progress_;
+            
+            display.setDrawColor(255, 0, 0, 255); // Red for placeholder teeth
+
+            SDL_Rect top_tooth_rect = {0, 0, screen_width, static_cast<int>(tooth_height)};
+            display.fillRect(&top_tooth_rect);
+
+            SDL_Rect bottom_tooth_rect = {0, screen_height - static_cast<int>(tooth_height), screen_width, static_cast<int>(tooth_height)};
+            display.fillRect(&bottom_tooth_rect);
         }
 
-        float tooth_height = (static_cast<float>(screen_height) / 2.0f) * tooth_transition_progress_;
+        // --- Instruction Screen Content Rendering ---
+        if (current_phase_ == VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY ||
+            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT) { 
+            // Black background for instruction screen (already handled by default fill if scene_is_rendered_this_frame is false)
+            // display.setDrawColor(0, 0, 0, 255); 
+            // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+            // display.fillRect(&bgRect);
+
+            if (instruction_text_texture_) {
+                int text_w, text_h;
+                SDL_QueryTexture(instruction_text_texture_, nullptr, nullptr, &text_w, &text_h);
+                SDL_Rect text_dest_rect = {
+                    (screen_width - text_w) / 2,
+                    (screen_height - text_h) / 2,
+                    text_w,
+                    text_h
+                };
+                display.drawTexture(instruction_text_texture_, nullptr, &text_dest_rect);
+            } else {
+                // Fallback if texture somehow failed (though error is logged in update)
+            }
+        }
+
+        // --- Selection Screen Content Rendering ---
+        if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
+            current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
+            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) {
+            // Black background for selection screen (already handled by default fill if scene_is_rendered_this_frame is false)
+            // display.setDrawColor(0, 0, 0, 255); 
+            // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+            // display.fillRect(&bgRect);
+
+            // Render selection screen text
+            // Text is created at the end of TO_SELECTION_FADE_IN update.
+            // It should be visible during SELECTION_SCREEN_DISPLAY and TO_PLAYER_REVEAL_FADE_OUT.
+            if ((current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
+                 current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) &&
+                selection_screen_text_texture_) {
+                int text_w, text_h;
+                SDL_QueryTexture(selection_screen_text_texture_, nullptr, nullptr, &text_w, &text_h);
+                SDL_Rect text_dest_rect = {
+                    (screen_width - text_w) / 2,
+                    (screen_height - text_h) / 2,
+                    text_w,
+                    text_h
+                };
+                display.drawTexture(selection_screen_text_texture_, nullptr, &text_dest_rect);
+            }
+        }
         
-        display.setDrawColor(255, 0, 0, 255); // Red for placeholder teeth
-
-        SDL_Rect top_tooth_rect = {0, 0, screen_width, static_cast<int>(tooth_height)};
-        display.fillRect(&top_tooth_rect);
-
-        SDL_Rect bottom_tooth_rect = {0, screen_height - static_cast<int>(tooth_height), screen_width, static_cast<int>(tooth_height)};
-        display.fillRect(&bottom_tooth_rect);
-    }
-
-    // --- Instruction Screen Content Rendering ---
-    if (current_phase_ == VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY ||
-        current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT) { 
-        // Black background for instruction screen (already handled by default fill if scene_is_rendered_this_frame is false)
-        // display.setDrawColor(0, 0, 0, 255); 
-        // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-        // display.fillRect(&bgRect);
-
-        if (instruction_text_texture_) {
-            int text_w, text_h;
-            SDL_QueryTexture(instruction_text_texture_, nullptr, nullptr, &text_w, &text_h);
-            SDL_Rect text_dest_rect = {
-                (screen_width - text_w) / 2,
-                (screen_height - text_h) / 2,
-                text_w,
-                text_h
-            };
-            display.drawTexture(instruction_text_texture_, nullptr, &text_dest_rect);
-        } else {
-            // Fallback if texture somehow failed (though error is logged in update)
+        // --- Fade Overlays ---
+        if (general_fade_alpha_ > 0.0f) { 
+            if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
+                current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT ||
+                current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
+                current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT || // Added
+                current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN    // Added
+                ) {
+                display.setDrawBlendMode(SDL_BLENDMODE_BLEND); 
+                display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
+                SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
+                display.fillRect(&fullScreenRect); 
+            }
         }
     }
-
-    // --- Selection Screen Content Rendering ---
-    if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
-        current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
-        current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) {
-        // Black background for selection screen (already handled by default fill if scene_is_rendered_this_frame is false)
-        // display.setDrawColor(0, 0, 0, 255); 
-        // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-        // display.fillRect(&bgRect);
-
-        // Render selection screen text
-        // Text is created at the end of TO_SELECTION_FADE_IN update.
-        // It should be visible during SELECTION_SCREEN_DISPLAY and TO_PLAYER_REVEAL_FADE_OUT.
-        if ((current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
-             current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) &&
-            selection_screen_text_texture_) {
-            int text_w, text_h;
-            SDL_QueryTexture(selection_screen_text_texture_, nullptr, nullptr, &text_w, &text_h);
-            SDL_Rect text_dest_rect = {
-                (screen_width - text_w) / 2,
-                (screen_height - text_h) / 2,
-                text_w,
-                text_h
-            };
-            display.drawTexture(selection_screen_text_texture_, nullptr, &text_dest_rect);
-        }
-    }
-    
-    // --- Fade Overlays ---
-    if (general_fade_alpha_ > 0.0f) { 
-        if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
-            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT ||
-            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
-            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT || // Added
-            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN    // Added
-            ) {
-            display.setDrawBlendMode(SDL_BLENDMODE_BLEND); 
-            display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
-            SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
-            display.fillRect(&fullScreenRect); 
-        }
-    }
-}
