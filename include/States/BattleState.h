@@ -4,7 +4,7 @@
 #include <SDL_render.h> // For SDL_Texture*
 #include "GameState.h" // Corrected: GameState.h is in the same directory
 #include "../entities/Digimon.h" // For DigimonType enum
-#include "graphics/Animator.h" // Added for enemy_animator_
+#include "graphics/Animator.h" // Ensure this is the correct Animator include
 
 // Forward declarations
 class Game;
@@ -14,7 +14,7 @@ class AssetManager; // For loading assets later
 struct SDL_Texture; // Forward declare SDL_Texture
 
 // Define a duration for the fade effect
-const float BATTLE_STATE_FADE_DURATION_SECONDS = 0.75f; // Duration of fade in/out within BattleState
+// const float BATTLE_STATE_FADE_DURATION_SECONDS = 0.75f; // Duration of fade in/out within BattleState
 
 enum class VPetBattlePhase {
     // Phase 1: Battle Start & Enemy Introduction
@@ -107,11 +107,15 @@ private:
 
     // Player and Enemy Info
     DigimonType player_digimon_type_; // Stores the player's chosen Digimon
+    Animator player_animator_;             // Changed to Animator
+    SDL_Texture* player_name_texture_;     // Added: Texture for the player's Digimon name (optional)
+    SDL_Point player_sprite_position_;     // Added: Centered position for the player sprite
+
     std::string enemy_id_;            // Identifier for the enemy
     DigimonType enemy_digimon_type_;  // Resolved DigimonType for the enemy
 
     // Enemy Visuals
-    Animator enemy_animator_;              // For enemy animations
+    Animator enemy_animator_;              // Changed to Animator
     SDL_Texture* enemy_name_texture_;      // Texture for the enemy's name
     SDL_Point enemy_sprite_position_;      // Centered position for the enemy sprite
     SDL_Point enemy_name_position_;        // Position for the enemy's name
@@ -125,6 +129,12 @@ private:
     SDL_Texture* instruction_text_texture_;
     SDL_Texture* selection_screen_text_texture_; // Added for selection screen text
 
+    // --- New variables for Battle UI (Placeholders) ---
+    SDL_Texture* player_hp_bar_texture_;   // Added: Placeholder for player HP bar
+    SDL_Texture* enemy_hp_bar_texture_;    // Added: Placeholder for enemy HP bar
+    // SDL_Rect player_hp_bar_position_;
+    // SDL_Rect enemy_hp_bar_position_;
+
     // Background Textures & Offsets
     SDL_Texture* bg_texture_layer0_;
     SDL_Texture* bg_texture_layer1_;
@@ -134,4 +144,16 @@ private:
     float bg_scroll_offset_2_;
     bool show_foreground_layer_; // Added: Flag to control foreground rendering
     // int enemy_id_; // Removed redefinition
+
+    // Tooth transition duration constant
+    static const float TOOTH_TRANSITION_DURATION_SECONDS; // Added
+    static const float BATTLE_STATE_FADE_DURATION_SECONDS; // Added
+    static const float PLAYER_ATTACK_BG_TRANSITION_DURATION_SECONDS; 
+    static const float PLAYER_ATTACK_LARGE_SPRITE_DURATION_SECONDS;
+
+    // Textures for UI elements
+    // SDL_Texture* player_hp_bar_texture_;   // Added: Placeholder for player HP bar
+    // SDL_Texture* enemy_hp_bar_texture_;    // Added: Placeholder for enemy HP bar
+    // SDL_Rect player_hp_bar_position_;
+    // SDL_Rect enemy_hp_bar_position_;
 };

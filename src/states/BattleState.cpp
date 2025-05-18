@@ -13,13 +13,18 @@
 #include <cmath>     // For other math functions if needed
 #include "Core/AssetManager.h" // Corrected path
 
+// Static member definitions
+const float BattleState::BATTLE_STATE_FADE_DURATION_SECONDS = 0.5f;
+const float BattleState::TOOTH_TRANSITION_DURATION_SECONDS = 0.3f;
+const float BattleState::PLAYER_ATTACK_BG_TRANSITION_DURATION_SECONDS = 0.5f;
+const float BattleState::PLAYER_ATTACK_LARGE_SPRITE_DURATION_SECONDS = 1.5f; // Defined here
+
 // Constants for battle visuals - adjust as needed
 const int ENEMY_SPRITE_POS_X = 180; // Example X position
 const int ENEMY_SPRITE_POS_Y = 100; // Example Y position
 const int ENEMY_NAME_POS_X = 180;   // Example X position for name
 const int ENEMY_NAME_POS_Y = 140;   // Example Y position for name
 const float ENEMY_REVEAL_ANIM_DURATION_SECONDS = 2.0f; // How long the reveal animation/pause lasts
-const float TOOTH_TRANSITION_DURATION_SECONDS = 0.3f; // Duration for closing/opening
 
 // Updated constructor implementation
 BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::string& enemyId,
@@ -27,6 +32,9 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
                          float scrollOffset0, float scrollOffset1, float scrollOffset2)
     : GameState(game), 
       player_digimon_type_(playerDigimonType), 
+      // player_animator_ initialized by default constructor
+      player_name_texture_(nullptr), // Added: Initialize player name texture
+      player_sprite_position_({0,0}), // Added: Initialize player sprite position (will be set later)
       enemy_id_(enemyId),
       asset_manager_ptr_(nullptr), 
       current_phase_(VPetBattlePhase::ENTERING_FADE_IN), 
@@ -37,6 +45,8 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
       tooth_transition_progress_(0.0f), // Added initialization
       instruction_text_texture_(nullptr),// Added initialization
       selection_screen_text_texture_(nullptr), // Added initialization
+      player_hp_bar_texture_(nullptr), // Added: Initialize player HP bar texture
+      enemy_hp_bar_texture_(nullptr),  // Added: Initialize enemy HP bar texture
       bg_texture_layer0_(bgLayer0),
       bg_texture_layer1_(bgLayer1),
       bg_texture_layer2_(bgLayer2),
@@ -63,6 +73,10 @@ BattleState::~BattleState() {
         SDL_DestroyTexture(enemy_name_texture_);
         enemy_name_texture_ = nullptr;
     }
+    if (player_name_texture_) { // Added: Destroy player name texture
+        SDL_DestroyTexture(player_name_texture_);
+        player_name_texture_ = nullptr;
+    }
     if (tooth_top_texture_) {
         SDL_DestroyTexture(tooth_top_texture_);
         tooth_top_texture_ = nullptr;
@@ -78,6 +92,14 @@ BattleState::~BattleState() {
     if (selection_screen_text_texture_) { // Added
         SDL_DestroyTexture(selection_screen_text_texture_);
         selection_screen_text_texture_ = nullptr;
+    }
+    if (player_hp_bar_texture_) { // Added: Destroy player HP bar texture
+        SDL_DestroyTexture(player_hp_bar_texture_);
+        player_hp_bar_texture_ = nullptr;
+    }
+    if (enemy_hp_bar_texture_) { // Added: Destroy enemy HP bar texture
+        SDL_DestroyTexture(enemy_hp_bar_texture_);
+        enemy_hp_bar_texture_ = nullptr;
     }
 }
 
@@ -95,6 +117,10 @@ std::string getDigimonNameForBattle(DigimonType type) {
         case DIGI_PATAMON: return "PATAMON";
         default: return "UNKNOWN";
     }
+}
+
+StateType BattleState::getType() const {
+    return StateType::Battle; // Corrected BATTLE to Battle
 }
 
 void BattleState::enter() {
@@ -227,14 +253,25 @@ void BattleState::handle_input(InputManager& inputManager, PlayerData* playerDat
             phase_timer_ = 0.0f;
             general_fade_alpha_ = 0.0f; // Start fade to black
         }
-    } else if (current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) { // Added new else if block
+    } else if (current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) {
         if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed selection screen. Transitioning to TO_PLAYER_REVEAL_FADE_OUT (placeholder loop to start).");
-            // For now, loop back to the beginning of the battle for testing
-            current_phase_ = VPetBattlePhase::ENTERING_FADE_IN; 
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed selection. Transitioning to TO_PLAYER_REVEAL_FADE_OUT.");
+            current_phase_ = VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT;
             phase_timer_ = 0.0f;
-            general_fade_alpha_ = 255.0f; // Reset for fade-in
+            general_fade_alpha_ = 0.0f; // Start fade to black (alpha will increase from 0 to 255)
         }
+    } else if (current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) { 
+        if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Player confirmed player reveal. Transitioning to PLAYER_ATTACK_BG_TRANSITION.");
+            current_phase_ = VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION; 
+            phase_timer_ = 0.0f; // Reset timer for the new phase
+            // general_fade_alpha_ should be managed by the new phase if needed, typically 0 for no fade initially
+            general_fade_alpha_ = 0.0f; 
+        }
+    } else if (current_phase_ == VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION) {
+        // This phase is timed and should transition automatically via update().
+        // No input needed here for normal flow.
+        // The previous test loop has been removed.
     }
     // ... other input handling ...
 }
@@ -365,6 +402,53 @@ void BattleState::update(float delta_time, PlayerData* playerData) {
             // For now, does nothing in update.
             break;
 
+        case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT:
+            general_fade_alpha_ = std::min(255.0f, (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS) * 255.0f);
+            if (general_fade_alpha_ >= 255.0f) {
+                general_fade_alpha_ = 255.0f; // Ensure it's fully black
+                phase_timer_ = 0.0f;
+                current_phase_ = VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN;
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade out from selection screen complete. Transitioning to TO_PLAYER_REVEAL_FADE_IN.");
+            }
+            break;
+
+        case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN:
+            general_fade_alpha_ = 255.0f * (1.0f - (phase_timer_ / BATTLE_STATE_FADE_DURATION_SECONDS));
+            if (general_fade_alpha_ <= 0.0f) {
+                general_fade_alpha_ = 0.0f;
+                phase_timer_ = 0.0f;
+                current_phase_ = VPetBattlePhase::PLAYER_REVEAL_DISPLAY; // Next phase
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Fade in to player reveal screen complete. Transitioning to PLAYER_REVEAL_DISPLAY.");
+                // Potentially load player Digimon assets here or ensure they are ready
+            }
+            break;
+
+        case VPetBattlePhase::PLAYER_REVEAL_DISPLAY:
+            // For now, this phase just waits for player input (handled in handle_input).
+            // Player Digimon rendering and UI will be added here later.
+            // player_animator_.update(delta_time); // Will be needed when player sprite is shown
+            // enemy_animator_.update(delta_time); // Enemy might be visible in background or smaller
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: PLAYER_REVEAL_DISPLAY active. Waiting for input.");
+            break;
+
+        case VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION:
+            // player_animator_.update(delta_time); // Player likely static or has own anim during this
+            if (phase_timer_ >= PLAYER_ATTACK_BG_TRANSITION_DURATION_SECONDS) {
+                current_phase_ = VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE; 
+                phase_timer_ = 0.0f;
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: PLAYER_ATTACK_BG_TRANSITION complete. Transitioning to PLAYER_ATTACK_LARGE_SPRITE.");
+            }
+            break;
+
+        case VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE:
+            // player_animator_.update(delta_time); // Player likely static or has own anim during this
+            if (phase_timer_ >= PLAYER_ATTACK_LARGE_SPRITE_DURATION_SECONDS) {
+                current_phase_ = VPetBattlePhase::PLAYER_ATTACK_PIXEL_SETUP; // Transition to the next phase
+                phase_timer_ = 0.0f;
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: PLAYER_ATTACK_LARGE_SPRITE complete. Transitioning to PLAYER_ATTACK_PIXEL_SETUP.");
+            }
+            break;
+
         // ... other phases ...
         default:
             // Potentially log an unknown phase
@@ -378,26 +462,46 @@ void BattleState::render(PCDisplay& display) {
     int screen_height = 0;
     display.getWindowSize(screen_width, screen_height);
 
-    // --- Background and Scene Rendering (similar to before) ---
+    // --- Background Color Fill (Phase Dependant) ---
+    // Default to black unless a specific phase needs a different solid background
+    // or allows scene rendering.
+    bool scene_is_rendered_this_frame = false;
+
+    // --- Background and Scene Rendering ---
     bool allow_scene_rendering = false;
-    if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN || 
-        current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY) {
-        allow_scene_rendering = true; 
-    } else if (current_phase_ > VPetBattlePhase::ENTERING_FADE_IN && 
-               current_phase_ < VPetBattlePhase::EXITING_FADE_OUT &&
-               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_CLOSING && 
-               current_phase_ != VPetBattlePhase::TOOTH_TRANSITION_OPENING && 
-               current_phase_ != VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY && 
-               current_phase_ != VPetBattlePhase::TO_SELECTION_FADE_OUT &&
-               current_phase_ != VPetBattlePhase::TO_SELECTION_FADE_IN &&   // Exclude: Selection fade in
-               current_phase_ != VPetBattlePhase::SELECTION_SCREEN_DISPLAY  // Exclude: Selection display
-               // Add other phases that don't show the main battle scene here
-               ) {
-        allow_scene_rendering = true;
+    bool allow_instruction_rendering = false;
+    bool allow_selection_rendering = false;
+    bool allow_player_digimon_rendering = false;
+    bool allow_hp_bar_rendering = false;
+    bool render_orange_background = false;
+
+    switch (current_phase_) {
+        case VPetBattlePhase::ENTERING_FADE_IN:
+        case VPetBattlePhase::ENEMY_REVEAL_DISPLAY:
+        case VPetBattlePhase::TOOTH_TRANSITION_START:     
+        case VPetBattlePhase::TOOTH_TRANSITION_CLOSING:  
+        // case VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN: // Scene (enemy) was visible here, but now PLAYER_REVEAL is different
+            allow_scene_rendering = true;
+            break;
+        // For PLAYER_REVEAL_DISPLAY, we will handle background differently for now.
+        // TO_PLAYER_REVEAL_FADE_IN will fade *to* this new PLAYER_REVEAL_DISPLAY background.
+        case VPetBattlePhase::PLAYER_REVEAL_DISPLAY:
+            allow_player_digimon_rendering = true; // Prepare for player rendering
+            allow_hp_bar_rendering = true;         // and HP bars
+            // Background remains black for this phase as per previous logic
+            break;
+        case VPetBattlePhase::PLAYER_ATTACK_BG_TRANSITION:
+            render_orange_background = true;
+            allow_player_digimon_rendering = true;
+            allow_hp_bar_rendering = true;
+            break;
+        default: 
+            allow_scene_rendering = false;
+            break;
     }
 
-
     if (allow_scene_rendering) {
+        scene_is_rendered_this_frame = true;
         // Render Background Layers (Parallax)
         SDL_Rect srcRect = {0, 0, 0, 0}; 
         SDL_Rect destRect = {0, 0, screen_width, screen_height}; 
@@ -466,8 +570,12 @@ void BattleState::render(PCDisplay& display) {
             }
         }
         
-        // Render Enemy Sprite (if in ENEMY_REVEAL_DISPLAY)
-        if (current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY || current_phase_ == VPetBattlePhase::ENTERING_FADE_IN) {
+        // Render Enemy Sprite (if in ENEMY_REVEAL_DISPLAY or other relevant phases)
+        // Adjusted condition to include PLAYER_REVEAL_DISPLAY and TO_PLAYER_REVEAL_FADE_IN
+        if (current_phase_ == VPetBattlePhase::ENEMY_REVEAL_DISPLAY || 
+            current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
+            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || // Enemy visible during fade-in to player reveal
+            current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {    // Enemy visible during player reveal
             const AnimationData* currentEnemyAnim = enemy_animator_.getCurrentAnimationData();
             if (currentEnemyAnim && currentEnemyAnim->textureAtlas) { 
                 SDL_Rect srcR = enemy_animator_.getCurrentFrameRect();
@@ -522,8 +630,35 @@ void BattleState::render(PCDisplay& display) {
                 }
             }
         } 
+    } else {
+        // If scene is not rendered, determine background color
+        if (render_orange_background) {
+            display.setDrawColor(255, 165, 0, 255); // Orange
+        } else {
+            // For other phases without scene rendering (e.g., INSTRUCTION_SCREEN_DISPLAY,
+            // SELECTION_SCREEN_DISPLAY, or the initial black for PLAYER_REVEAL_DISPLAY before its specific draw call)
+            // Default to black. PLAYER_REVEAL_DISPLAY will draw its own black screen later anyway.
+            display.setDrawColor(0, 0, 0, 255); // Opaque Black
+        }
+        SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+        display.fillRect(&bgRect);
+        scene_is_rendered_this_frame = false; 
     }
 
+    // --- Phase-Specific Overlays / Content ---
+
+    // --- Player Reveal Display Screen ---
+    if (current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN || 
+        current_phase_ == VPetBattlePhase::PLAYER_REVEAL_DISPLAY) {
+        // For now, just a black screen. Later this will have player digimon and UI.
+        // This overrides the default black fill if allow_scene_rendering was false for these phases.
+        display.setDrawColor(0, 0, 0, 255); // Opaque Black for player reveal background
+        SDL_Rect player_reveal_bg_rect = {0, 0, screen_width, screen_height};
+        display.fillRect(&player_reveal_bg_rect);
+        scene_is_rendered_this_frame = false; // No parallax scene here for now
+        // TODO: Render Player Digimon sprite
+        // TODO: Render HP Bars and other UI
+    }
 
     // --- Jagged Tooth Transition Rendering ---
     if (current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_CLOSING || current_phase_ == VPetBattlePhase::TOOTH_TRANSITION_OPENING) {
@@ -545,12 +680,13 @@ void BattleState::render(PCDisplay& display) {
         display.fillRect(&bottom_tooth_rect);
     }
 
-    // --- Instruction Screen Rendering ---
-    if (current_phase_ == VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY) {
-        // Black background for instruction screen
-        display.setDrawColor(0, 0, 0, 255); // Opaque Black
-        SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-        display.fillRect(&bgRect);
+    // --- Instruction Screen Content Rendering ---
+    if (current_phase_ == VPetBattlePhase::INSTRUCTION_SCREEN_DISPLAY ||
+        current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT) { 
+        // Black background for instruction screen (already handled by default fill if scene_is_rendered_this_frame is false)
+        // display.setDrawColor(0, 0, 0, 255); 
+        // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+        // display.fillRect(&bgRect);
 
         if (instruction_text_texture_) {
             int text_w, text_h;
@@ -564,19 +700,24 @@ void BattleState::render(PCDisplay& display) {
             display.drawTexture(instruction_text_texture_, nullptr, &text_dest_rect);
         } else {
             // Fallback if texture somehow failed (though error is logged in update)
-            // You could use TextRenderer::drawText directly here for a fallback if it supports immediate mode.
         }
     }
 
-    // --- Selection Screen Background (Placeholder) & Fade In ---
-    if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN || current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY) {
-        // Ensure black background
-        display.setDrawColor(0, 0, 0, 255); // Opaque Black
-        SDL_Rect bgRect = {0, 0, screen_width, screen_height};
-        display.fillRect(&bgRect);
+    // --- Selection Screen Content Rendering ---
+    if (current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
+        current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
+        current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) {
+        // Black background for selection screen (already handled by default fill if scene_is_rendered_this_frame is false)
+        // display.setDrawColor(0, 0, 0, 255); 
+        // SDL_Rect bgRect = {0, 0, screen_width, screen_height};
+        // display.fillRect(&bgRect);
 
         // Render selection screen text
-        if (current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY && selection_screen_text_texture_) {
+        // Text is created at the end of TO_SELECTION_FADE_IN update.
+        // It should be visible during SELECTION_SCREEN_DISPLAY and TO_PLAYER_REVEAL_FADE_OUT.
+        if ((current_phase_ == VPetBattlePhase::SELECTION_SCREEN_DISPLAY ||
+             current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT) &&
+            selection_screen_text_texture_) {
             int text_w, text_h;
             SDL_QueryTexture(selection_screen_text_texture_, nullptr, nullptr, &text_w, &text_h);
             SDL_Rect text_dest_rect = {
@@ -593,15 +734,14 @@ void BattleState::render(PCDisplay& display) {
     if (general_fade_alpha_ > 0.0f) { 
         if (current_phase_ == VPetBattlePhase::ENTERING_FADE_IN ||
             current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_OUT ||
-            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN) { // Added TO_SELECTION_FADE_IN
+            current_phase_ == VPetBattlePhase::TO_SELECTION_FADE_IN ||
+            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_OUT || // Added
+            current_phase_ == VPetBattlePhase::TO_PLAYER_REVEAL_FADE_IN    // Added
+            ) {
             display.setDrawBlendMode(SDL_BLENDMODE_BLEND); 
             display.setDrawColor(0, 0, 0, static_cast<Uint8>(general_fade_alpha_));
             SDL_Rect fullScreenRect = {0, 0, screen_width, screen_height};
             display.fillRect(&fullScreenRect); 
         }
     }
-}
-
-StateType BattleState::getType() const {
-    return StateType::Battle;
 }
