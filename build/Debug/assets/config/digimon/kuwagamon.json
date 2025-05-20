@@ -1,0 +1,25 @@
+{
+    "id": "kuwagamon",
+    "displayName": "Kuwagamon",
+    "class": "StandardEnemy",
+    "legacyEnum": 8,
+    "stats": {
+        "hp": 180,
+        "attack": 18,
+        "defense": 12,
+        "speed": 9
+    },
+    "spriteBaseId": "kuwagamon_sheet",
+    "description": "An Insectoid Digimon with large pincers and red shell.",
+    "animations": [
+        "Idle",
+        "Attack",
+        "Move"
+    ],
+    "attributes": {
+        "element": "Wind",
+        "attribute": "Virus",
+        "level": "Champion",
+        "type": "Insect"
+    }
+}

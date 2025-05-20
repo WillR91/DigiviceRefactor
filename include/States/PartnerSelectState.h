@@ -3,7 +3,9 @@
 
 #include "states/GameState.h"      
 #include "ui/TextRenderer.h"       
-#include "../entities/Digimon.h"   
+#include "../entities/Digimon.h"   // Keep for legacy enum compatibility
+#include "../entities/DigimonDefinition.h" // Add for DigimonDefinition
+#include "../entities/DigimonRegistry.h"   // Add for DigimonRegistry
 #include "graphics/Animator.h"     
 #include "utils/AnimationUtils.h"  
 #include <SDL.h>                   
@@ -32,7 +34,7 @@ public:
 private:
     // --- Member Variables ---
     size_t currentSelectionIndex_;
-    std::vector<DigimonType> availablePartners_;
+    std::vector<std::string> availablePartnerIds_; // Changed from DigimonType to string ID
     SDL_Texture* backgroundTexture_;
     Animator digimonAnimator_;
     bool returnToAdventure_ = false;
@@ -40,8 +42,7 @@ private:
     // --- Private Helper Methods ---
     void drawDigimon(PCDisplay& display);    
     void updateDisplayedDigimon();
-    DigimonType getDigimonTypeFromIndex(size_t index) const;
-    std::string getDigimonName(DigimonType type) const;
-    std::string getDigimonTextureId(DigimonType type) const;
-    std::string getAnimationId(DigimonType type, const std::string& animName) const;
+    std::string getPartnerIdFromIndex(size_t index) const; // Changed to return ID instead of enum
+    std::string getDigimonName(const std::string& partnerId) const; // Changed to take ID
+    std::string getAnimationId(const std::string& partnerId, const std::string& animName) const; // Changed to take ID
 };

@@ -3,6 +3,7 @@
 #include "platform/pc/pc_display.h" 
 #include <SDL_log.h>                
 #include <stdexcept>                
+#include "utils/GameConstants.h"    // Include for SPRITE_SCALE_FACTOR
 
 PCDisplay::PCDisplay() : window_(nullptr), renderer_(nullptr), initialized_(false) {}
 
@@ -78,7 +79,21 @@ void PCDisplay::drawTexture(SDL_Texture* texture, const SDL_Rect* srcRect, const
         // if (!texture) SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "PCDisplay::drawTexture called with null texture.");
         return;
     }
-    SDL_RenderCopyEx(renderer_, texture, srcRect, dstRect, 0.0, NULL, flip);
+
+    // Apply sprite scaling if a destination rectangle is provided
+    if (dstRect) {
+        // Create a scaled destination rectangle
+        SDL_Rect scaledDstRect = {
+            dstRect->x,
+            dstRect->y,
+            static_cast<int>(dstRect->w * Constants::SPRITE_SCALE_FACTOR),
+            static_cast<int>(dstRect->h * Constants::SPRITE_SCALE_FACTOR)
+        };
+        SDL_RenderCopyEx(renderer_, texture, srcRect, &scaledDstRect, 0.0, NULL, flip);
+    } else {
+        // If no destination rectangle, render normally
+        SDL_RenderCopyEx(renderer_, texture, srcRect, dstRect, 0.0, NULL, flip);
+    }
 }
 
 void PCDisplay::present() {

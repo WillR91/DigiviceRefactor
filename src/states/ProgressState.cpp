@@ -11,6 +11,7 @@
 #include "platform/pc/pc_display.h"
 #include "utils/AnimationUtils.h"
 #include "core/GameConstants.h" // Added include
+#include "entities/DigimonRegistry.h" // Added include for DigimonRegistry
 #include <SDL_log.h>
 #include <string> // For std::to_string
 
@@ -42,13 +43,21 @@ void ProgressState::enter() {
     if (!game_ptr || !game_ptr->getPlayerData() || !game_ptr->getAnimationManager()) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ProgressState::enter() - Missing required pointers!");
         return;
+    }    PlayerData* playerData = game_ptr->getPlayerData();
+    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
+    if (!registry) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ProgressState::enter() - Missing DigimonRegistry!");
+        return;
+    }
+    
+    const Digimon::DigimonDefinition* partnerDef = playerData->getCurrentPartnerDefinition(registry);
+    if (!partnerDef) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ProgressState::enter() - Could not get partner definition!");
+        return;
     }
 
-    PlayerData* playerData = game_ptr->getPlayerData();
-    DigimonType currentPartner = playerData->currentPartner;
-
     // Request "Walk" animation with explicit loop override
-    std::string walkAnimId = AnimationUtils::GetAnimationId(currentPartner, "Walk");
+    std::string walkAnimId = AnimationUtils::GetAnimationId(partnerDef->spriteBaseId, "Walk");
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ProgressState Enter: Requesting Anim ID: '%s'", walkAnimId.c_str());
 
     AnimationManager* animManager = game_ptr->getAnimationManager();

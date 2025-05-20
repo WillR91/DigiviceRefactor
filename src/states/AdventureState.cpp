@@ -15,6 +15,8 @@
 #include "utils/AnimationUtils.h"
 #include "core/GameConstants.h"     // Added for game constants
 #include "states/BattleState.h"       // Forward declare or include for BattleState later
+#include "Utils/RenderUtils.h"        // Added for sprite scaling utilities
+#include "entities/DigimonRegistry.h" // <<< ADDED for DigimonRegistry access
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -38,9 +40,6 @@ const float BATTLE_FADE_DURATION_SECONDS = 1.0f; // Duration of fade to battle i
 // --- Constructor ---
 AdventureState::AdventureState(Game* game) :
     GameState(game),
-    bgTexture0_(nullptr),
-    bgTexture1_(nullptr),
-    bgTexture2_(nullptr),
     current_state_(STATE_IDLE),
     queued_steps_(0),
     firstWalkUpdate_(true),
@@ -50,22 +49,36 @@ AdventureState::AdventureState(Game* game) :
     timeSinceLastStep_(0.0f),
     stepWindowTimer_(0.0f),
     stepsInWindow_(0),
-    // Initialize new battle trigger members
+    // Initialize battle trigger members
     current_area_step_goal_(0),
     total_steps_taken_in_area_(0),
     current_area_enemy_id_("DefaultEnemy"), // Placeholder
     is_fading_to_battle_(false),
-    battle_fade_alpha_(0.0f)
+    battle_fade_alpha_(0.0f),
+    bgTexture0_(nullptr),
+    bgTexture1_(nullptr),
+    bgTexture2_(nullptr),
+    current_partner_definition_(nullptr)
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Initializing...");
     
     if (!game_ptr || !game_ptr->getAssetManager() || !game_ptr->get_display() || 
-        !game_ptr->getPlayerData() || !game_ptr->getAnimationManager()) {
-        throw std::runtime_error("AdventureState: Missing required systems!");
+        !game_ptr->getPlayerData() || !game_ptr->getAnimationManager() || !game_ptr->getDigimonRegistry()) { // <<< ADDED getDigimonRegistry() check
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Missing required game systems!");
+        // Consider throwing an exception or setting an error state
+        return;
     }
 
     PlayerData* pd = game_ptr->getPlayerData();
-    current_digimon_ = pd->currentPartner;
+    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry(); // <<< GET REGISTRY
+    const Digimon::DigimonDefinition* partnerDef = pd->getCurrentPartnerDefinition(registry); // <<< GET PARTNER DEFINITION
+
+    if (!partnerDef) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Could not get partner definition for ID: %s", pd->getCurrentPartnerId().c_str());
+        // Handle error: maybe default to a known Digimon or throw
+        return;
+    }
+    current_partner_definition_ = partnerDef;
 
     // Load data from the current map node
     AssetManager* assets = game_ptr->getAssetManager();
@@ -129,7 +142,8 @@ AdventureState::AdventureState(Game* game) :
     }
     
     // Load initial animation for the partner Digimon
-    std::string initialAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
+    // Use partnerDef->spriteBaseId and "Idle"
+    std::string initialAnimId = AnimationUtils::GetAnimationId(partnerDef->spriteBaseId, "Idle");
     AnimationManager* animManager = game_ptr->getAnimationManager();
     const AnimationData* initialAnimData = animManager->getAnimationData(initialAnimId);
     partnerAnimator_.setAnimation(initialAnimData);
@@ -147,27 +161,27 @@ AdventureState::~AdventureState() { SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "A
 // --- enter ---
 void AdventureState::enter() {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Entering state");
-    if (!game_ptr || !game_ptr->getPlayerData() || !game_ptr->getAnimationManager()) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Missing required pointers!");
+    if (!game_ptr || !game_ptr->getPlayerData() || !game_ptr->getAnimationManager() || !game_ptr->getDigimonRegistry()) { // <<< ADDED getDigimonRegistry() check
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter() - Missing required game systems!");
         return;
     }
 
     PlayerData* playerData = game_ptr->getPlayerData();
-    if (playerData && current_digimon_ != playerData->currentPartner) {
-        current_digimon_ = playerData->currentPartner;
-        current_state_ = STATE_IDLE; // Reset state to idle
-        queued_steps_ = 0;           // Reset steps
+    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry(); // <<< GET REGISTRY
+    const Digimon::DigimonDefinition* partnerDef = playerData->getCurrentPartnerDefinition(registry); // <<< GET PARTNER DEFINITION
 
-        // Update the animator with the new partner's idle animation
-        std::string idleAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
-        AnimationManager* animManager = game_ptr->getAnimationManager();
-        const AnimationData* idleAnimData = animManager->getAnimationData(idleAnimId);
-        partnerAnimator_.setAnimation(idleAnimData);
+    if (!partnerDef) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter(): Could not get partner definition for ID: %s", playerData->getCurrentPartnerId().c_str());
+        return;
+    }    current_partner_definition_ = partnerDef;
+    
+    // Ensure animation is set based on current state (e.g., Idle)
+    std::string currentAnimSuffix = getAnimationIdForCurrentState(); // Assuming this returns "Idle" or "Walk"
+    std::string animId = AnimationUtils::GetAnimationId(partnerDef->spriteBaseId, currentAnimSuffix);
+    const AnimationData* animData = game_ptr->getAnimationManager()->getAnimationData(animId);
+    partnerAnimator_.setAnimation(animData);
 
-        if (!idleAnimData) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter - Failed to set animation for new partner %d", (int)current_digimon_);
-        } else { /* Intentional empty else based on provided code */ }
-    }
+
     firstWalkUpdate_ = true;
 
     // Reset fade state upon entering AdventureState
@@ -194,62 +208,20 @@ void AdventureState::handle_input(InputManager& inputManager, PlayerData* player
 
     // Step Input with Rate Limiting
     if (inputManager.isActionJustPressed(GameAction::STEP)) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "Input: STEP pressed");
-        if (stepsInWindow_ < MAX_STEPS_PER_WINDOW) {
-            stepsInWindow_++; // Consume a slot in the window
-            queued_steps_++; // Actually queue the step to be processed
-            if (playerData) {
-                playerData->stepsTakenThisChapter++;
-                playerData->totalSteps++;
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 
-                    "Step Counted (Rate Limit OK). Steps in Window: %d. Chapter Steps: %d", 
-                    stepsInWindow_, playerData->stepsTakenThisChapter);
-            }
-            current_state_ = STATE_WALKING;
-            timeSinceLastStep_ = 0.0f;
+        if (queued_steps_ < MAX_QUEUED_STEPS && stepsInWindow_ < MAX_STEPS_PER_WINDOW) {
+            queued_steps_++;
+            stepsInWindow_++;
+            timeSinceLastStep_ = 0.0f; // Reset idle timer on step input
+            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "AdventureState: Step registered. Queued: %d, Window: %d", queued_steps_, stepsInWindow_);
         } else {
-            SDL_LogVerbose(SDL_LOG_CATEGORY_INPUT, 
-                "Step press ignored due to rate limit (StepsInWindow: %d)", stepsInWindow_);
-            if(current_state_ == STATE_WALKING) {
-                timeSinceLastStep_ = 0.0f;
-            }
-            current_state_ = STATE_WALKING;
-        }
-    }
+            SDL_LogDebug(SDL_LOG_CATEGORY_INPUT, "AdventureState: Step NOT registered. Queued: %d (Max: %d), Window: %d (Max: %d)", 
+                         queued_steps_, MAX_QUEUED_STEPS, stepsInWindow_, MAX_STEPS_PER_WINDOW);
+        }    }    
 
-    // Debug Key Check
-    DigimonType previousDigimon = current_digimon_;
-    DigimonType keySelectedDigimon = previousDigimon;
-    if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_1)) { keySelectedDigimon = DIGI_AGUMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_2)) { keySelectedDigimon = DIGI_GABUMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_3)) { keySelectedDigimon = DIGI_BIYOMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_4)) { keySelectedDigimon = DIGI_GATOMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_5)) { keySelectedDigimon = DIGI_GOMAMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_6)) { keySelectedDigimon = DIGI_PALMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_7)) { keySelectedDigimon = DIGI_TENTOMON; }
-    else if (inputManager.isActionJustPressed(GameAction::SELECT_DIGI_8)) { keySelectedDigimon = DIGI_PATAMON; }
-
-    if (keySelectedDigimon != previousDigimon) {
-         current_digimon_ = keySelectedDigimon;
-         if (playerData) { playerData->currentPartner = current_digimon_; }
-
-         current_state_ = STATE_IDLE;
-         queued_steps_ = 0;
-
-         std::string newIdleAnimId = AnimationUtils::GetAnimationId(current_digimon_, "Idle");
-         AnimationManager* animManager = game_ptr->getAnimationManager();
-         if(animManager){
-             const AnimationData* idleAnimData = animManager->getAnimationData(newIdleAnimId);
-             partnerAnimator_.setAnimation(idleAnimData);
-             if (!idleAnimData) {
-                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"HandleInput: Animator set with NULL data for '%s'!", newIdleAnimId.c_str());
-             }
-         } else {
-             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,"AnimationManager pointer is null in handle_input!");
-         }
-    }
+    // Debug Key Check - removed - for changing Digimon to use IDs now
+    // This functionality can be reimplemented using DigimonDefinition IDs
+    // if needed in the future
 }
-
 
 // --- update ---
 void AdventureState::update(float delta_time, PlayerData* playerData) {
@@ -261,62 +233,44 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
     if (is_fading_to_battle_) {
         battle_fade_alpha_ += (255.0f / BATTLE_FADE_DURATION_SECONDS) * delta_time;
         if (battle_fade_alpha_ >= 255.0f) {
-            battle_fade_alpha_ = 255.0f; // Cap alpha at 255
-            // Transition to BattleState
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Fade to black complete. Requesting BattleState.");
+            battle_fade_alpha_ = 255.0f;
             
+            // --- Transition to BattleState ---
             PlayerData* pd = game_ptr->getPlayerData();
-            if (!pd) {
-                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: PlayerData is null, cannot start battle.");
-                is_fading_to_battle_ = false; // Reset fade as battle cannot start
+            Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
+            const Digimon::DigimonDefinition* playerDef = pd->getCurrentPartnerDefinition(registry);
+
+            if (!playerDef) {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Cannot start battle, player definition is null!");
+                is_fading_to_battle_ = false; // Abort fade
                 battle_fade_alpha_ = 0.0f;
-                total_steps_taken_in_area_ = 0; 
                 return;
             }
 
-            // Calculate additional scroll distances for battle transition
-            float additional_scroll_0 = SCROLL_SPEED_0 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
-            float additional_scroll_1 = SCROLL_SPEED_1 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
-            float additional_scroll_2 = SCROLL_SPEED_2 * BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS;
-
-            // Calculate new battle starting offsets (raw, before wrapping)
-            // Subtract because scroll offsets decrease as the player moves "forward" (right)
-            float battle_start_offset_0_raw = bg_scroll_offset_0_ - additional_scroll_0;
-            float battle_start_offset_1_raw = bg_scroll_offset_1_ - additional_scroll_1;
-            float battle_start_offset_2_raw = bg_scroll_offset_2_ - additional_scroll_2;
-
-            // Get effective widths for wrapping
-            int effW0 = 0, effW1 = 0, effW2 = 0;
-            if (bgTexture0_) { int w; SDL_QueryTexture(bgTexture0_, NULL, NULL, &w, NULL); effW0 = w * 2/3; if (effW0 <= 0) effW0 = w; }
-            if (bgTexture1_) { int w; SDL_QueryTexture(bgTexture1_, NULL, NULL, &w, NULL); effW1 = w * 2/3; if (effW1 <= 0) effW1 = w; }
-            if (bgTexture2_) { int w; SDL_QueryTexture(bgTexture2_, NULL, NULL, &w, NULL); effW2 = w * 2/3; if (effW2 <= 0) effW2 = w; }
-
-            // Wrap the new offsets
-            float battle_start_offset_0 = battle_start_offset_0_raw;
-            float battle_start_offset_1 = battle_start_offset_1_raw;
-            float battle_start_offset_2 = battle_start_offset_2_raw;
-
-            if (effW0 > 0) battle_start_offset_0 = std::fmod(battle_start_offset_0_raw + effW0, (float)effW0);
-            if (effW1 > 0) battle_start_offset_1 = std::fmod(battle_start_offset_1_raw + effW1, (float)effW1);
-            if (effW2 > 0) battle_start_offset_2 = std::fmod(battle_start_offset_2_raw + effW2, (float)effW2);
-
+            // For now, enemy ID is hardcoded, later this will come from map data or encounter logic
+            std::string enemyId = current_area_enemy_id_; 
+            const Digimon::DigimonDefinition* enemyDef = registry->getDefinitionById(enemyId);
+            if (!enemyDef) {
+                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Enemy ID '%s' not found in registry for battle. Defaulting to Kuwagamon.", enemyId.c_str());
+                 enemyDef = registry->getDefinitionById("kuwagamon"); // Fallback
+                 if (!enemyDef) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Fallback enemy 'kuwagamon' also not found. Cannot start battle.");
+                    is_fading_to_battle_ = false; // Abort fade
+                    battle_fade_alpha_ = 0.0f;
+                    return;
+                 }            }
+            
+            // Pass the legacy DigimonType for now, or update BattleState to take IDs/Definitions            
             game_ptr->requestPushState(std::make_unique<BattleState>(
                 game_ptr, 
-                pd->currentPartner, 
-                current_area_enemy_id_,
-                bgTexture0_, 
-                bgTexture1_, 
-                bgTexture2_, 
-                battle_start_offset_0, // Pass wrapped offset
-                battle_start_offset_1, // Pass wrapped offset
-                battle_start_offset_2  // Pass wrapped offset
+                playerDef->legacyEnum, // Need to pass the legacy enum since BattleState still uses it
+                enemyDef->id,          // Pass enemy ID
+                bgTexture0_, bgTexture1_, bgTexture2_,
+                bg_scroll_offset_0_, bg_scroll_offset_1_, bg_scroll_offset_2_
             ));
-            
-            total_steps_taken_in_area_ = 0; // Reset steps for the area
-            // DO NOT set is_fading_to_battle_ to false here.
-            // Let AdventureState::enter() handle resetting the fade status
-            // when this state becomes active again.
-            // battle_fade_alpha_ remains 255.0f to keep the screen black.
+            // The fade out is complete, BattleState will handle its own fade in or entry.
+            // No need to reset is_fading_to_battle_ here as the state will change.
+            return; // Important: return to avoid further updates in this state
         }
         return; // Don't process other game logic while fading to battle
     }
@@ -338,31 +292,42 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         timeSinceLastStep_ += delta_time;
         if (timeSinceLastStep_ >= TIME_TO_RETURN_TO_IDLE) {
             current_state_ = STATE_IDLE;
-            queued_steps_ = 0; // Clear queue when stopping
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Update: Returning to IDLE due to inactivity.");
             needs_new_animation_set = true;
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Returned to IDLE due to inactivity.");
         }
     }
 
     // Process queued steps
-    if (current_state_ == STATE_WALKING && queued_steps_ > 0) {
-        // This is where a step is "taken"
-        queued_steps_--; // Consume one step from the queue
-        if (playerData) {
-            playerData->totalSteps++; // Increment global player steps
+    if (queued_steps_ > 0) {
+        if (current_state_ == STATE_IDLE) {
+            current_state_ = STATE_WALKING;
+            needs_new_animation_set = true;
+            firstWalkUpdate_ = true; // Reset for the new walking sequence
         }
-        total_steps_taken_in_area_++; // Increment steps for this area's battle trigger
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Step taken. Total in area: %d/%d", total_steps_taken_in_area_, current_area_step_goal_);
+        
+        // Update player data for steps taken
+        playerData->stepsTakenThisChapter++;
+        playerData->totalSteps++;
+        total_steps_taken_in_area_++; // Increment steps in current area
 
-        // Reset idle timer as a step was just processed
-        timeSinceLastStep_ = 0.0f;
-        firstWalkUpdate_ = false; // A step has been taken, no longer the "first walk update"
-    }
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Step taken. Chapter: %d, Total: %d, Area: %d (Goal: %d)", 
+            playerData->stepsTakenThisChapter, playerData->totalSteps, total_steps_taken_in_area_, current_area_step_goal_);
 
-    // Update Animator
+        // Check for battle trigger
+        if (total_steps_taken_in_area_ >= current_area_step_goal_ && current_area_step_goal_ > 0) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Battle triggered! Steps: %d, Goal: %d", 
+                        total_steps_taken_in_area_, current_area_step_goal_);
+            is_fading_to_battle_ = true; // Start fading to battle
+            battle_fade_alpha_ = 0.0f;   // Reset fade alpha
+            total_steps_taken_in_area_ = 0; // Reset steps for the area after triggering
+            // The actual transition to BattleState will happen when fade is complete.
+        }
+
+        queued_steps_--;
+    }    // Update Animator
     partnerAnimator_.update(delta_time);
 
-    // Determine required animation based on current state
+    // Determine required animation based on current state    
     std::string requiredAnimSuffix;
     if (current_state_ == STATE_IDLE) {
         requiredAnimSuffix = "Idle";
@@ -370,7 +335,15 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         requiredAnimSuffix = "WalkLoop"; // Use the looping version for walking
     }
     
-    std::string requiredAnimId = AnimationUtils::GetAnimationId(current_digimon_, requiredAnimSuffix);
+    // Get the current partner definition and use its spriteBaseId for animations
+    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
+    const Digimon::DigimonDefinition* partnerDef = playerData->getCurrentPartnerDefinition(registry);
+    if (!partnerDef) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::update - Cannot get partner definition!");
+        return;
+    }
+    
+    std::string requiredAnimId = AnimationUtils::GetAnimationId(partnerDef->spriteBaseId, requiredAnimSuffix);
     
     // Check if we need to set/reset the animation
     bool needsNewAnimation = needs_new_animation_set || 
@@ -492,16 +465,19 @@ void AdventureState::render(PCDisplay& display) {
     if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
 
     drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");
-
-    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-
-    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-        int drawX = (windowW / 2) - (currentSourceRect.w / 2);
+    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
+    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+        // Calculate the position for the scaled sprite
+        // Note: We need to center the scaled sprite, not the original source size
+        int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
+        int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
+        
+        int drawX = (windowW / 2) - (scaledWidth / 2);
         int verticalOffset = 7; // This might need to be a constant or configurable
-        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - verticalOffset;
-        SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
+        int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
+        
+        // Create scaled destination rectangle
+        SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
 
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     }
@@ -520,4 +496,15 @@ void AdventureState::render(PCDisplay& display) {
 
 StateType AdventureState::getType() const {
     return StateType::Adventure;
+}
+
+std::string AdventureState::getAnimationIdForCurrentState() const {
+    // This function now needs the DigimonDefinition to get the spriteBaseId
+    // However, its original purpose was just to return "Idle" or "Walk".
+    // Let's keep it simple and assume the caller will combine it with spriteBaseId.
+    switch (current_state_) {
+        case STATE_WALKING: return "Walk";
+        case STATE_IDLE:    
+        default:            return "Idle";
+    }
 }

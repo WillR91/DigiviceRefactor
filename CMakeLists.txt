@@ -27,6 +27,8 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/*/*/*.cpp" # Handles src/platform/pc/*.cpp
 )
 
+message(STATUS "Collected source files: ${SOURCE_FILES}") # Added for debugging
+
 # --- Add Your Source Files ---
 add_executable(${PROJECT_NAME}
     main.cpp

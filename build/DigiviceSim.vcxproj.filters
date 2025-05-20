@@ -10,6 +10,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -19,13 +22,16 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game_fade.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\entities\DigimonDefinition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\entities\DigimonRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp">
@@ -46,6 +52,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -53,9 +62,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\DigiviceRefactor\src\states\battlestate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp">

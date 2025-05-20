@@ -1,255 +1,92 @@
+{"frames": {
+
+"Agumon_0.png":
 {
-  "frames": {
-    "Agumon_0": {
-      "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_1": {
-      "frame": {
-        "x": 0,
-        "y": 192,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_2": {
-      "frame": {
-        "x": 0,
-        "y": 384,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_3": {
-      "frame": {
-        "x": 0,
-        "y": 576,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_4": {
-      "frame": {
-        "x": 0,
-        "y": 768,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_5": {
-      "frame": {
-        "x": 0,
-        "y": 960,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_6": {
-      "frame": {
-        "x": 0,
-        "y": 1152,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_7": {
-      "frame": {
-        "x": 0,
-        "y": 1344,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_8": {
-      "frame": {
-        "x": 0,
-        "y": 1536,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "Agumon_9": {
-      "frame": {
-        "x": 0,
-        "y": 1728,
-        "w": 192,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 192,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 192,
-        "h": 192
-      },
-      "pivot": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    }
-  },
-  "meta": {
-    "app": "http://free-tex-packer.com",
-    "version": "0.6.7",
-    "image": "agumon.png",
-    "format": "RGBA8888",
-    "size": {
-      "w": 192,
-      "h": 1920
-    },
-    "scale": 1
-  }
+	"frame": {"x":1,"y":1,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_1.png":
+{
+	"frame": {"x":1,"y":259,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_2.png":
+{
+	"frame": {"x":1,"y":517,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_3.png":
+{
+	"frame": {"x":1,"y":775,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_4.png":
+{
+	"frame": {"x":1,"y":1033,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_5.png":
+{
+	"frame": {"x":1,"y":1291,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_6.png":
+{
+	"frame": {"x":1,"y":1549,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_7.png":
+{
+	"frame": {"x":1,"y":1807,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_8.png":
+{
+	"frame": {"x":1,"y":2065,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+},
+"Agumon_9.png":
+{
+	"frame": {"x":1,"y":2323,"w":256,"h":256},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":256,"h":256},
+	"sourceSize": {"w":256,"h":256}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "agumon_sheet.png",
+	"format": "RGBA8888",
+	"size": {"w":258,"h":2580},
+	"scale": "4",
+	"smartupdate": "$TexturePacker:SmartUpdate:14652ff43146f95b47b60a225de2d816:05502f8975164df30ffcb7927af12635:c27d861b4f9a40205eba4a3ceafce59a$"
+}
 }

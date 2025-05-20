@@ -3,7 +3,8 @@
 
 #include "states/GameState.h"
 #include "graphics/Animator.h"
-#include "../entities/Digimon.h"
+#include "../entities/Digimon.h" // Keep for backward compatibility
+#include "../entities/DigimonDefinition.h" // Add for DigimonDefinition
 // Reduce includes if possible, move SDL includes to cpp if only needed there
 #include <SDL_render.h> // Needed for SDL_Texture* member
 #include <SDL_rect.h>   // Needed for SDL_Rect usage? (If helpers use it)
@@ -46,13 +47,11 @@ private:
     bool is_fading_to_battle_;          // True if currently fading out for a battle
     float battle_fade_alpha_;           // Alpha for the fade-to-black overlay (0.0 to 255.0)
     const float BATTLE_FADE_DURATION_SECONDS = 0.5f; // How long the fade to black should take
-    const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition
-
-    // Other Data Members
+    const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition    // Other Data Members    
     SDL_Texture* bgTexture0_ = nullptr;
     SDL_Texture* bgTexture1_ = nullptr;
     SDL_Texture* bgTexture2_ = nullptr;
-    DigimonType current_digimon_;
+    const Digimon::DigimonDefinition* current_partner_definition_ = nullptr;
     PlayerState current_state_ = STATE_IDLE;
     int queued_steps_ = 0;
     float bg_scroll_offset_0_ = 0.0f;
@@ -71,10 +70,7 @@ private:
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;
     const int WINDOW_WIDTH = 466;
-    const int WINDOW_HEIGHT = 466;
-
-    // Private Helpers
+    const int WINDOW_HEIGHT = 466;    // Private Helpers
     std::string getAnimationIdForCurrentState() const;
-    std::string getDigimonTextureId(DigimonType type) const;
 
 }; // End of AdventureState class definition

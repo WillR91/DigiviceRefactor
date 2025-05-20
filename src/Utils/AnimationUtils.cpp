@@ -36,14 +36,40 @@ namespace AnimationUtils {
         return baseId + "_" + animNameSuffix;
     }
 
+    std::string GetDigimonBaseId(const Digimon::DigimonDefinition* definition) {
+        if (!definition) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetDigimonBaseId (Definition) - Provided definition is null.");
+            return "unknown_sheet";
+        }
+        if (definition->spriteBaseId.empty()) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetDigimonBaseId (Definition) - spriteBaseId is empty for Digimon ID: %s", definition->id.c_str());
+            return "unknown_sheet";
+        }
+        return definition->spriteBaseId;
+    }
+
+    std::string GetAnimationId(const Digimon::DigimonDefinition* definition, const std::string& animNameSuffix) {
+        if (!definition) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (Definition) - Provided definition is null.");
+            return "unknown_sheet" + (animNameSuffix.empty() ? "" : ("_" + animNameSuffix));
+        }
+        std::string baseId = GetDigimonBaseId(definition); // Use the new GetDigimonBaseId
+        
+        if (animNameSuffix.empty()) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (Definition) - animNameSuffix is empty for Digimon ID: %s, baseId: %s", definition->id.c_str(), baseId.c_str());
+            return baseId; // Or return baseId + "_Default" or some error string
+        }
+        return baseId + "_" + animNameSuffix;
+    }
+
     std::string GetAnimationId(const std::string& baseId, const std::string& animNameSuffix) {
         if (baseId.empty()) {
-             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (string overload) - baseId is empty.");
-             // Decide on behavior: return empty, return suffix, throw?
+             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (string overload) - baseId is empty. Returning empty animation ID.");
+             return ""; // Return empty string if baseId is empty
         }
         if (animNameSuffix.empty()) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (string overload) - animNameSuffix is empty for baseId: %s", baseId.c_str());
-            return baseId;
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AnimationUtils::GetAnimationId (string overload) - animNameSuffix is empty for baseId: %s. Returning baseId itself.", baseId.c_str());
+            return baseId; // Return baseId if only suffix is empty
         }
         return baseId + "_" + animNameSuffix;
     }

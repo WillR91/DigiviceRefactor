@@ -1,0 +1,28 @@
+{
+    "id": "agumon",
+    "displayName": "Agumon",
+    "class": "PlayerRookie",
+    "legacyEnum": 0,
+    "stats": {
+        "hp": 150,
+        "attack": 15,
+        "defense": 10,
+        "speed": 8
+    },
+    "spriteBaseId": "agumon_sheet",
+    "description": "A Reptile Digimon with an appearance resembling a small dinosaur.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Fire",
+        "attribute": "Vaccine",
+        "level": "Rookie",
+        "type": "Reptile"
+    }
+}

@@ -14,6 +14,7 @@
 #include "core/PlayerData.h"
 #include "core/GraphicsTypes.h" // For Color struct
 #include "utils/ConfigManager.h" // For configuration access
+#include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
 
 // Forward declarations
 class TextRenderer;
@@ -72,6 +73,7 @@ public:
     PlayerData* getPlayerData();
     TextRenderer* getTextRenderer();
     AnimationManager* getAnimationManager();
+    Digimon::DigimonRegistry* getDigimonRegistry(); // <<< ADD THIS LINE
 
     // Debug helper
     std::vector<std::unique_ptr<GameState>>& DEBUG_getStack();

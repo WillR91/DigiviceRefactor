@@ -5,6 +5,7 @@
 // Definition of the different Digimon types available in the game.
 // Moved here from AdventureState.h to be accessible globally.
 enum DigimonType {
+    NONE = -1,          // Used as default/invalid value
     DIGI_AGUMON,
     DIGI_GABUMON,
     DIGI_BIYOMON,

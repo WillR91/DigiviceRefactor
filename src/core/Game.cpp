@@ -11,6 +11,7 @@
 #include "ui/TextRenderer.h"
 #include "core/AnimationManager.h"
 #include "utils/ConfigManager.h" // Add ConfigManager include
+#include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
 
 #include <SDL_log.h>
 #include <stdexcept>
@@ -65,6 +66,17 @@ bool Game::init(const std::string& title, int width, int height) {
 
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
+
+    // Initialize Digimon Registry
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing DigimonRegistry...");
+    std::string definitionsPath = ConfigManager::getValue<std::string>("paths.digimonDefinitions", "assets/definitions/digimon_definitions");
+    if (!Digimon::DigimonRegistry::getInstance().initialize(definitionsPath)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "DigimonRegistry Initialization Failed!");
+        // Decide if this is a fatal error. For now, we'll log and continue.
+        // return false; // Uncomment if this should be a fatal error
+    } else {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "DigimonRegistry Initialized Successfully.");
+    }
 
     // Log CWD
     try {
@@ -612,6 +624,10 @@ InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
 TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
 AnimationManager* Game::getAnimationManager() { return animationManager_.get(); }
+
+Digimon::DigimonRegistry* Game::getDigimonRegistry() {
+    return &Digimon::DigimonRegistry::getInstance();
+}
 
 GameState* Game::getCurrentState() {
     return states_.empty() ? nullptr : states_.back().get();
