@@ -9,7 +9,7 @@
         "defense": 9,
         "speed": 9
     },
-    "spriteBaseId": "patamon_sheet",
+    "spriteBaseId": "patamon",
     "description": "A Mammal Digimon characterized by its large ears.",
     "animations": [
         "Idle",

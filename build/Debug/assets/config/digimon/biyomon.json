@@ -9,7 +9,7 @@
         "defense": 8,
         "speed": 10
     },
-    "spriteBaseId": "biyomon_sheet",
+    "spriteBaseId": "biyomon",
     "description": "A small Bird Digimon with wings that have developed like arms.",
     "animations": [
         "Idle",

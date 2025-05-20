@@ -92,17 +92,21 @@ bool Game::init(const std::string& title, int width, int height) {
      if (!ui_mask_texture_) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load UI mask texture: assets/ui/mask/round_mask.png");
          // Decide if this is a critical failure or if the game can run without it
-     }
-     assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
-     assets_ok &= assetManager.loadTexture("agumon_sheet", "assets/sprites/agumon_sheet.png");
-     assets_ok &= assetManager.loadTexture("gabumon_sheet", "assets/sprites/gabumon_sheet.png");
-     assets_ok &= assetManager.loadTexture("biyomon_sheet", "assets/sprites/biyomon_sheet.png");
-     assets_ok &= assetManager.loadTexture("gatomon_sheet", "assets/sprites/gatomon_sheet.png");
-     assets_ok &= assetManager.loadTexture("gomamon_sheet", "assets/sprites/gomamon_sheet.png");
-     assets_ok &= assetManager.loadTexture("palmon_sheet", "assets/sprites/palmon_sheet.png");
-     assets_ok &= assetManager.loadTexture("tentomon_sheet", "assets/sprites/tentomon_sheet.png");
-     assets_ok &= assetManager.loadTexture("patamon_sheet", "assets/sprites/patamon_sheet.png");
-     assets_ok &= assetManager.loadTexture("kuwagamon_sheet", "assets/sprites/digimon/kuwagamon/spritesheet.png");
+     }     assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
+     
+     // Load new player Digimon sprite sheets with their new textureIds
+     assets_ok &= assetManager.loadTexture("agumon", "assets/sprites/player_digimon/agumon.png");
+     assets_ok &= assetManager.loadTexture("gabumon", "assets/sprites/player_digimon/gabumon.png");
+     assets_ok &= assetManager.loadTexture("biyomon", "assets/sprites/player_digimon/biyomon.png");
+     assets_ok &= assetManager.loadTexture("gatomon", "assets/sprites/player_digimon/gatomon.png");
+     assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
+     assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");
+     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
+     assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
+     
+     // Load enemy Digimon sprite sheets with their new textureIds
+     assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
+     
      assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
      assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
@@ -132,10 +136,26 @@ bool Game::init(const std::string& title, int width, int height) {
     // Initialize Animation Manager & Load Animations
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing AnimationManager...");
     try {
-        animationManager_ = std::make_unique<AnimationManager>(&assetManager); // Pass AssetManager pointer
-
+        animationManager_ = std::make_unique<AnimationManager>(&assetManager); // Pass AssetManager pointer        
         bool anims_ok = true;
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animation data files...");
+          // Load new player Digimon animation data 
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/agumon.json", "agumon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/gabumon.json", "gabumon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/biyomon.json", "biyomon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/gatomon.json", "gatomon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/gomamon.json", "gomamon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/palmon.json", "palmon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/tentomon.json", "tentomon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");
+        
+        // Load enemy Digimon animation data
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
+        
+        // Load enemy Digimon animation data
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
+        
+        // Keep loading legacy animation data for backward compatibility
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gabumon_sheet.json", "gabumon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/biyomon_sheet.json", "biyomon_sheet");

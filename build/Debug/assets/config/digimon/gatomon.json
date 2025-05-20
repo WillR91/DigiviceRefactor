@@ -9,7 +9,7 @@
         "defense": 15,
         "speed": 12
     },
-    "spriteBaseId": "gatomon_sheet",
+    "spriteBaseId": "gatomon",
     "description": "A Holy Beast Digimon that looks like a small cat but is actually very powerful.",
     "animations": [
         "Idle",

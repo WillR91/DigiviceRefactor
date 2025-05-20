@@ -9,7 +9,7 @@
         "defense": 10,
         "speed": 8
     },
-    "spriteBaseId": "agumon_sheet",
+    "spriteBaseId": "agumon",
     "description": "A Reptile Digimon with an appearance resembling a small dinosaur.",
     "animations": [
         "Idle",

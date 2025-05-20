@@ -9,7 +9,7 @@
         "defense": 12,
         "speed": 9
     },
-    "spriteBaseId": "kuwagamon_sheet",
+    "spriteBaseId": "kuwagamon",
     "description": "An Insectoid Digimon with large pincers and red shell.",
     "animations": [
         "Idle",

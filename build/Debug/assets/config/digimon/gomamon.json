@@ -9,7 +9,7 @@
         "defense": 13,
         "speed": 6
     },
-    "spriteBaseId": "gomamon_sheet",
+    "spriteBaseId": "gomamon",
     "description": "A Sea Animal Digimon covered in warm white fur.",
     "animations": [
         "Idle",

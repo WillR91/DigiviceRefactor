@@ -186,9 +186,7 @@ bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, co
                     jsonPath.c_str(), e.what());
         if(jsonFile.is_open()) jsonFile.close();
         return false;
-    }
-
-    std::map<int, SDL_Rect> frameRectsMap;
+    }    std::map<int, SDL_Rect> frameRectsMap;
     if (!data.contains("frames") || !parseFrameRects(data["frames"], frameRectsMap)) {
          SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Failed to parse frame rectangles from '%s'.", 
                      jsonPath.c_str());
@@ -196,6 +194,13 @@ bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, co
     }
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Parsed %zu total frame rects from %s", 
                  frameRectsMap.size(), jsonPath.c_str());
+    
+    // Debug log available frame indices
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Available frame indices in %s:", jsonPath.c_str());
+    for (const auto& [idx, rect] : frameRectsMap) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "  Frame index %d: Rect = {%d, %d, %d, %d}", 
+                   idx, rect.x, rect.y, rect.w, rect.h);
+    }
 
     int animationsStored = 0;
 

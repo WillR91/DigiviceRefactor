@@ -9,7 +9,7 @@
         "defense": 12,
         "speed": 7
     },
-    "spriteBaseId": "palmon_sheet",
+    "spriteBaseId": "palmon",
     "description": "A Plant Digimon with a tropical flower blooming on its head.",
     "animations": [
         "Idle",

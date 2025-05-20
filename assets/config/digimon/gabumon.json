@@ -9,7 +9,7 @@
         "defense": 10,
         "speed": 8
     },
-    "spriteBaseId": "gabumon_sheet",
+    "spriteBaseId": "gabumon",
     "description": "A Reptile Digimon that has grown by covering itself in a fur pelt.",
     "animations": [
         "Idle",
