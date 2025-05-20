@@ -428,11 +428,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="Z:\DigiviceRefactor\main.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\bitmapfont.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\AnimationManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp" />
-    <ClCompile Include="Z:\DigiviceRefactor\src\core\animationmanager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\game_fade.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\inputmanager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\entities\DigimonDefinition.cpp" />
@@ -444,6 +444,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\EnemyTestState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp" />

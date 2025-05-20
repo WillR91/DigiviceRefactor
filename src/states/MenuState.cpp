@@ -21,6 +21,7 @@
 #include "states/MapSystemState.h" // Added include for MapSystemState
 #include "states/PartnerSelectState.h" // For PartnerSelectState
 #include "states/SettingsState.h" // For SettingsState
+#include "states/EnemyTestState.h" // For EnemyTestState
 #include "../../include/states/MapSystemState.h"  // Add this at the top with other includes
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
@@ -68,8 +69,7 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
     if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
         if (currentSelection_ >= 0 && currentSelection_ < menuOptions_.size()) {
             const std::string& selectedItem = menuOptions_[currentSelection_];
-            
-            if (selectedItem == "MAP") {
+              if (selectedItem == "MAP") {
                 // Use full namespace if necessary (e.g., Digivice::MapSystemState)
                 auto mapState = std::make_unique<Digivice::MapSystemState>(game_ptr);
                 game_ptr->requestFadeToState(std::move(mapState));
@@ -81,6 +81,13 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
                 auto partnerSelectState = std::make_unique<PartnerSelectState>(game_ptr);
                 game_ptr->requestPushState(std::move(partnerSelectState));
                 return; // Added return to exit after handling
+            }
+            else if (selectedItem == "DEBUG") {
+                // Transition to EnemyTestState for debugging
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: DEBUG selected. Pushing EnemyTestState.");
+                auto enemyTestState = std::make_unique<EnemyTestState>(game_ptr);
+                game_ptr->requestPushState(std::move(enemyTestState));
+                return;
             }
             // Other menu options handling...
         }

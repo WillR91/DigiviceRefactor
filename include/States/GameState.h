@@ -18,7 +18,8 @@ enum class StateType {
     Progress,       // New state for tracking progress/achievements
     Battle,         // <<< ADDED Battle state type
     MAP_SYSTEM,
-    Settings        // Added for settings/options menu
+    Settings,       // Added for settings/options menu
+    Debug           // Added for testing and debugging screens
     // Add future states here:
     // Status,
     // MapView,
