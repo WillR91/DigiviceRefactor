@@ -1,0 +1,28 @@
+{
+    "id": "gomamon",
+    "displayName": "Gomamon",
+    "class": "PlayerRookie",
+    "legacyEnum": 6,
+    "stats": {
+        "hp": 170,
+        "attack": 14,
+        "defense": 13,
+        "speed": 6
+    },
+    "spriteBaseId": "gomamon_sheet",
+    "description": "A Sea Animal Digimon covered in warm white fur.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Water",
+        "attribute": "Vaccine",
+        "level": "Rookie",
+        "type": "SeaAnimal"
+    }
+}

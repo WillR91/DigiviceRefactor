@@ -1,0 +1,28 @@
+{
+    "id": "patamon",
+    "displayName": "Patamon",
+    "class": "PlayerRookie",
+    "legacyEnum": 4,
+    "stats": {
+        "hp": 130,
+        "attack": 11,
+        "defense": 9,
+        "speed": 9
+    },
+    "spriteBaseId": "patamon_sheet",
+    "description": "A Mammal Digimon characterized by its large ears.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Holy",
+        "attribute": "Vaccine",
+        "level": "Rookie",
+        "type": "Mammal"
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "id": "palmon",
+    "displayName": "Palmon",
+    "class": "PlayerRookie",
+    "legacyEnum": 3,
+    "stats": {
+        "hp": 160,
+        "attack": 13,
+        "defense": 12,
+        "speed": 7
+    },
+    "spriteBaseId": "palmon_sheet",
+    "description": "A Plant Digimon with a tropical flower blooming on its head.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Nature",
+        "attribute": "Data",
+        "level": "Rookie",
+        "type": "Plant"
+    }
+}

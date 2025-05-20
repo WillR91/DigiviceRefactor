@@ -1,0 +1,28 @@
+{
+    "id": "biyomon",
+    "displayName": "Biyomon",
+    "class": "PlayerRookie",
+    "legacyEnum": 2,
+    "stats": {
+        "hp": 140,
+        "attack": 12,
+        "defense": 8,
+        "speed": 10
+    },
+    "spriteBaseId": "biyomon_sheet",
+    "description": "A small Bird Digimon with wings that have developed like arms.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Wind",
+        "attribute": "Vaccine",
+        "level": "Rookie",
+        "type": "Bird"
+    }
+}

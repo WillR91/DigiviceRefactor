@@ -12,6 +12,7 @@
 #include <algorithm> // For std::min
 #include <cmath>     // For other math functions if needed
 #include "Core/AssetManager.h" // Corrected path
+#include "entities/DigimonRegistry.h" // <<< ADD THIS INCLUDE
 
 // Static member definitions
 const float BattleState::BATTLE_STATE_FADE_DURATION_SECONDS = 0.5f;
@@ -54,6 +55,7 @@ BattleState::BattleState(Game* game, DigimonType playerDigimonType, const std::s
       bg_scroll_offset_1_(scrollOffset1),
       bg_scroll_offset_2_(scrollOffset2),
       show_foreground_layer_(false), // Initialize the new flag to false (foreground off by default)
+      enemy_definition_(nullptr), // <<< INITIALIZE NEW MEMBER
       enemy_digimon_type_(DIGI_COUNT), // Initialize enemy_digimon_type_
       enemy_name_texture_(nullptr),    // Initialize enemy_name_texture_
       enemy_sprite_position_({ENEMY_SPRITE_POS_X, ENEMY_SPRITE_POS_Y}),   // Initialize enemy_sprite_position_
@@ -164,36 +166,56 @@ void BattleState::enter() {
         return;
     }
 
-    // 1. Determine Enemy Type (Hardcoded for now)
-    if (enemy_id_ == "DefaultEnemy") {
-        enemy_digimon_type_ = DIGI_KUWAGAMON; // Example
-    } else {
-        enemy_digimon_type_ = DIGI_AGUMON; // Fallback
+    // --- BEGIN MOVED ENEMY_REVEAL_SETUP LOGIC ---
+    // This section will be significantly changed to use DigimonDefinition
+    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
+    if (!registry) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: DigimonRegistry is null!");
+        // Handle critical error
+        return;
     }
 
-    // 2. Get Enemy Name String
-    std::string enemyNameStr = getDigimonNameForBattle(enemy_digimon_type_);
+    // 1. Get Enemy Definition from Registry using enemy_id_
+    enemy_definition_ = registry->getDefinitionById(enemy_id_);
+    if (!enemy_definition_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: Enemy ID '%s' not found in registry. Attempting fallback to agumon.", enemy_id_.c_str());
+        enemy_definition_ = registry->getDefinitionById("agumon"); // Default to Agumon as a fallback
+        if (!enemy_definition_) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: Fallback 'agumon' also not found. Cannot initialize enemy.");
+            // Handle critical error - maybe set a flag to prevent battle progression or return
+            return; 
+        }
+    }
 
-    // 3. Load Enemy Animation
-    std::string enemyIdleAnimId = AnimationUtils::GetAnimationId(enemy_digimon_type_, "Idle");
+    // Set the legacy enum type from the definition, if other parts of BattleState still use it.
+    // This ensures enemy_digimon_type_ is consistent with the loaded definition.
+    enemy_digimon_type_ = enemy_definition_->legacyEnum; 
+
+    // 2. Get Enemy Name String directly from the Definition
+    std::string enemyNameStr = enemy_definition_->displayName;
+
+    // 3. Load Enemy Animation using spriteBaseId from Definition
+    std::string enemyIdleAnimId = AnimationUtils::GetAnimationId(enemy_definition_->spriteBaseId, "Idle");
     const AnimationData* enemyIdleAnimData = animManager->getAnimationData(enemyIdleAnimId);
     if (enemyIdleAnimData) {
         enemy_animator_.setAnimation(enemyIdleAnimData);
-        enemy_animator_.update(0.0f); // Prime the animator for the first frame
+        // SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Animator: Set animation to '%s'", enemyIdleAnimId.c_str()); // Original log
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState: Enemy Animator: Set animation to '%s' for Digimon '%s'", enemyIdleAnimId.c_str(), enemyNameStr.c_str());
+
     } else {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get idle animation '%s' for enemy type %d.", enemyIdleAnimId.c_str(), static_cast<int>(enemy_digimon_type_));
+        // SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: Failed to load enemy idle animation: %s", enemyIdleAnimId.c_str()); // Original log
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: Failed to load enemy idle animation: '%s' for Digimon '%s'", enemyIdleAnimId.c_str(), enemyNameStr.c_str());
+        // Potentially load a fallback animation here if needed
     }
 
     // 4. Create Enemy Name Texture
-    if (enemy_name_texture_) { 
-        SDL_DestroyTexture(enemy_name_texture_);
-        enemy_name_texture_ = nullptr;
-    }
+    if (enemy_name_texture_) { SDL_DestroyTexture(enemy_name_texture_); enemy_name_texture_ = nullptr; }
     SDL_Color textColor = {255, 255, 255, 255}; // White
     enemy_name_texture_ = textRenderer->renderTextToTexture(display->getRenderer(), enemyNameStr, textColor);
     if (!enemy_name_texture_) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to render enemy name texture for '%s'.", enemyNameStr.c_str());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter: Failed to create enemy name texture for: %s", enemyNameStr.c_str());
     }
+    // --- The old logic for determining enemy_digimon_type_ based on if (enemy_id_ == "DefaultEnemy") etc. is now replaced by the registry lookup ---
 
     // 5. Define Positions
     int screen_width = 0;
@@ -749,7 +771,7 @@ void BattleState::render(PCDisplay& display) {
             current_phase_ == VPetBattlePhase::PLAYER_ATTACK_LARGE_SPRITE) {
             if (allow_player_digimon_rendering) { // This flag is set true for these phases in the switch above
                 const AnimationData* currentPlayerAnim = player_animator_.getCurrentAnimationData();
-                if (currentPlayerAnim && currentPlayerAnim->textureAtlas) {
+                if currentPlayerAnim && currentPlayerAnim->textureAtlas) {
                     SDL_Rect srcR = player_animator_.getCurrentFrameRect();
                     SDL_Rect destR = {
                         player_sprite_position_.x - srcR.w / 2,

@@ -5,6 +5,7 @@
 #include "GameState.h" // Corrected: GameState.h is in the same directory
 #include "entities/Digimon.h" // Make sure DigimonType is known
 #include "graphics/Animator.h" // Ensure this is the correct Animator include
+#include "entities/DigimonDefinition.h" // <<< ADD THIS INCLUDE
 
 // Forward declarations
 class Game;
@@ -113,6 +114,7 @@ private:
     SDL_Point player_sprite_position_;     // Added: Centered position for the player sprite
 
     std::string enemy_id_;            // Identifier for the enemy
+    const Digimon::DigimonDefinition* enemy_definition_; // <<< ADD THIS
     DigimonType enemy_digimon_type_;  // Resolved DigimonType for the enemy
 
     // Enemy Visuals

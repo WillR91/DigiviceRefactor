@@ -38,6 +38,7 @@
         "backgrounds": "assets/backgrounds/",
         "ui": "assets/ui/",
         "fonts": "assets/ui/fonts/",
+        "digimonDefinitions": "assets/config/digimon/",
         "fallback": "assets/fallback/"
     },
     "debug": {

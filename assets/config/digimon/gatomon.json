@@ -1,0 +1,28 @@
+{
+    "id": "gatomon",
+    "displayName": "Gatomon",
+    "class": "PlayerRookie",
+    "legacyEnum": 7,
+    "stats": {
+        "hp": 180,
+        "attack": 18,
+        "defense": 15,
+        "speed": 12
+    },
+    "spriteBaseId": "gatomon_sheet",
+    "description": "A Holy Beast Digimon that looks like a small cat but is actually very powerful.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Holy",
+        "attribute": "Vaccine",
+        "level": "Champion",
+        "type": "HolyBeast"
+    }
+}

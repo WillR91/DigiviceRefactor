@@ -1,0 +1,28 @@
+{
+    "id": "gabumon",
+    "displayName": "Gabumon",
+    "class": "PlayerRookie",
+    "legacyEnum": 1,
+    "stats": {
+        "hp": 150,
+        "attack": 15,
+        "defense": 10,
+        "speed": 8
+    },
+    "spriteBaseId": "gabumon_sheet",
+    "description": "A Reptile Digimon that has grown by covering itself in a fur pelt.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Ice",
+        "attribute": "Data",
+        "level": "Rookie",
+        "type": "Reptile"
+    }
+}

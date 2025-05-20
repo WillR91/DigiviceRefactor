@@ -1,0 +1,28 @@
+{
+    "id": "tentomon",
+    "displayName": "Tentomon",
+    "class": "PlayerRookie",
+    "legacyEnum": 5,
+    "stats": {
+        "hp": 150,
+        "attack": 14,
+        "defense": 11,
+        "speed": 8
+    },
+    "spriteBaseId": "tentomon_sheet",
+    "description": "An Insect Digimon with a hard shell and six legs.",
+    "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Attack",
+        "Happy",
+        "Rest"
+    ],
+    "attributes": {
+        "element": "Electric",
+        "attribute": "Virus",
+        "level": "Rookie",
+        "type": "Insect"
+    }
+}

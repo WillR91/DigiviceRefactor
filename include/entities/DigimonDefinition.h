@@ -11,9 +11,9 @@ namespace Digimon {
 enum class DigimonClass {
     PlayerRookie,     // Player's starting Digimon (Agumon, Gabumon, etc.)
     PlayerChampion,   // Player's Digivolved forms (not implemented yet)
-    PlayerUltimate    // Player's Digivolved forms (not implemented yet)
-    PlayerMega        // Player's Final forms (not implemented yet)
-    PlayerUnlockables
+    PlayerUltimate,    // Player's Digivolved forms (not implemented yet)
+    PlayerMega,        // Player's Final forms (not implemented yet)
+    PlayerUnlockables,
     StandardEnemy,    // Regular enemy Digimon (Kuwagamon, etc.)
     Boss,             // Boss Digimon with special abilities
     NPC               // Non-combat Digimon for story/dialog

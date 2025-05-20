@@ -5,6 +5,7 @@
 #include <SDL_log.h>
 #include <fstream>
 #include <stdexcept>               // For errors during loading maybe
+#include <cctype>                  // For std::islower and std::toupper
 
 
 TextRenderer::TextRenderer(SDL_Texture* fontTexture) :
@@ -105,17 +106,36 @@ bool TextRenderer::loadFontData(const std::string& jsonPath) {
 
 // Internal helper to get the source rect for a character
 const SDL_Rect* TextRenderer::getCharRect(char c) const {
-     auto it = fontCharMap_.find(c);
-     if (it != fontCharMap_.end()) {
-          // Check if the found rect is valid before returning pointer
-          if (it->second.w > 0 && it->second.h > 0) {
-               return &(it->second);
-          } else {
-               SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::getCharRect WARN: Found char '%c' but rect has zero width/height!", c);
-               return nullptr; // Treat as not found if rect invalid
-          }
-     }
-     return nullptr; // Character not in map
+    auto it = fontCharMap_.find(c);
+    if (it != fontCharMap_.end()) {
+        // Check if the found rect is valid before returning pointer
+        if (it->second.w > 0 && it->second.h > 0) {
+            return &(it->second);
+        } else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::getCharRect WARN: Found char '%c' but rect has zero width/height!", c);
+            // Fall through to try uppercase if 'c' is lowercase and its original entry was invalid
+        }
+    }
+
+    // If not found, or found but invalid, try uppercase if 'c' is lowercase
+    if (std::islower(static_cast<unsigned char>(c))) {
+        char upper_c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        auto it_upper = fontCharMap_.find(upper_c);
+        if (it_upper != fontCharMap_.end()) {
+            if (it_upper->second.w > 0 && it_upper->second.h > 0) {
+                return &(it_upper->second); // Return valid uppercase char
+            } else {
+                // Uppercase found but invalid
+                SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "TextRenderer::getCharRect WARN: Found uppercase fallback '%c' for '%c' but rect has zero width/height!", upper_c, c);
+                return nullptr; 
+            }
+        }
+    }
+
+    // If original char not found (and it wasn't lowercase or its uppercase wasn't found/invalid)
+    // OR if original was found but invalid (and it wasn't lowercase or its uppercase wasn't found/invalid)
+    // The calling functions (getTextDimensions, drawText) will log the "not found" if this returns nullptr.
+    return nullptr; 
 }
 
 
