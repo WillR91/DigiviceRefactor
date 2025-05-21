@@ -19,6 +19,7 @@ Z:\DigiviceRefactor\src\states\BattleState.cpp;Z:\DigiviceRefactor\build\Digivic
 Z:\DigiviceRefactor\src\states\EnemyTestState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\EnemyTestState.obj
 Z:\DigiviceRefactor\src\states\MapSystemState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MapSystemState.obj
 Z:\DigiviceRefactor\src\states\MenuState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MenuState.obj
+Z:\DigiviceRefactor\src\states\PlayerTestState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\PlayerTestState.obj
 Z:\DigiviceRefactor\src\states\SettingsState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\SettingsState.obj
 Z:\DigiviceRefactor\src\states\partnerselectstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\partnerselectstate.obj
 Z:\DigiviceRefactor\src\states\progressstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\progressstate.obj

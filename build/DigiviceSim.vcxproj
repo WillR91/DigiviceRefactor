@@ -447,6 +447,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\EnemyTestState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\PlayerTestState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />

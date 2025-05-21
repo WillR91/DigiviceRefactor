@@ -22,6 +22,7 @@
 #include "states/PartnerSelectState.h" // For PartnerSelectState
 #include "states/SettingsState.h" // For SettingsState
 #include "states/EnemyTestState.h" // For EnemyTestState
+#include "states/PlayerTestState.h" // For PlayerTestState
 #include "../../include/states/MapSystemState.h"  // Add this at the top with other includes
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
@@ -83,10 +84,33 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
                 return; // Added return to exit after handling
             }
             else if (selectedItem == "DEBUG") {
+                // Create and show debug submenu
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: DEBUG selected. Opening debug submenu.");
+                std::vector<std::string> debugOptions = {"TEST DIGIMON", "SETTINGS", "BACK"};
+                auto debugMenuState = std::make_unique<MenuState>(game_ptr, debugOptions);
+                game_ptr->requestPushState(std::move(debugMenuState));
+                return;
+            }
+            else if (selectedItem == "TEST DIGIMON") {
+                // Create and show Digimon test submenu
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: TEST DIGIMON selected. Opening Digimon test submenu.");
+                std::vector<std::string> digimonTestOptions = {"ENEMY DIGIMON", "PLAYER DIGIMON", "BACK"};
+                auto digimonTestMenuState = std::make_unique<MenuState>(game_ptr, digimonTestOptions);
+                game_ptr->requestPushState(std::move(digimonTestMenuState));
+                return;
+            }
+            else if (selectedItem == "ENEMY DIGIMON") {
                 // Transition to EnemyTestState for debugging
-                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: DEBUG selected. Pushing EnemyTestState.");
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: ENEMY DIGIMON selected. Pushing EnemyTestState.");
                 auto enemyTestState = std::make_unique<EnemyTestState>(game_ptr);
                 game_ptr->requestPushState(std::move(enemyTestState));
+                return;
+            }
+            else if (selectedItem == "PLAYER DIGIMON") {
+                // Transition to PlayerTestState for debugging player Digimon
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: PLAYER DIGIMON selected. Pushing PlayerTestState.");
+                auto playerTestState = std::make_unique<PlayerTestState>(game_ptr);
+                game_ptr->requestPushState(std::move(playerTestState));
                 return;
             }
             // Other menu options handling...

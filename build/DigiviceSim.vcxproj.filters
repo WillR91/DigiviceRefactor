@@ -64,6 +64,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\PlayerTestState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\SettingsState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

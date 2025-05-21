@@ -33,6 +33,7 @@ message(STATUS "Collected source files: ${SOURCE_FILES}") # Added for debugging
 add_executable(${PROJECT_NAME}
     main.cpp
     ${SOURCE_FILES}
+    src/states/PlayerTestState.cpp
 )
 
 # --- Include Directories --- 
