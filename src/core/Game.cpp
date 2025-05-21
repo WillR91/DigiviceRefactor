@@ -201,6 +201,10 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
      
+     // Load unlockable Digimon
+     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
+     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
+     
      assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
      assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
@@ -241,7 +245,13 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/gomamon.json", "gomamon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/palmon.json", "palmon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/tentomon.json", "tentomon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");
+        
+        // Load unlockable Digimon animations
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
+        
+        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
         
         // Keep loading legacy animation data for backward compatibility
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
@@ -784,98 +794,92 @@ bool Game::reloadConfig() {
     return success;
 }
 
-
-// --- close ---
-void Game::close() {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Shutting down Game systems...");
-    if (!states_.empty()) {
-         states_.back()->exit();
-         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Called exit() on final state during shutdown.");
-    }
-    states_.clear();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "State stack cleared.");
-
-    animationManager_.reset();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager reset.");
-    textRenderer_.reset();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer reset.");
-
-    assetManager.shutdown();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager shutdown.");
-    display.close();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay closed.");
-    SDL_Quit();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SDL quit.");
-}
-
-// --- DEBUG_getStack Implementation ---
-std::vector<std::unique_ptr<GameState>>& Game::DEBUG_getStack() { return states_; }
-
-void Game::processPopUntil() {
-    if (pop_until_target_type_ != StateType::None) {
-        StateType targetType = pop_until_target_type_;
-        pop_until_target_type_ = StateType::None;
-        
-        // Find the target state in the stack
-        bool found = false;
-        for (auto it = states_.rbegin(); it != states_.rend(); ++it) {
-            if ((*it)->getType() == targetType) {
-                found = true;
-                break;
-            }
-        }
-        
-        if (!found) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "processPopUntil: Target state %d not found in stack!", (int)targetType);
-            return;
-        }
-        
-        // Pop states until we reach the target
-        while (!states_.empty() && states_.back()->getType() != targetType) {
-            states_.back()->exit();
-            pop_state();
-        }
-        
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "processPopUntil: Popped states until reaching %d", (int)targetType);
-        
-        if (!states_.empty()) {
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "processPopUntil: Calling enter() on target state %p (type %d).",
-                        (void*)states_.back().get(), (int)states_.back()->getType());
-            states_.back()->enter();
-        }
-    }
-}
-
-// Helper function to load all enemy Digimon assets
+// Implementation of the missing loadAllEnemyDigimonAssets function
 bool Game::loadAllEnemyDigimonAssets() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading all enemy Digimon assets...");
     bool assets_ok = true;
     
-    // Get list of all enemy Digimon IDs from registry
-    auto& registry = Digimon::DigimonRegistry::getInstance();
-    auto enemyDigimon = registry.getDefinitionsByClass(Digimon::DigimonClass::StandardEnemy);
-    auto bossDigimon = registry.getDefinitionsByClass(Digimon::DigimonClass::Boss);
+    // This directory contains enemy Digimon assets
+    const std::string enemyBaseDir = "assets/sprites/enemy_digimon";
     
-    // Combine lists
-    enemyDigimon.insert(enemyDigimon.end(), bossDigimon.begin(), bossDigimon.end());
+    // Load common enemy Digimon textures
+    assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
+    assets_ok &= assetManager.loadTexture("andromon", "assets/sprites/enemy_digimon/andromon.png");
+    assets_ok &= assetManager.loadTexture("devimon", "assets/sprites/enemy_digimon/devimon.png");
+    assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
+    assets_ok &= assetManager.loadTexture("kiwimon", "assets/sprites/enemy_digimon/kiwimon.png");
+    assets_ok &= assetManager.loadTexture("monochromon", "assets/sprites/enemy_digimon/monochromon.png");
+    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyrannomon.png");
+    assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
+    assets_ok &= assetManager.loadTexture("shellmon", "assets/sprites/enemy_digimon/shellmon.png");
     
-    // Process each enemy Digimon
-    for (const auto& digimon : enemyDigimon) {
-        std::string spriteId = digimon->spriteBaseId;
-        std::string spritePath = "assets/sprites/enemy_digimon/" + spriteId + ".png";
-        std::string jsonPath = "assets/sprites/enemy_digimon/" + spriteId + ".json";
-        
-        // Load texture
-        assets_ok &= assetManager.loadTexture(spriteId, spritePath);
-        
-        // Load animation data
-        bool anims_ok = animationManager_->loadAnimationDataFromFile(jsonPath, spriteId);
-        if (!anims_ok) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load animations for %s", spriteId.c_str());
-        }
-        assets_ok &= anims_ok;
-    }
+    // Load unlockable Digimon
+    assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
+    assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
     
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading enemy Digimon assets.");
-    return assets_ok;
+    // Load enemy Digimon animations
+    bool anims_ok = true;
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/andromon.json", "andromon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/devimon.json", "devimon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kiwimon.json", "kiwimon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/monochromon.json", "monochromon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyrannomon.json", "tyrannomon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/shellmon.json", "shellmon");
+    
+    // Load unlockable Digimon animations
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
+    return assets_ok && anims_ok;
 }
+
+// Implementation of the missing processPopUntil function
+void Game::processPopUntil() {
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ProcessPopUntil: Target type=%d", (int)pop_until_target_type_);
+
+    if (pop_until_target_type_ == StateType::None || states_.empty()) {
+        // Nothing to do, no target or no states to pop
+        pop_until_target_type_ = StateType::None;
+        return;
+    }
+
+    // Check if the target state is in the stack
+    bool found = false;
+    for (auto it = states_.rbegin(); it != states_.rend(); ++it) {
+        if ((*it)->getType() == pop_until_target_type_) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ProcessPopUntil: Target state type %d not found in stack", 
+                   (int)pop_until_target_type_);
+        pop_until_target_type_ = StateType::None;
+        return;
+    }
+
+    // Pop states until we reach the target
+    while (!states_.empty() && states_.back()->getType() != pop_until_target_type_) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "PopUntil: Popping state %p (type %d)", 
+                     (void*)states_.back().get(), (int)states_.back()->getType());
+        
+        states_.back()->exit();
+        states_.pop_back();
+    }
+
+    // Call enter() on the target state, which is now at the top of the stack
+    if (!states_.empty()) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ProcessPopUntil: Target state %p (type %d) now at top, calling enter()", 
+                     (void*)states_.back().get(), (int)states_.back()->getType());
+        states_.back()->enter();
+    }
+
+    // Reset the pop_until_target_type_ as we've processed it
+    pop_until_target_type_ = StateType::None;
+}
+

@@ -46,7 +46,15 @@ PlayerTestState::PlayerTestState(Game* game) :
         
         // If no player Digimon found, add hardcoded defaults
         if (playerDigimonIds_.empty()) {
-            playerDigimonIds_ = {"agumon", "gabumon", "biyomon", "gatomon", "gomamon", "palmon", "tentomon", "patamon"};
+            playerDigimonIds_ = {"agumon", "gabumon", "biyomon", "gatomon", "gomamon", "palmon", "tentomon", "patamon", "veedramon", "wizardmon"};
+        }
+        
+        // Add unlockable Digimon if they're not already in the list
+        if (std::find(playerDigimonIds_.begin(), playerDigimonIds_.end(), "veedramon") == playerDigimonIds_.end()) {
+            playerDigimonIds_.push_back("veedramon");
+        }
+        if (std::find(playerDigimonIds_.begin(), playerDigimonIds_.end(), "wizardmon") == playerDigimonIds_.end()) {
+            playerDigimonIds_.push_back("wizardmon");
         }
         
         // Sort alphabetically for easier navigation
