@@ -27,6 +27,10 @@ public:
     // Get a random Digimon of a specific class
     const DigimonDefinition* getRandomDigimonByClass(DigimonClass digimonClass) const;
     
+    // Register an enemy Digimon with default stats and animations
+    void registerEnemyDigimon(const std::string& id, const std::string& displayName, const std::string& description, 
+                              int hp = 180, int attack = 18, int defense = 15, int speed = 12);
+    
     // Clear all loaded definitions
     void clear();
     

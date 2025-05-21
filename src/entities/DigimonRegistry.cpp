@@ -238,6 +238,30 @@ bool DigimonRegistry::loadDefinitionFromFile(const std::string& filePath) {
     }
 }
 
+void DigimonRegistry::registerEnemyDigimon(const std::string& id, const std::string& displayName, const std::string& description, 
+                                          int hp, int attack, int defense, int speed) {
+    // Check if already exists
+    if (definitions_.find(id) != definitions_.end()) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "DigimonRegistry: Digimon with ID '%s' already exists, skipping registration.", id.c_str());
+        return; // Already registered
+    }
+    
+    // Create new definition
+    DigimonDefinition def;
+    def.id = id;
+    def.displayName = displayName;
+    def.digimonClass = DigimonClass::StandardEnemy;
+    def.stats = {hp, attack, defense, speed};
+    def.spriteBaseId = id;  // Use ID as sprite base
+    def.description = description;
+    def.animations = {"Idle", "Attack"};
+    def.legacyEnum = NONE;  // Default to NONE for new Digimon without enum values
+    
+    // Register the definition
+    definitions_[id] = def;
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "DigimonRegistry: Registered enemy Digimon: %s", id.c_str());
+}
+
 bool DigimonRegistry::loadDefinitionsFromDirectory(const std::string& directoryPath) {
     try {
         if (!fs::exists(directoryPath) || !fs::is_directory(directoryPath)) {

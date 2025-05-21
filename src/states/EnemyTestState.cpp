@@ -23,25 +23,35 @@ EnemyTestState::EnemyTestState(Game* game) :
     if (!game_ptr) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "EnemyTestState requires a valid Game pointer!");
         return;
-    }      // Initialize enemy Digimon IDs
-    // Add all enemy Digimon IDs for testing
-    enemyDigimonIds_ = {
-        "kuwagamon",
-        "andromon",
-        "bakemon",
-        "devimon",
-        "etemon",
-        "gazimon",
-        "leomon",
-        "meramon",
-        "numemon",
-        "ogremon",
-        "tyranomon",
-        "seadramon",
-        "whamon",
-        "myotismon"
-        // More enemy Digimon can be added as needed
-    };
+    }
+    
+    // Get all enemy Digimon from the registry instead of hardcoding
+    if (game_ptr->getDigimonRegistry()) {
+        auto enemyDefs = game_ptr->getDigimonRegistry()->getDefinitionsByClass(Digimon::DigimonClass::StandardEnemy);
+        auto bossDefs = game_ptr->getDigimonRegistry()->getDefinitionsByClass(Digimon::DigimonClass::Boss);
+        
+        // Add IDs from both enemy and boss classes
+        enemyDigimonIds_.clear();
+        for (const auto& def : enemyDefs) {
+            if (def) {
+                enemyDigimonIds_.push_back(def->id);
+            }
+        }
+        for (const auto& def : bossDefs) {
+            if (def) {
+                enemyDigimonIds_.push_back(def->id);
+            }
+        }
+        
+        // Sort alphabetically for easier navigation
+        std::sort(enemyDigimonIds_.begin(), enemyDigimonIds_.end());
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "EnemyTestState: Loaded %zu enemy Digimon for testing", enemyDigimonIds_.size());
+    } else {
+        // Fallback to just kuwagamon if registry isn't available
+        enemyDigimonIds_ = {"kuwagamon"};
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "EnemyTestState: DigimonRegistry not available, using default enemy");
+    }
     
     AssetManager* assets = game_ptr->getAssetManager();
     if (assets) {
@@ -91,13 +101,12 @@ void EnemyTestState::handle_input(InputManager& inputManager, PlayerData* player
         currentEnemyIndex_ = (currentEnemyIndex_ + 1) % enemyDigimonIds_.size();
         updateDisplayedEnemy();
     }
-      // Toggle animation type (IDLE or ATTACK)
+    
+    // Toggle animation type (IDLE or ATTACK)
     if (inputManager.isActionJustPressed(GameAction::NAV_UP) || 
         inputManager.isActionJustPressed(GameAction::NAV_DOWN)) {
         currentAnimationType_ = (currentAnimationType_ == "Idle") ? "Attack" : "Idle";
         updateDisplayedEnemy();
-        
-        // Log animation change for debugging
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
                     "EnemyTestState: Changed animation to '%s' for enemy '%s'", 
                     currentAnimationType_.c_str(), getCurrentEnemyName().c_str());
@@ -158,19 +167,26 @@ void EnemyTestState::render(PCDisplay& display) {
     // Render info text
     TextRenderer* textRenderer = game_ptr ? game_ptr->getTextRenderer() : nullptr;
     if (textRenderer) {
-        // Display enemy name
+        // Display enemy name and ID
         std::string enemyName = getCurrentEnemyName();
+        std::string enemyId = enemyDigimonIds_[currentEnemyIndex_];
         float nameScale = 1.0f;
         int nameKerning = -2;
         textRenderer->drawText(renderer, enemyName, 20, 20, nameScale, nameKerning);
+        textRenderer->drawText(renderer, "ID: " + enemyId, 20, 45, 0.7f, nameKerning);
         
         // Display current animation type
         std::string animText = "ANIM: " + currentAnimationType_;
-        textRenderer->drawText(renderer, animText, 20, 50, nameScale, nameKerning);
-          // Display controls
+        textRenderer->drawText(renderer, animText, 20, 70, nameScale, nameKerning);
+          // Display controls - FIXED: using dashes instead of pipe characters
         std::string controls = "LEFT/RIGHT: Change Enemy - UP/DOWN: Toggle Animation - ESC: Exit";
         float controlScale = 0.5f;
         textRenderer->drawText(renderer, controls, 20, windowH - 30, controlScale, nameKerning);
+        
+        // Display enemy count
+        std::string countText = std::to_string(currentEnemyIndex_ + 1) + " / " + 
+                               std::to_string(enemyDigimonIds_.size());
+        textRenderer->drawText(renderer, countText, windowW - 70, 20, 0.7f, nameKerning);
     }
 }
 
@@ -218,12 +234,11 @@ std::string EnemyTestState::getCurrentEnemyName() const {
     }
     
     std::string enemyId = enemyDigimonIds_[currentEnemyIndex_];
-    Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
-    const Digimon::DigimonDefinition* enemyDef = registry->getDefinitionById(enemyId);
+    const Digimon::DigimonDefinition* def = game_ptr->getDigimonRegistry()->getDefinitionById(enemyId);
     
-    if (enemyDef) {
-        return enemyDef->displayName;
+    if (def) {
+        return def->displayName;
     }
     
-    return enemyId;
+    return enemyId; // Fallback to ID if no definition found
 }

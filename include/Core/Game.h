@@ -111,6 +111,9 @@ private:
     int original_width_ = 0;
     int original_height_ = 0;
     SDL_Texture* ui_mask_texture_ = nullptr; // For the round UI mask
+    
+    // Helper function to load all enemy Digimon assets
+    bool loadAllEnemyDigimonAssets();
 
     // State Change Request Variables
     bool request_pop_ = false;

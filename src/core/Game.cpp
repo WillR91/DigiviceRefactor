@@ -76,6 +76,104 @@ bool Game::init(const std::string& title, int width, int height) {
         // return false; // Uncomment if this should be a fatal error
     } else {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "DigimonRegistry Initialized Successfully.");
+        
+        // Register all enemy Digimon for the Enemy Test Screen
+        auto& registry = Digimon::DigimonRegistry::getInstance();
+        
+        // Register all enemy Digimon - first batch (already defined in DigimonDefinition.cpp will be skipped)
+        registry.registerEnemyDigimon("kuwagamon", "Kuwagamon", "An Insectoid Digimon with large pincers and red shell.");
+        registry.registerEnemyDigimon("andromon", "Andromon", "A Cyborg Digimon with enhanced mechanical parts.");
+        registry.registerEnemyDigimon("apocalymon", "Apocalymon", "A monstrous Digimon born from the data of defeated and deleted Digimon.");
+        registry.registerEnemyDigimon("bakemon", "Bakemon", "A Ghost Digimon that loves to frighten others.");
+        registry.registerEnemyDigimon("blossomon", "Blossomon", "A Plant Digimon with dangerous ivy tendrils.");
+        registry.registerEnemyDigimon("centaurmon", "Centaurmon", "A Beast Man Digimon with the upper body of a human and lower body of a horse.");
+        registry.registerEnemyDigimon("cherrymon", "Cherrymon", "An ancient Plant Digimon that resembles a large cherry tree.");
+        registry.registerEnemyDigimon("cockatrimon", "Cockatrimon", "A Bird Digimon that can petrify enemies with its gaze.");
+        registry.registerEnemyDigimon("colosseumgreymon", "Colosseum Greymon", "A gladiator-like variant of Greymon trained for arena combat.");
+        registry.registerEnemyDigimon("darktyranomon", "DarkTyranomon", "A dark-colored, virus-type variant of Tyranomon with increased aggression.");
+        registry.registerEnemyDigimon("demidevimon", "DemiDevimon", "A small but devious bat-like Digimon that serves evil masters.");
+        registry.registerEnemyDigimon("deramon", "Deramon", "A Bird Digimon with a bush growing on its back.");
+        registry.registerEnemyDigimon("devidramon", "Devidramon", "A dark Dragon Digimon with four red eyes and sharp claws.");
+        registry.registerEnemyDigimon("devimon", "Devimon", "A fallen Angel Digimon with long arms and black wings.");
+        registry.registerEnemyDigimon("deviwomon", "Deviwomon", "A female demonic Digimon with powerful dark magic abilities.");
+        
+        // Register second batch of enemy Digimon
+        registry.registerEnemyDigimon("diablomon", "Diablomon", "A virus Digimon that attacks computer networks and multiplies rapidly.");
+        registry.registerEnemyDigimon("digitamamon", "Digitamamon", "A mysterious Digimon with a body like an egg and only legs and eyes visible.");
+        registry.registerEnemyDigimon("divermon", "Divermon", "An aquatic Digimon expert in underwater combat with a harpoon.");
+        registry.registerEnemyDigimon("dokugumon", "Dokugumon", "A poisonous spider Digimon that traps prey in its sticky web.");
+        registry.registerEnemyDigimon("drimogemon", "Drimogemon", "A Beast Digimon that excels at digging with its drill nose and claws.");
+        registry.registerEnemyDigimon("elecmon", "Elecmon", "A Mammal Digimon that can generate electricity from its tail.");
+        registry.registerEnemyDigimon("etemon", "Etemon", "A Monkey Digimon who loves to perform and controls the Dark Network.");
+        registry.registerEnemyDigimon("evilmon", "Evilmon", "A small demonic Digimon with a mischievous personality.");
+        registry.registerEnemyDigimon("floramon", "Floramon", "A Plant Digimon with flower-like hands that emit a pleasant fragrance.");
+        registry.registerEnemyDigimon("flymon", "Flymon", "An Insectoid Digimon with a dangerous poisonous stinger.");
+        registry.registerEnemyDigimon("frigimon", "Frigimon", "A Beast Digimon made of snow with ice punching attacks.");
+        registry.registerEnemyDigimon("garbagemon", "Garbagemon", "A Digimon that lives in trash heaps and attacks with garbage.");
+        registry.registerEnemyDigimon("gazimon", "Gazimon", "A Mammal Digimon with sharp claws and a mischievous nature.");
+        registry.registerEnemyDigimon("gekomon", "Gekomon", "An Amphibian Digimon that attacks using sound waves from its horn.");
+        registry.registerEnemyDigimon("gesomon", "Gesomon", "A Mollusk Digimon that resembles a squid with powerful tentacles.");
+        
+        // Register third batch of enemy Digimon
+        registry.registerEnemyDigimon("gigadramon", "Gigadramon", "A Cyborg Dragon Digimon with mechanical parts and devastating attacks.");
+        registry.registerEnemyDigimon("gizamon", "Gizamon", "An Amphibian Digimon with a spiky back that moves quickly on both land and water.");
+        registry.registerEnemyDigimon("gotsumon", "Gotsumon", "A Rock Digimon whose body is entirely made of stone.");
+        registry.registerEnemyDigimon("hagurumon", "Hagurumon", "A Machine Digimon shaped like a gear with simple mechanical capabilities.");
+        registry.registerEnemyDigimon("infermon", "Infermon", "An evolved form of Keramon that moves quickly through computer networks.");
+        registry.registerEnemyDigimon("keramon", "Keramon", "A virus-type Digimon that causes chaos in computer systems.");
+        registry.registerEnemyDigimon("kiwimon", "Kiwimon", "A Bird Digimon resembling a kiwi bird that attacks with mini-birds.");
+        registry.registerEnemyDigimon("leomon", "Leomon", "A Beast Man Digimon with a strong sense of justice.");
+        registry.registerEnemyDigimon("machinedramon", "Machinedramon", "A massive metallic Dragon Digimon with devastating firepower.");
+        registry.registerEnemyDigimon("mammothmon", "Mammothmon", "A large Ancient Animal Digimon resembling a wooly mammoth.");
+        registry.registerEnemyDigimon("megadramon", "Megadramon", "A Cyborg Dragon Digimon created as a weapon of mass destruction.");
+        registry.registerEnemyDigimon("megaseadramon", "MegaSeadramon", "A Sea Animal Digimon with a lightning-shaped horn and enhanced powers.");
+        registry.registerEnemyDigimon("mekanorimon", "Mekanorimon", "A robotic Digimon that moves using electromagnetic forces.");
+        registry.registerEnemyDigimon("meramon", "Meramon", "A Flame Digimon with a body made entirely of fire.");
+        registry.registerEnemyDigimon("metaletemon", "MetalEtemon", "A Digimon with a body coated in Chrome Digizoid, making him nearly invincible.");
+        
+        // Register fourth batch of enemy Digimon
+        registry.registerEnemyDigimon("metalseadramon", "MetalSeadramon", "A Sea Animal Digimon coated in Chrome Digizoid, leader of the Dark Masters.");
+        registry.registerEnemyDigimon("mojyamon", "Mojyamon", "A Beast Man Digimon that lives in snowy mountains.");
+        registry.registerEnemyDigimon("monochromon", "Monochromon", "A Dinosaur Digimon resembling a triceratops with a hard shell.");
+        registry.registerEnemyDigimon("monzaemon", "Monzaemon", "A Puppet Digimon resembling a giant teddy bear.");
+        registry.registerEnemyDigimon("mushmon", "Mushmon", "A Plant Digimon resembling a mushroom with spore-based attacks.");
+        registry.registerEnemyDigimon("myotismon", "Myotismon", "A Vampire Digimon with powerful dark abilities.");
+        registry.registerEnemyDigimon("nanimon", "Nanimon", "A bizarre Digimon with a round body and unpredictable behavior.");
+        registry.registerEnemyDigimon("nanomon", "Nanomon", "A small Machine Digimon with exceptional technical knowledge.");
+        registry.registerEnemyDigimon("numemon", "Numemon", "A slimy Mollusk Digimon that prefers dark and damp places.");
+        registry.registerEnemyDigimon("ogremon", "Ogremon", "A virus-type ogre Digimon that carries a bone club.");
+        registry.registerEnemyDigimon("otamamon", "Otamamon", "An Amphibian Digimon resembling a tadpole that lives in lakes and rivers.");
+        registry.registerEnemyDigimon("parrotmon", "Parrotmon", "A giant Bird Digimon with the ability to generate electricity from its feathers.");
+        registry.registerEnemyDigimon("phantomon", "Phantomon", "A Ghost Digimon resembling a reaper with a large scythe.");
+        registry.registerEnemyDigimon("piemon", "Piemon", "The leader of the Dark Masters with deadly sword attacks and reality-altering powers.");
+        registry.registerEnemyDigimon("piximon", "Piximon", "A tiny fairy Digimon known for training other Digimon with harsh methods.");
+        
+        // Register fifth batch of enemy Digimon
+        registry.registerEnemyDigimon("pumpmon", "Pumpmon", "A Digimon with a pumpkin head who loves to play pranks.");
+        registry.registerEnemyDigimon("puppetmon", "Puppetmon", "A Puppet Digimon and one of the Dark Masters with a malicious personality.");
+        registry.registerEnemyDigimon("raremon", "Raremon", "A slimy, decaying Digimon that emits a foul odor and corrosive gases.");
+        registry.registerEnemyDigimon("redvegimon", "RedVegimon", "A red variant of Vegimon with enhanced fighting capabilities.");
+        registry.registerEnemyDigimon("sabreleomon", "SabreLeomon", "A Beast Man Digimon with saber-like fangs and incredible speed.");
+        registry.registerEnemyDigimon("scorpiomon", "Scorpiomon", "An Ancient Crustacean Digimon resembling a scorpion with powerful pincers.");
+        registry.registerEnemyDigimon("seadramon", "Seadramon", "A Sea Animal Digimon that resembles a large serpent and lives in deep water.");
+        registry.registerEnemyDigimon("shellmon", "Shellmon", "A Mollusk Digimon with a hard shell and water-based attacks.");
+        registry.registerEnemyDigimon("shogungekomon", "ShogunGekomon", "A large Amphibian Digimon with massive musical horns and royal status.");
+        registry.registerEnemyDigimon("skullmeramon", "SkullMeramon", "A Flame Digimon with a skeletal body and blue fire burning all over.");
+        registry.registerEnemyDigimon("snimon", "Snimon", "An Insectoid Digimon with large sickle-like arms and excellent hunting skills.");
+        registry.registerEnemyDigimon("sukamon", "Sukamon", "A mutant Digimon made from waste data, resembling a yellow blob.");
+        registry.registerEnemyDigimon("tankmon", "Tankmon", "A Machine Digimon equipped with cannons and treads for movement.");
+        registry.registerEnemyDigimon("tuskmon", "Tuskmon", "A Dinosaur Digimon with large tusks and powerful physical attacks.");
+        registry.registerEnemyDigimon("tyranomon", "Tyranomon", "A Dinosaur Digimon resembling a T-Rex with powerful fire breath.");
+        
+        // Register final batch of enemy Digimon
+        registry.registerEnemyDigimon("unimon", "Unimon", "A Mythical Beast Digimon resembling a winged unicorn.");
+        registry.registerEnemyDigimon("vademon", "Vademon", "An alien-like Digimon with a large brain and strange scientific knowledge.");
+        registry.registerEnemyDigimon("vegimon", "Vegimon", "A Plant Digimon with extensible vine-like arms.");
+        registry.registerEnemyDigimon("venommyotismon", "VenomMyotismon", "A more powerful and monstrous form of Myotismon.");
+        registry.registerEnemyDigimon("warumonzaemon", "WaruMonzaemon", "A darker, sinister version of Monzaemon with an evil personality.");
+        registry.registerEnemyDigimon("whamon", "Whamon", "A gigantic Aquatic Digimon resembling a whale.");
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "All 81 enemy Digimon registered successfully for testing.");
     }
 
     // Log CWD
@@ -100,24 +198,8 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("biyomon", "assets/sprites/player_digimon/biyomon.png");
      assets_ok &= assetManager.loadTexture("gatomon", "assets/sprites/player_digimon/gatomon.png");
      assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
-     assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");
-     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
+     assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
-       // Load enemy Digimon sprite sheets with their new textureIds
-     assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
-     assets_ok &= assetManager.loadTexture("andromon", "assets/sprites/enemy_digimon/andromon.png");
-     assets_ok &= assetManager.loadTexture("bakemon", "assets/sprites/enemy_digimon/bakemon.png");
-     assets_ok &= assetManager.loadTexture("devimon", "assets/sprites/enemy_digimon/devimon.png");
-     assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
-     assets_ok &= assetManager.loadTexture("gazimon", "assets/sprites/enemy_digimon/gazimon.png");
-     assets_ok &= assetManager.loadTexture("leomon", "assets/sprites/enemy_digimon/leomon.png");
-     assets_ok &= assetManager.loadTexture("meramon", "assets/sprites/enemy_digimon/meramon.png");
-     assets_ok &= assetManager.loadTexture("numemon", "assets/sprites/enemy_digimon/numemon.png");
-     assets_ok &= assetManager.loadTexture("ogremon", "assets/sprites/enemy_digimon/ogremon.png");
-     assets_ok &= assetManager.loadTexture("tyranomon", "assets/sprites/enemy_digimon/tyranomon.png");
-     assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
-     assets_ok &= assetManager.loadTexture("whamon", "assets/sprites/enemy_digimon/whamon.png");
-     assets_ok &= assetManager.loadTexture("myotismon", "assets/sprites/enemy_digimon/myotismon.png");
      
      assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
@@ -159,22 +241,7 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/gomamon.json", "gomamon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/palmon.json", "palmon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/tentomon.json", "tentomon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");
-          // Load enemy Digimon animation data
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/andromon.json", "andromon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/bakemon.json", "bakemon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/devimon.json", "devimon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/gazimon.json", "gazimon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/leomon.json", "leomon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/meramon.json", "meramon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/numemon.json", "numemon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/ogremon.json", "ogremon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyranomon.json", "tyranomon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/whamon.json", "whamon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/myotismon.json", "myotismon");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
         
         // Keep loading legacy animation data for backward compatibility
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
@@ -182,10 +249,15 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/biyomon_sheet.json", "biyomon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gatomon_sheet.json", "gatomon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gomamon_sheet.json", "gomamon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/digimon/kuwagamon/animation.json", "kuwagamon_sheet");
+
+        // Now load all enemy Digimon assets (textures and animations)
+        bool enemyAssetsOk = loadAllEnemyDigimonAssets();
+        if (!enemyAssetsOk) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Some enemy Digimon assets failed to load. EnemyTestState may not work properly.");
+        }
 
         if (!anims_ok) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
@@ -280,9 +352,7 @@ void Game::run() {
             // Handle input for the current state
             if (!states_.empty()) { // Check again, applyStateChanges might alter the stack
                 states_.back()->handle_input(inputManager, &playerData_);
-            }
-
-            // Update the current state
+            }            // Update the current state
             if (!states_.empty()) { // Check again
                 states_.back()->update(delta_time, &playerData_);
             }
@@ -347,7 +417,7 @@ void Game::requestPushState(std::unique_ptr<GameState> state) {
 void Game::requestPopState() {
     if(request_pop_) SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Multiple pop requests made before applyStateChanges.");
     request_pop_ = true;
-    pop_until_target_type_ = StateType::None; // Cancel any pending pop_until
+    pop_until_target_type_ = StateType::None; // Cancel any pending single pop
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Single Pop requested.");
 }
 
@@ -774,4 +844,38 @@ void Game::processPopUntil() {
             states_.back()->enter();
         }
     }
+}
+
+// Helper function to load all enemy Digimon assets
+bool Game::loadAllEnemyDigimonAssets() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading all enemy Digimon assets...");
+    bool assets_ok = true;
+    
+    // Get list of all enemy Digimon IDs from registry
+    auto& registry = Digimon::DigimonRegistry::getInstance();
+    auto enemyDigimon = registry.getDefinitionsByClass(Digimon::DigimonClass::StandardEnemy);
+    auto bossDigimon = registry.getDefinitionsByClass(Digimon::DigimonClass::Boss);
+    
+    // Combine lists
+    enemyDigimon.insert(enemyDigimon.end(), bossDigimon.begin(), bossDigimon.end());
+    
+    // Process each enemy Digimon
+    for (const auto& digimon : enemyDigimon) {
+        std::string spriteId = digimon->spriteBaseId;
+        std::string spritePath = "assets/sprites/enemy_digimon/" + spriteId + ".png";
+        std::string jsonPath = "assets/sprites/enemy_digimon/" + spriteId + ".json";
+        
+        // Load texture
+        assets_ok &= assetManager.loadTexture(spriteId, spritePath);
+        
+        // Load animation data
+        bool anims_ok = animationManager_->loadAnimationDataFromFile(jsonPath, spriteId);
+        if (!anims_ok) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load animations for %s", spriteId.c_str());
+        }
+        assets_ok &= anims_ok;
+    }
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Finished loading enemy Digimon assets.");
+    return assets_ok;
 }
