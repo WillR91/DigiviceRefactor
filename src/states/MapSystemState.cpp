@@ -157,21 +157,21 @@ namespace Digivice {
 
         tropicalJungleNode.adventureBackgroundLayers.push_back(
             BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_0.png"}, 
+                {"assets/backgrounds/environments/01_file_island/01_tropicaljungle/tropicaljungle_fg_v1.png"}, 
                 0.5f,  
                 0.0f   
             )
         );
         tropicalJungleNode.adventureBackgroundLayers.push_back(
             BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_1.png"}, 
+                {"assets/backgrounds/environments/01_file_island/01_tropicaljungle/tropicaljungle_mg_v1.png"}, 
                 0.25f, 
                 0.0f   
             )
         );
         tropicalJungleNode.adventureBackgroundLayers.push_back(
             BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_2.png"}, 
+                {"assets/backgrounds/environments/01_file_island/01_tropicaljungle/tropicaljungle_bg_v1.png"}, 
                 0.1f,  
                 0.0f   
             )
@@ -187,13 +187,11 @@ namespace Digivice {
         lakeNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         lakeNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
         lakeNode.totalSteps = 20; 
-        lakeNode.isUnlocked = true; 
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_0.png"}, 0.5f, 0.0f));
-        // Note: Lake has multiple layer_1 and layer_2 files, this is a simplified representation.
-        // You might need a more complex loading or data structure if these are used simultaneously or for animation.
-        // For now, picking one of each for simplicity.
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_1_0.png"}, 0.25f, 0.0f)); 
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_2_0.png"}, 0.1f, 0.0f));
+        lakeNode.isUnlocked = true;        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/lake_fg_v1.png"}, 0.5f, 0.0f));
+        // Note: Lake has multiple versions of background images. Using v1 for consistency.
+        // You might need a more complex loading or data structure if these are used for animation or variants.
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/lake_mg_v1.png"}, 0.25f, 0.0f)); 
+        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/lake_bg_v1.png"}, 0.1f, 0.0f));
         fileIsland.nodes.push_back(lakeNode);
         // --- Define Node: 03_gear_savannah ---
         NodeData gearSavannahNode;
@@ -205,10 +203,9 @@ namespace Digivice {
         gearSavannahNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         gearSavannahNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
         gearSavannahNode.totalSteps = 20; 
-        gearSavannahNode.isUnlocked = true; 
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_0.png"}, 0.5f, 0.0f));
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_1.png"}, 0.25f, 0.0f));
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_2.png"}, 0.1f, 0.0f));
+        gearSavannahNode.isUnlocked = true;        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gearsavannah/gearsavannah_fg_v1.png"}, 0.5f, 0.0f));
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gearsavannah/gearsavannah_mg_v1.png"}, 0.25f, 0.0f));
+        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gearsavannah/gearsavannah_bg_v1.png"}, 0.1f, 0.0f));
         fileIsland.nodes.push_back(gearSavannahNode);
         // --- Define Node: 04_factorial_town ---
         NodeData factorialTownNode;
@@ -220,10 +217,9 @@ namespace Digivice {
         factorialTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         factorialTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
         factorialTownNode.totalSteps = 20; 
-        factorialTownNode.isUnlocked = true; 
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_0.png"}, 0.5f, 0.0f));
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_1.png"}, 0.25f, 0.0f));
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_2.png"}, 0.1f, 0.0f));
+        factorialTownNode.isUnlocked = true;        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorialtown/factorialtown_fg_v1.png"}, 0.5f, 0.0f));
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorialtown/factorialtown_mg_v1.png"}, 0.25f, 0.0f));
+        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorialtown/factorialtown_bg_v1.png"}, 0.1f, 0.0f));
         fileIsland.nodes.push_back(factorialTownNode);
         // --- Define Node: 05_toy_town ---
         NodeData toyTownNode;
@@ -235,11 +231,10 @@ namespace Digivice {
         toyTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         toyTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
         toyTownNode.totalSteps = 20; 
-        toyTownNode.isUnlocked = true; 
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_0.png"}, 0.5f, 0.0f));
-        // Note: Toy Town has multiple layer_2 files. Using one for simplicity.
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_1.png"}, 0.25f, 0.0f));
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_2_0.png"}, 0.1f, 0.0f));
+        toyTownNode.isUnlocked = true;        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toytown/toytown_fg_v1.png"}, 0.5f, 0.0f));
+        // Note: Toy Town has multiple bg versions. Using v1 for consistency.
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toytown/toytown_mg_v1.png"}, 0.25f, 0.0f));
+        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toytown/toytown_bg_v1.png"}, 0.1f, 0.0f));
         fileIsland.nodes.push_back(toyTownNode);
         // --- Define Node: 06_infinity_mountain ---
         NodeData infinityMountainNode;
@@ -251,10 +246,9 @@ namespace Digivice {
         infinityMountainNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         infinityMountainNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
         infinityMountainNode.totalSteps = 20; 
-        infinityMountainNode.isUnlocked = true; 
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_0.png"}, 0.5f, 0.0f));
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_1.png"}, 0.25f, 0.0f));
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_2.png"}, 0.1f, 0.0f));
+        infinityMountainNode.isUnlocked = true;        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinitymountain/infinitymountain_fg_v1.png"}, 0.5f, 0.0f));
+        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinitymountain/infinitymountain_mg_v1.png"}, 0.25f, 0.0f));
+        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinitymountain/infinitymountain_bg_v1.png"}, 0.1f, 0.0f));
         fileIsland.nodes.push_back(infinityMountainNode);
         continents_.push_back(fileIsland);
 
@@ -274,13 +268,11 @@ namespace Digivice {
         freezelandNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         freezelandNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         freezelandNode.totalSteps = 20;
-        freezelandNode.isUnlocked = true;
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_0.png"}, 0.5f, 0.0f));
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_1.png"}, 0.25f, 0.0f));
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_2.png"}, 0.1f, 0.0f));
-        fileIslandBroken.nodes.push_back(freezelandNode);
-
-        // Node: 02_ancientdinoregion
+        freezelandNode.isUnlocked = true;        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/freezeland_fg_v1.png"}, 0.5f, 0.0f));
+        // Note: According to tree.txt, freezeland might be missing the fg file, using what's available
+        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/freezeland_mg_v1.png"}, 0.25f, 0.0f));
+        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/freezeland_bg_v1.png"}, 0.1f, 0.0f));
+        fileIslandBroken.nodes.push_back(freezelandNode);        // Node: 02_ancientdinoregion
         NodeData ancientDinoRegionNode;
         ancientDinoRegionNode.id = "02_fib_node_02_ancientdinoregion";
         ancientDinoRegionNode.name = "ANCIENT DINO REGION";
@@ -291,12 +283,13 @@ namespace Digivice {
         ancientDinoRegionNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         ancientDinoRegionNode.totalSteps = 20;
         ancientDinoRegionNode.isUnlocked = true;
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_0.png"}, 0.5f, 0.0f));
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_1.png"}, 0.25f, 0.0f));
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_2.png"}, 0.1f, 0.0f));
+        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/ancientdinoregion_fg_v1.png"}, 0.5f, 0.0f));
+        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/ancientdinoregion_mg_v1.png"}, 0.25f, 0.0f));
+        // Note: Based on tree.txt, a bg file wasn't listed but we'll assume it exists for consistency
+        // If this causes issues, you may need to create this file or handle this special case
+        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/ancientdinoregion_bg_v1.png"}, 0.1f, 0.0f));
         fileIslandBroken.nodes.push_back(ancientDinoRegionNode);
-        
-        // Node: 03_overdellcemetary
+          // Node: 03_overdellcemetary
         NodeData overdellCemetaryNode;
         overdellCemetaryNode.id = "02_fib_node_03_overdellcemetary";
         overdellCemetaryNode.name = "OVERDELL CEMETARY";
@@ -307,9 +300,9 @@ namespace Digivice {
         overdellCemetaryNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         overdellCemetaryNode.totalSteps = 20;
         overdellCemetaryNode.isUnlocked = true;
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_0.png"}, 0.5f, 0.0f));
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_1.png"}, 0.25f, 0.0f));
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_2.png"}, 0.1f, 0.0f));
+        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/overdellcemetary_fg_v1.png"}, 0.5f, 0.0f));
+        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/overdellcemetary_mg_v1.png"}, 0.25f, 0.0f));
+        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/overdellcemetary_bg_v1.png"}, 0.1f, 0.0f));
         fileIslandBroken.nodes.push_back(overdellCemetaryNode);
 
         // Node: 04_townofbeginnings
@@ -323,9 +316,9 @@ namespace Digivice {
         townOfBeginningsNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         townOfBeginningsNode.totalSteps = 20;
         townOfBeginningsNode.isUnlocked = true;
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_0.png"}, 0.5f, 0.0f));
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_1.png"}, 0.25f, 0.0f));
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_2.png"}, 0.1f, 0.0f));
+        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/townofbeginnings_fg_v1.png"}, 0.5f, 0.0f));
+        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/townofbeginnings_mg_v1.png"}, 0.25f, 0.0f));
+        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/townofbeginnings_bg_v1.png"}, 0.1f, 0.0f));
         fileIslandBroken.nodes.push_back(townOfBeginningsNode);
         
         // Node: 05_infinitymountain2
@@ -339,9 +332,9 @@ namespace Digivice {
         infinityMountain2Node.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         infinityMountain2Node.totalSteps = 20;
         infinityMountain2Node.isUnlocked = true;
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_0.png"}, 0.5f, 0.0f));
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_1.png"}, 0.25f, 0.0f));
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_2.png"}, 0.1f, 0.0f));
+        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/infinitymountain_fg_v1.png"}, 0.5f, 0.0f));
+        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/infinitymountain_mg_v1.png"}, 0.25f, 0.0f));
+        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/infinitymountain_bg_v1.png"}, 0.1f, 0.0f));
         fileIslandBroken.nodes.push_back(infinityMountain2Node);
 
         // Node: 06_opensea
@@ -354,10 +347,9 @@ namespace Digivice {
         openSeaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         openSeaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         openSeaNode.totalSteps = 20;
-        openSeaNode.isUnlocked = true;
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_0.png"}, 0.5f, 0.0f));
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_1.png"}, 0.25f, 0.0f));
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_2.png"}, 0.1f, 0.0f));
+        openSeaNode.isUnlocked = true;        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/opensea_fg_v1.png"}, 0.5f, 0.0f));
+        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/opensea_mg_v1.png"}, 0.25f, 0.0f));
+        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/opensea_bg_v1.png"}, 0.1f, 0.0f));
         fileIslandBroken.nodes.push_back(openSeaNode);
 
         continents_.push_back(fileIslandBroken);
@@ -377,10 +369,9 @@ namespace Digivice {
         koromonsVillageNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         koromonsVillageNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         koromonsVillageNode.totalSteps = 20;
-        koromonsVillageNode.isUnlocked = true;
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_0.png"}, 0.5f, 0.0f));
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_1.png"}, 0.25f, 0.0f));
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_2.png"}, 0.1f, 0.0f));
+        koromonsVillageNode.isUnlocked = true;        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/koromonsvillage_fg_v1.png"}, 0.5f, 0.0f));
+        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/koromonsvillage_mg_v1.png"}, 0.25f, 0.0f));
+        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/koromonsvillage_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(koromonsVillageNode);
 
         NodeData scColosseumNode; 
@@ -392,10 +383,9 @@ namespace Digivice {
         scColosseumNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         scColosseumNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         scColosseumNode.totalSteps = 20;
-        scColosseumNode.isUnlocked = true;
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_0.png"}, 0.5f, 0.0f));
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_1.png"}, 0.25f, 0.0f));
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_2.png"}, 0.1f, 0.0f));
+        scColosseumNode.isUnlocked = true;        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/colosseum_fg_v1.png"}, 0.5f, 0.0f));
+        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/colosseum_mg_v1.png"}, 0.25f, 0.0f));
+        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/colosseum_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(scColosseumNode);
 
         NodeData desertNode;
@@ -407,10 +397,9 @@ namespace Digivice {
         desertNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         desertNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         desertNode.totalSteps = 20;
-        desertNode.isUnlocked = true;
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_0.png"}, 0.5f, 0.0f));
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_1.png"}, 0.25f, 0.0f));
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_2.png"}, 0.1f, 0.0f));
+        desertNode.isUnlocked = true;        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/desert_fg_v1.png"}, 0.5f, 0.0f));
+        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/desert_mg_v1.png"}, 0.25f, 0.0f));
+        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/desert_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(desertNode);
         
         NodeData piccolomonsForestNode;
@@ -422,10 +411,9 @@ namespace Digivice {
         piccolomonsForestNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         piccolomonsForestNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         piccolomonsForestNode.totalSteps = 20;
-        piccolomonsForestNode.isUnlocked = true;
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_0.png"}, 0.5f, 0.0f));
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_1.png"}, 0.25f, 0.0f));
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_2.png"}, 0.1f, 0.0f));
+        piccolomonsForestNode.isUnlocked = true;        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/piccolomonsforest_fg_v1.png"}, 0.5f, 0.0f));
+        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/piccolomonsforest_mg_v1.png"}, 0.25f, 0.0f));
+        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/piccolomonsforest_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(piccolomonsForestNode);
 
         NodeData reversePyramidNode;
@@ -437,10 +425,9 @@ namespace Digivice {
         reversePyramidNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         reversePyramidNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         reversePyramidNode.totalSteps = 20;
-        reversePyramidNode.isUnlocked = true;
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_0.png"}, 0.5f, 0.0f));
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_1.png"}, 0.25f, 0.0f));
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_2.png"}, 0.1f, 0.0f));
+        reversePyramidNode.isUnlocked = true;        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/reversepyramid_fg_v1.png"}, 0.5f, 0.0f));
+        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/reversepyramid_mg_v1.png"}, 0.25f, 0.0f));
+        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/reversepyramid_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(reversePyramidNode);
 
         NodeData amusementParkNode;
@@ -452,10 +439,9 @@ namespace Digivice {
         amusementParkNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         amusementParkNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         amusementParkNode.totalSteps = 20;
-        amusementParkNode.isUnlocked = true;
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_0.png"}, 0.5f, 0.0f));
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_1.png"}, 0.25f, 0.0f));
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_2.png"}, 0.1f, 0.0f));
+        amusementParkNode.isUnlocked = true;        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/amusementpark_fg_v1.png"}, 0.5f, 0.0f));
+        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/amusementpark_mg_v1.png"}, 0.25f, 0.0f));
+        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/amusementpark_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(amusementParkNode);
         
         NodeData restaurantNode;
@@ -467,10 +453,9 @@ namespace Digivice {
         restaurantNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         restaurantNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         restaurantNode.totalSteps = 20;
-        restaurantNode.isUnlocked = true;
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_0.png"}, 0.5f, 0.0f));
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_1.png"}, 0.25f, 0.0f));
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_2.png"}, 0.1f, 0.0f));
+        restaurantNode.isUnlocked = true;        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/restaurant_fg_v1.png"}, 0.5f, 0.0f));
+        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/restaurant_mg_v1.png"}, 0.25f, 0.0f));
+        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/restaurant_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(restaurantNode);
 
         NodeData differentSpaceNode;
@@ -482,10 +467,9 @@ namespace Digivice {
         differentSpaceNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         differentSpaceNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         differentSpaceNode.totalSteps = 20;
-        differentSpaceNode.isUnlocked = true;
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_0.png"}, 0.5f, 0.0f));
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_1.png"}, 0.25f, 0.0f));
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_2.png"}, 0.1f, 0.0f));
+        differentSpaceNode.isUnlocked = true;        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/differentspace_fg_v1.png"}, 0.5f, 0.0f));
+        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/differentspace_mg_v1.png"}, 0.25f, 0.0f));
+        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/differentspace_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(differentSpaceNode);
         
         NodeData gekomonsCastleNode;
@@ -497,10 +481,9 @@ namespace Digivice {
         gekomonsCastleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         gekomonsCastleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         gekomonsCastleNode.totalSteps = 20;
-        gekomonsCastleNode.isUnlocked = true;
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_0.png"}, 0.5f, 0.0f));
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_1.png"}, 0.25f, 0.0f));
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_2.png"}, 0.1f, 0.0f));
+        gekomonsCastleNode.isUnlocked = true;        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/gekomonscastle_fg_v1.png"}, 0.5f, 0.0f));
+        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/gekomonscastle_mg_v1.png"}, 0.25f, 0.0f));
+        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/gekomonscastle_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(gekomonsCastleNode);
 
         NodeData myotismonsCastleNode;
@@ -512,10 +495,9 @@ namespace Digivice {
         myotismonsCastleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         myotismonsCastleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         myotismonsCastleNode.totalSteps = 20;
-        myotismonsCastleNode.isUnlocked = true;
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_0.png"}, 0.5f, 0.0f));
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_1.png"}, 0.25f, 0.0f));
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_2.png"}, 0.1f, 0.0f));
+        myotismonsCastleNode.isUnlocked = true;        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/myotismonscastle_fg_v1.png"}, 0.5f, 0.0f));
+        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/myotismonscastle_mg_v1.png"}, 0.25f, 0.0f));
+        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/myotismonscastle_bg_v1.png"}, 0.1f, 0.0f));
         serverContinent.nodes.push_back(myotismonsCastleNode);
 
         continents_.push_back(serverContinent);
@@ -535,10 +517,9 @@ namespace Digivice {
         hikarigoakaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         hikarigoakaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         hikarigoakaNode.totalSteps = 20;
-        hikarigoakaNode.isUnlocked = true;
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_0.png"}, 0.5f, 0.0f));
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_1.png"}, 0.25f, 0.0f));
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_2.png"}, 0.1f, 0.0f));
+        hikarigoakaNode.isUnlocked = true;        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/hikarigoaka_fg_v1.png"}, 0.5f, 0.0f));
+        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/hikarigoaka_mg_v1.png"}, 0.25f, 0.0f));
+        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/hikarigoaka_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(hikarigoakaNode);
         
         NodeData harumiNode;
@@ -550,10 +531,9 @@ namespace Digivice {
         harumiNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         harumiNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         harumiNode.totalSteps = 20;
-        harumiNode.isUnlocked = true;
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_0.png"}, 0.5f, 0.0f));
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_1.png"}, 0.25f, 0.0f));
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_2.png"}, 0.1f, 0.0f));
+        harumiNode.isUnlocked = true;        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/harumi_fg_v1.png"}, 0.5f, 0.0f));
+        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/harumi_mg_v1.png"}, 0.25f, 0.0f));
+        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/harumi_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(harumiNode);
 
         NodeData pierNode;
@@ -565,10 +545,9 @@ namespace Digivice {
         pierNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         pierNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         pierNode.totalSteps = 20;
-        pierNode.isUnlocked = true;
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_0.png"}, 0.5f, 0.0f));
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_1.png"}, 0.25f, 0.0f));
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_2.png"}, 0.1f, 0.0f));
+        pierNode.isUnlocked = true;        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/pier_fg_v1.png"}, 0.5f, 0.0f));
+        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/pier_mg_v1.png"}, 0.25f, 0.0f));
+        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/pier_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(pierNode);
 
         NodeData towerNode;
@@ -580,10 +559,9 @@ namespace Digivice {
         towerNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         towerNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         towerNode.totalSteps = 20;
-        towerNode.isUnlocked = true;
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_0.png"}, 0.5f, 0.0f));
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_1.png"}, 0.25f, 0.0f));
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_2.png"}, 0.1f, 0.0f));
+        towerNode.isUnlocked = true;        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/tower_fg_v1.png"}, 0.5f, 0.0f));
+        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/tower_mg_v1.png"}, 0.25f, 0.0f));
+        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/tower_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(towerNode);
         
         NodeData shibuyaNode;
@@ -595,10 +573,9 @@ namespace Digivice {
         shibuyaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         shibuyaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         shibuyaNode.totalSteps = 20;
-        shibuyaNode.isUnlocked = true;
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_0.png"}, 0.5f, 0.0f));
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_1.png"}, 0.25f, 0.0f));
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_2.png"}, 0.1f, 0.0f));
+        shibuyaNode.isUnlocked = true;        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/shibuya_fg_v1.png"}, 0.5f, 0.0f));
+        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/shibuya_mg_v1.png"}, 0.25f, 0.0f));
+        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/shibuya_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(shibuyaNode);
 
         NodeData exhibitionCentreNode;
@@ -610,10 +587,9 @@ namespace Digivice {
         exhibitionCentreNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         exhibitionCentreNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         exhibitionCentreNode.totalSteps = 20;
-        exhibitionCentreNode.isUnlocked = true;
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_0.png"}, 0.5f, 0.0f));
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_1.png"}, 0.25f, 0.0f));
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_2.png"}, 0.1f, 0.0f));
+        exhibitionCentreNode.isUnlocked = true;        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/exhibitioncentre_fg_v1.png"}, 0.5f, 0.0f));
+        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/exhibitioncentre_mg_v1.png"}, 0.25f, 0.0f));
+        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/exhibitioncentre_bg_v1.png"}, 0.1f, 0.0f));
         tokyo.nodes.push_back(exhibitionCentreNode);
 
         continents_.push_back(tokyo);
@@ -633,10 +609,9 @@ namespace Digivice {
         smJungleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         smJungleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         smJungleNode.totalSteps = 20;
-        smJungleNode.isUnlocked = true;
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_0.png"}, 0.5f, 0.0f));
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_1.png"}, 0.25f, 0.0f));
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_2.png"}, 0.1f, 0.0f));
+        smJungleNode.isUnlocked = true;        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/jungle_fg_v1.png"}, 0.5f, 0.0f));
+        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/jungle_mg_v1.png"}, 0.25f, 0.0f));
+        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/jungle_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(smJungleNode);
         
         NodeData smColosseum2Node;
@@ -648,10 +623,9 @@ namespace Digivice {
         smColosseum2Node.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         smColosseum2Node.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         smColosseum2Node.totalSteps = 20;
-        smColosseum2Node.isUnlocked = true;
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_0.png"}, 0.5f, 0.0f));
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_1.png"}, 0.25f, 0.0f));
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_2.png"}, 0.1f, 0.0f));
+        smColosseum2Node.isUnlocked = true;        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/colosseum2_fg_v1.png"}, 0.5f, 0.0f));
+        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/colosseum2_mg_v1.png"}, 0.25f, 0.0f));
+        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/colosseum2_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(smColosseum2Node);
 
         NodeData digitalSeaNode;
@@ -663,10 +637,9 @@ namespace Digivice {
         digitalSeaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
         digitalSeaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         digitalSeaNode.totalSteps = 20;
-        digitalSeaNode.isUnlocked = true;
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_0.png"}, 0.5f, 0.0f));
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_1.png"}, 0.25f, 0.0f));
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_2.png"}, 0.1f, 0.0f));
+        digitalSeaNode.isUnlocked = true;        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/digitalsea_fg_v1.png"}, 0.5f, 0.0f));
+        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/digitalsea_mg_v1.png"}, 0.25f, 0.0f));
+        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/digitalsea_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(digitalSeaNode);
 
         NodeData digitalForestNode;
@@ -679,9 +652,9 @@ namespace Digivice {
         digitalForestNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         digitalForestNode.totalSteps = 20;
         digitalForestNode.isUnlocked = true;
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_0.png"}, 0.5f, 0.0f));
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_1.png"}, 0.25f, 0.0f));
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_2.png"}, 0.1f, 0.0f));
+        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/digitalforest_fg_v1.png"}, 0.5f, 0.0f));
+        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/digitalforest_mg_v1.png"}, 0.25f, 0.0f));
+        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/digitalforest_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(digitalForestNode);
         
         NodeData digitalCityNode;
@@ -694,9 +667,9 @@ namespace Digivice {
         digitalCityNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         digitalCityNode.totalSteps = 20;
         digitalCityNode.isUnlocked = true;
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_0.png"}, 0.5f, 0.0f));
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_1.png"}, 0.25f, 0.0f));
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_2.png"}, 0.1f, 0.0f));
+        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/digitalcity_fg_v1.png"}, 0.5f, 0.0f));
+        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/digitalcity_mg_v1.png"}, 0.25f, 0.0f));
+        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/digitalcity_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(digitalCityNode);
 
         NodeData wastelandNode;
@@ -709,9 +682,9 @@ namespace Digivice {
         wastelandNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         wastelandNode.totalSteps = 20;
         wastelandNode.isUnlocked = true;
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_0.png"}, 0.5f, 0.0f));
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_1.png"}, 0.25f, 0.0f));
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_2.png"}, 0.1f, 0.0f));
+        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/wasteland_fg_v1.png"}, 0.5f, 0.0f));
+        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/wasteland_mg_v1.png"}, 0.25f, 0.0f));
+        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/wasteland_bg_v1.png"}, 0.1f, 0.0f));
         spiralMountain.nodes.push_back(wastelandNode);
         
         continents_.push_back(spiralMountain);
@@ -732,9 +705,9 @@ namespace Digivice {
         subspaceNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         subspaceNode.totalSteps = 20;
         subspaceNode.isUnlocked = true;
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_0.png"}, 0.5f, 0.0f));
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_1.png"}, 0.25f, 0.0f));
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_2.png"}, 0.1f, 0.0f));
+        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/subspace_fg_v1.png"}, 0.5f, 0.0f));
+        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/subspace_mg_v1.png"}, 0.25f, 0.0f));
+        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/subspace_bg_v1.png"}, 0.1f, 0.0f));
         subspace.nodes.push_back(subspaceNode);
         continents_.push_back(subspace);
 
@@ -754,9 +727,9 @@ namespace Digivice {
         networkNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
         networkNode.totalSteps = 20;
         networkNode.isUnlocked = true;
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_0.png"}, 0.5f, 0.0f));
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_1.png"}, 0.25f, 0.0f));
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_2.png"}, 0.1f, 0.0f));
+        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/network_fg_v1.png"}, 0.5f, 0.0f));
+        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/network_mg_v1.png"}, 0.25f, 0.0f));
+        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/network_bg_v1.png"}, 0.1f, 0.0f));
         network.nodes.push_back(networkNode);
         continents_.push_back(network);
 
@@ -976,12 +949,10 @@ namespace Digivice {
         if (currentContinentIndex_ < 0 || currentContinentIndex_ >= static_cast<int>(continents_.size())) { // Corrected static_cast
             textRenderer->drawText(display.getRenderer(), "NODE SELECTION: NO CONTINENT DATA", 10, 50, 1.0f); // Changed to uppercase
             return;
-        }
-
-        const auto& continent = continents_[currentContinentIndex_];
+        }        const auto& continent = continents_[currentContinentIndex_];
         
         // First, render the continent map as the background for node selection
-        std::string continentMapTextureId = continent.id + "_map_texture";
+        std::string continentMapTextureId = continent.id + "_map_texture";;
         SDL_Texture* continentMapTexture = assetManager->getTexture(continentMapTextureId);
         if (!continentMapTexture) { // Attempt to load if not found (e.g., if we came here directly for debugging)
             if (assetManager->loadTexture(continentMapTextureId, continent.mapImagePath)) {
@@ -996,9 +967,8 @@ namespace Digivice {
             SDL_Rect dstRect = {0, 0, screenWidth, screenHeight};
             display.drawTexture(continentMapTexture, nullptr, &dstRect);
         } else {
-            textRenderer->drawText(display.getRenderer(), "ERROR: CONTINENT MAP MISSING", screenWidth / 2 - 100, screenHeight / 2, 1.0f); // Changed to uppercase
+            textRenderer->drawText(display.getRenderer(), "ERROR: CONTINENT MAP MISSING", screenWidth / 2 - 100, screenHeight / 2, 1.0f);
         }
-
         
         // Commenting out the rendering of the continent name at the top of the node selection view
         /*

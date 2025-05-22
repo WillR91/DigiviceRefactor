@@ -1,0 +1,28 @@
+{"frames": {
+
+"1567_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1567_3_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "05_digitalcity.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":256},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:dab2d44b7eb294cde1e3f548077f239b:19a4479f094046ad07db4b349dc6ac2f:c230c9c6baf939c2124c12aef99fdb51$"
+}
+}
