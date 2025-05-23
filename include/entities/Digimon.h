@@ -81,7 +81,7 @@ enum DigimonType {
     DIGI_OTAMAMON,
     DIGI_PARROTMON,
     DIGI_PHANTOMON,
-    DIGI_PIEMON,
+    DIGI_PIEDMON,
     
     // Enemy Digimon - Part 5
     DIGI_PIXIMON,

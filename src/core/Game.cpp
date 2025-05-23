@@ -145,7 +145,7 @@ bool Game::init(const std::string& title, int width, int height) {
         registry.registerEnemyDigimon("otamamon", "Otamamon", "An Amphibian Digimon resembling a tadpole that lives in lakes and rivers.");
         registry.registerEnemyDigimon("parrotmon", "Parrotmon", "A giant Bird Digimon with the ability to generate electricity from its feathers.");
         registry.registerEnemyDigimon("phantomon", "Phantomon", "A Ghost Digimon resembling a reaper with a large scythe.");
-        registry.registerEnemyDigimon("piemon", "Piemon", "The leader of the Dark Masters with deadly sword attacks and reality-altering powers.");
+        registry.registerEnemyDigimon("piedmon", "Piedmon", "The leader of the Dark Masters with deadly sword attacks and reality-altering powers.");
         registry.registerEnemyDigimon("piximon", "Piximon", "A tiny fairy Digimon known for training other Digimon with harsh methods.");
         
         // Register fifth batch of enemy Digimon

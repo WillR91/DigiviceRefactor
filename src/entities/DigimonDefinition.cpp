@@ -677,12 +677,12 @@ DigimonDefinition DigimonDefinition::fromLegacyEnum(DigimonType type) {
             def.animations = {"Idle", "Attack"};
             break;
             
-        case DIGI_PIEMON:
-            def.id = "piemon";
-            def.displayName = "Piemon";
+        case DIGI_PIEDMON:
+            def.id = "piedmon";
+            def.displayName = "Piedmon";
             def.digimonClass = DigimonClass::Boss;
             def.stats = {270, 25, 22, 23};
-            def.spriteBaseId = "piemon";
+            def.spriteBaseId = "piedmon";
             def.description = "The leader of the Dark Masters with deadly sword attacks and reality-altering powers.";
             def.animations = {"Idle", "Attack"};
             break;
