@@ -4,14 +4,27 @@
 #include <SDL_log.h>                
 #include <stdexcept>                
 #include "utils/GameConstants.h"    // Include for SPRITE_SCALE_FACTOR
+#include "graphics/GraphicsConstants.h" // Include for asset scaling
 
-PCDisplay::PCDisplay() : window_(nullptr), renderer_(nullptr), initialized_(false) {}
+// Native resolution constants
+const int NATIVE_WIDTH = 466;  // Default width matching display config
+const int NATIVE_HEIGHT = 466; // Default height matching display config
+
+PCDisplay::PCDisplay() : 
+    window_(nullptr), 
+    renderer_(nullptr), 
+    renderTarget_(nullptr),
+    initialized_(false),
+    width_(0),
+    height_(0),
+    nativeWidth_(NATIVE_WIDTH),
+    nativeHeight_(NATIVE_HEIGHT) {}
 
 PCDisplay::~PCDisplay() {
     close(); 
 }
 
-bool PCDisplay::init(const char* title, int width, int height, bool vsync) {
+bool PCDisplay::init(const std::string& title, int width, int height, bool fullscreen) {
     if (initialized_) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay::init called when already initialized.");
         return true;
@@ -23,22 +36,24 @@ bool PCDisplay::init(const char* title, int width, int height, bool vsync) {
     //     return false;
     // }
 
-    window_ = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    width_ = width;
+    height_ = height;
+
+    window_ = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
     if (!window_) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Window could not be created! SDL_Error: %s", SDL_GetError());
         return false; 
     }
 
     // Set up renderer flags based on vsync preference
-    Uint32 rendererFlags = SDL_RENDERER_ACCELERATED;
-    if (vsync) {
-        rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VSync enabled");
+    Uint32 rendererFlags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
+    if (fullscreen) {
+        // Uncomment the following line to enable fullscreen
+        // SDL_SetWindowFullscreen(window_, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fullscreen enabled");
     } else {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "VSync disabled");
-    }
-
-    renderer_ = SDL_CreateRenderer(window_, -1, rendererFlags);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fullscreen disabled");
+    }    renderer_ = SDL_CreateRenderer(window_, -1, rendererFlags);
     if (!renderer_) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Renderer could not be created! SDL Error: %s", SDL_GetError());
         SDL_DestroyWindow(window_); 
@@ -46,7 +61,24 @@ bool PCDisplay::init(const char* title, int width, int height, bool vsync) {
         return false; 
     }
 
-    SDL_SetRenderDrawColor(renderer_, 0x00, 0x00, 0x00, 0xFF); // Default draw color black
+    // Comment out render target for now
+    /*
+    renderTarget_ = SDL_CreateTexture(
+        renderer_,
+        SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET,
+        NATIVE_WIDTH,
+        NATIVE_HEIGHT
+    );
+    
+    if (!renderTarget_) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create render target: %s", SDL_GetError());
+        return false;
+    }
+    
+    SDL_SetTextureBlendMode(renderTarget_, SDL_BLENDMODE_BLEND);
+    */
+    
     initialized_ = true;
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay initialized window and renderer.");
     return true;
@@ -67,54 +99,59 @@ void PCDisplay::clear(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
     SDL_RenderClear(renderer_);
 }
 
+// Update the clear method call in AdventureState
+void PCDisplay::clear() {
+    clear(0, 0, 0, 255); // Default black clear
+}
+
 void PCDisplay::drawPixels(int dstX, int dstY, int width, int height, const uint16_t* srcData, int srcDataW, int srcDataH, int srcX, int srcY) {
      if (!initialized_ || !renderer_ || !srcData) return;
      // This method is likely unused if all rendering is texture-based.
      // SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PCDisplay::drawPixels called - consider for removal if unused.");
 }
 
-void PCDisplay::drawTexture(SDL_Texture* texture, const SDL_Rect* srcRect, const SDL_Rect* dstRect, SDL_RendererFlip flip) {
-    if (!initialized_ || !renderer_ || !texture) {
-        // Optionally log if texture is null, but can be spammy
-        // if (!texture) SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "PCDisplay::drawTexture called with null texture.");
-        return;
-    }
-
-    // Apply sprite scaling if a destination rectangle is provided
-    if (dstRect) {
-        // Create a scaled destination rectangle
-        SDL_Rect scaledDstRect = {
-            dstRect->x,
-            dstRect->y,
-            static_cast<int>(dstRect->w * Constants::SPRITE_SCALE_FACTOR),
-            static_cast<int>(dstRect->h * Constants::SPRITE_SCALE_FACTOR)
+void PCDisplay::drawTexture(SDL_Texture* texture, const SDL_Rect* srcRect, const SDL_Rect* destRect) {
+    if (!texture || !renderer_) return;
+    
+    if (destRect) {
+        // Use GraphicsConstants for scaling
+        float scale = Digivice::GraphicsConstants::getAssetScale();
+        SDL_Rect scaledDest = {
+            destRect->x,
+            destRect->y,
+            static_cast<int>(destRect->w * scale),
+            static_cast<int>(destRect->h * scale)
         };
-        SDL_RenderCopyEx(renderer_, texture, srcRect, &scaledDstRect, 0.0, NULL, flip);
+        SDL_RenderCopy(renderer_, texture, srcRect, &scaledDest);
     } else {
-        // If no destination rectangle, render normally
-        SDL_RenderCopyEx(renderer_, texture, srcRect, dstRect, 0.0, NULL, flip);
+        SDL_RenderCopy(renderer_, texture, srcRect, destRect);
     }
 }
 
 void PCDisplay::present() {
-    if (!initialized_ || !renderer_) return;
+    // Simplified presentation - remove render target complexity for now
     SDL_RenderPresent(renderer_);
 }
 
 void PCDisplay::close() {
-    if (!initialized_) return; // Already closed or never initialized
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Closing PCDisplay...");
-    if (renderer_) { 
-        SDL_DestroyRenderer(renderer_); 
-        renderer_ = nullptr; 
+    /*
+    if (renderTarget_) {
+        SDL_DestroyTexture(renderTarget_);
+        renderTarget_ = nullptr;
     }
-    if (window_) { 
-        SDL_DestroyWindow(window_); 
-        window_ = nullptr; 
+    */
+    
+    if (renderer_) {
+        SDL_DestroyRenderer(renderer_);
+        renderer_ = nullptr;
     }
-    initialized_ = false; // Mark as not initialized
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay closed.");
-    // SDL_Quit(); // SDL_Quit should be called globally by Game::close()
+    
+    if (window_) {
+        SDL_DestroyWindow(window_);
+        window_ = nullptr;
+    }
+    
+    initialized_ = false;
 }
 
 SDL_Renderer* PCDisplay::getRenderer() const {
@@ -194,3 +231,14 @@ void PCDisplay::fillRect(const SDL_Rect* rect) {
     }
 }
 // --- END ADDED Implementations ---
+
+// Comment out or remove the beginFrame and endFrame methods since renderTarget_ is disabled
+/*
+void PCDisplay::beginFrame() {
+    // Disabled - render target not created
+}
+
+void PCDisplay::endFrame() {
+    // Disabled - render target not created
+}
+*/

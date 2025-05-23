@@ -367,24 +367,15 @@ void Game::run() {
                 states_.back()->update(delta_time, &playerData_);
             }
 
-            // Render Logic
-            if (!states_.empty()) { // Check again in case update caused a state change
+            // Render Logic - Remove beginFrame/endFrame calls
+            if (!states_.empty()) {
                 GameState* currentStateForRender = states_.back().get();
                 if (currentStateForRender) {
-                    // Clear the screen (e.g., black or a debug color)
-                    // display.clear(0, 0, 0, 255); // Example: Clear to black
-                    currentStateForRender->render(display); // Pass by reference
-
-                    // Apply the UI mask after the state has rendered its content
-                    if (ui_mask_texture_) {
-                        display.applyMask(ui_mask_texture_);
-                    }
+                    // Direct rendering without render target
+                    currentStateForRender->render(display);
+                    display.present();
                 }
             }
-            // Present the frame
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Presenting frame.");
-            display.present();
-            
         } else {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Game::run() - State stack is empty, nothing to update or render.");
         }

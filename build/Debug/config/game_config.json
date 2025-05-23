@@ -1,11 +1,8 @@
 {    "display": {
         "width": 466,
         "height": 466,
-        "smallScreenWidth": 172,
-        "smallScreenHeight": 172,
-        "title": "Digivice Sim",
-        "fullscreen": false,
-        "vsync": true
+        "title": "Digivice Sim - Refactored",
+        "fullscreen": false
     },
     "input": {
         "moveKey": {
@@ -28,10 +25,11 @@
         "difficultyLevel": "normal",
         "debugMode": false,
         "transitionSpeed": 0.3,
-        "stepGoal": 10
+        "stepGoal": 10    },    "ui": {
+        "textScale": -3.0
     },
-    "ui": {
-        "textScale": 1.0
+    "graphics": {
+        "assetScale": 2
     },
     "paths": {
         "sprites": "assets/sprites/",

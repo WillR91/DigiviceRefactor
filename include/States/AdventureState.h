@@ -5,6 +5,7 @@
 #include "graphics/Animator.h"
 #include "../entities/Digimon.h" // Keep for backward compatibility
 #include "../entities/DigimonDefinition.h" // Add for DigimonDefinition
+#include "Core/MapData.h" // Include for NodeData
 // Reduce includes if possible, move SDL includes to cpp if only needed there
 #include <SDL_render.h> // Needed for SDL_Texture* member
 #include <SDL_rect.h>   // Needed for SDL_Rect usage? (If helpers use it)
@@ -13,6 +14,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>   // Needed for helper return types
+#include <map>      // Needed for environment configuration mapping
 
 // Forward declarations
 class Game;
@@ -64,6 +66,32 @@ private:
     float stepWindowTimer_ = 0.0f;  // Timer tracking the current window
     int stepsInWindow_ = 0;         // Steps counted in the current window
 
+    // Environment constants
+    struct EnvironmentConfig {
+        int groundOffset;  // Distance from bottom of screen to ground
+        float parallaxFactor; // How much parallax to apply
+    };
+    
+    std::map<std::string, EnvironmentConfig> environmentConfigs_;
+    void initializeEnvironmentConfigs() {
+        // Set up ground offsets for each environment
+        environmentConfigs_["tropicaljungle"] = {50, 1.0f};
+        environmentConfigs_["lake"] = {60, 0.8f};
+        // Add other environments...
+    }
+      // Function to get current ground offset
+    int getCurrentGroundOffset() const {
+        // Look up based on current node ID
+        if (currentNode_ && environmentConfigs_.count(currentNode_->id) > 0) {
+            return environmentConfigs_.at(currentNode_->id).groundOffset;
+        }
+        return 40; // Default fallback value
+    }
+
+    // Rendering methods
+    void render_background_layers(PCDisplay& display);
+    void render_character(PCDisplay& display);
+
     // Constants
     const int MAX_QUEUED_STEPS = 2;
     const float SCROLL_SPEED_0 = 3.0f * 60.0f;
@@ -71,6 +99,12 @@ private:
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;
     const int WINDOW_WIDTH = 466;
     const int WINDOW_HEIGHT = 466;    // Private Helpers
-    std::string getAnimationIdForCurrentState() const;
+    std::string getAnimationIdForCurrentState() const;    
+    
+    // Current map node
+    const Digivice::NodeData* currentNode_ = nullptr;
 
+    // Default values
+    int groundOffset_ = 40;        // Default ground offset
+    int characterHeight = 32;      // Default character height
 }; // End of AdventureState class definition

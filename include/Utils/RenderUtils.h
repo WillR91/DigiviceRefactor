@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/GameConstants.h"
+#include "graphics/GraphicsConstants.h"
 #include <SDL.h>
 
 namespace RenderUtils {
@@ -14,9 +15,8 @@ namespace RenderUtils {
      * @param y The y-coordinate for rendering on screen
      * @param optionalOverrideScale Optional parameter to override the global scale factor
      * @return SDL_Rect The scaled destination rectangle
-     */
-    inline SDL_Rect ScaleDestRect(const SDL_Rect& srcRect, int x, int y, float optionalOverrideScale = 0.0f) {
-        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Constants::SPRITE_SCALE_FACTOR;
+     */    inline SDL_Rect ScaleDestRect(const SDL_Rect& srcRect, int x, int y, float optionalOverrideScale = 0.0f) {
+        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Digivice::GraphicsConstants::getAssetScale();
         
         SDL_Rect destRect;
         destRect.x = x;
@@ -36,9 +36,8 @@ namespace RenderUtils {
      * @param h The unscaled height
      * @param optionalOverrideScale Optional parameter to override the global scale factor
      * @return SDL_Rect The scaled destination rectangle
-     */
-    inline SDL_Rect CreateScaledRect(int x, int y, int w, int h, float optionalOverrideScale = 0.0f) {
-        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Constants::SPRITE_SCALE_FACTOR;
+     */    inline SDL_Rect CreateScaledRect(int x, int y, int w, int h, float optionalOverrideScale = 0.0f) {
+        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Digivice::GraphicsConstants::getAssetScale();
         
         SDL_Rect destRect;
         destRect.x = x;

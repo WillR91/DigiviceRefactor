@@ -25,13 +25,11 @@
         "difficultyLevel": "normal",
         "debugMode": false,
         "transitionSpeed": 0.3,
-        "stepGoal": 10
-    },
-    "ui": {
-        "textScale": 1.0
+        "stepGoal": 10    },    "ui": {
+        "textScale": -3.0
     },
     "graphics": {
-        "assetScale": 1.0
+        "assetScale": 2
     },
     "paths": {
         "sprites": "assets/sprites/",

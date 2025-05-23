@@ -419,79 +419,17 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
 
 // --- render ---
 void AdventureState::render(PCDisplay& display) {
-    // Add debugging to verify rendering is happening
-    // static int frameCount = 0; // Commented out
-    // if (frameCount % 60 == 0) { // Log every 60 frames to avoid spamming // Commented out
-    //     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState rendering frame: %d", frameCount); // Commented out
-    // } // Commented out
-    // frameCount++; // Commented out
-
-    SDL_Renderer* renderer = display.getRenderer();
-    if (!renderer) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::render - Renderer is NULL!");
-        return;
-    }
-
-    // Clear the screen (this should ideally be a common color or handled by a specific background)
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Clear to black
-    SDL_RenderClear(renderer);
-
-    const int windowW = GameConstants::WINDOW_WIDTH; 
-    const int windowH = GameConstants::WINDOW_HEIGHT; 
-
-    auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) { 
-        if (!tex || texW <= 0 || effectiveWidth <= 0) { 
-            return; 
-        } 
-        int drawX1 = -static_cast<int>(std::fmod(offset, (float)effectiveWidth)); 
-        if (drawX1 > 0) drawX1 -= effectiveWidth; 
-        SDL_Rect dst1 = { drawX1, 0, texW, texH }; 
-        display.drawTexture(tex, NULL, &dst1); 
-        
-        int drawX2 = drawX1 + effectiveWidth; 
-        SDL_Rect dst2 = { drawX2, 0, texW, texH }; 
-        display.drawTexture(tex, NULL, &dst2); 
-        
-        if (drawX2 + texW < windowW) { 
-            int drawX3 = drawX2 + effectiveWidth; 
-            SDL_Rect dst3 = { drawX3, 0, texW, texH }; 
-            display.drawTexture(tex, NULL, &dst3); 
-        } 
-    }; 
-
-    int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
-    if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
-    if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
-    if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
-
-    drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-        // Calculate the position for the scaled sprite
-        // Note: We need to center the scaled sprite, not the original source size
-        int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
-        int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
-        
-        int drawX = (windowW / 2) - (scaledWidth / 2);
-        int verticalOffset = 7; // This might need to be a constant or configurable
-        int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
-        
-        // Create scaled destination rectangle
-        SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
-
-        display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
-    }
-
-    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
-
-    // Render fade_to_battle overlay if active
-    if (is_fading_to_battle_ && battle_fade_alpha_ > 0.0f) {
-        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, static_cast<Uint8>(battle_fade_alpha_));
-        SDL_Rect fullscreen_rect = {0, 0, GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT};
-        SDL_RenderFillRect(renderer, &fullscreen_rect);
-        SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "AdventureState: Rendering fade overlay with alpha: %.2f", battle_fade_alpha_);
-    }
+    // Clear screen
+    display.clear();
+    
+    // Render background layers using existing texture system
+    render_background_layers(display);
+    
+    // Render character using existing system
+    render_character(display);
+    
+    // Render existing UI elements (if any)
+    // ...existing rendering code...
 }
 
 StateType AdventureState::getType() const {
@@ -506,5 +444,96 @@ std::string AdventureState::getAnimationIdForCurrentState() const {
         case STATE_WALKING: return "Walk";
         case STATE_IDLE:    
         default:            return "Idle";
+    }
+}
+
+void AdventureState::render_background_layers(PCDisplay& display) {
+    int screenWidth = display.getWidth();
+    int screenHeight = display.getHeight();
+    
+    // Render background layer 2 (furthest back)
+    if (bgTexture2_) {
+        int texW, texH;
+        SDL_QueryTexture(bgTexture2_, nullptr, nullptr, &texW, &texH);
+        
+        // Scale to fill square display (zoom to fill)
+        float scaleX = static_cast<float>(screenWidth) / texW;
+        float scaleY = static_cast<float>(screenHeight) / texH;
+        float fillScale = std::max(scaleX, scaleY);  // Use larger scale to fill completely
+        
+        int scaledW = static_cast<int>(texW * fillScale);
+        int scaledH = static_cast<int>(texH * fillScale);
+        
+        // Center the scaled background
+        SDL_Rect dest = {
+            (screenWidth - scaledW) / 2,
+            (screenHeight - scaledH) / 2,
+            scaledW, scaledH
+        };
+        
+        display.drawTexture(bgTexture2_, nullptr, &dest);
+    }
+    
+    // Render background layer 1 (middle)
+    if (bgTexture1_) {
+        int texW, texH;
+        SDL_QueryTexture(bgTexture1_, nullptr, nullptr, &texW, &texH);
+        
+        float scaleX = static_cast<float>(screenWidth) / texW;
+        float scaleY = static_cast<float>(screenHeight) / texH;
+        float fillScale = std::max(scaleX, scaleY);
+        
+        int scaledW = static_cast<int>(texW * fillScale);
+        int scaledH = static_cast<int>(texH * fillScale);
+        
+        SDL_Rect dest = {
+            (screenWidth - scaledW) / 2,
+            (screenHeight - scaledH) / 2,
+            scaledW, scaledH
+        };
+        
+        display.drawTexture(bgTexture1_, nullptr, &dest);
+    }
+    
+    // Render background layer 0 (foreground)
+    if (bgTexture0_) {
+        int texW, texH;
+        SDL_QueryTexture(bgTexture0_, nullptr, nullptr, &texW, &texH);
+        
+        float scaleX = static_cast<float>(screenWidth) / texW;
+        float scaleY = static_cast<float>(screenHeight) / texH;
+        float fillScale = std::max(scaleX, scaleY);
+        
+        int scaledW = static_cast<int>(texW * fillScale);
+        int scaledH = static_cast<int>(texH * fillScale);
+        
+        SDL_Rect dest = {
+            (screenWidth - scaledW) / 2,
+            (screenHeight - scaledH) / 2,
+            scaledW, scaledH
+        };
+        
+        display.drawTexture(bgTexture0_, nullptr, &dest);
+    }
+}
+void AdventureState::render_character(PCDisplay& display) {
+    // Fix the Animator usage
+    if (partnerAnimator_.isActive()) { // Check if animator is active instead of treating as pointer
+        int screenWidth = display.getWidth();
+        int screenHeight = display.getHeight();
+        
+        // Position character at bottom center
+        int characterX = screenWidth / 2 - 16;  // Assuming 32px wide character
+        int characterY = screenHeight - 60;     // Position near bottom
+        
+        SDL_Rect dest = { characterX, characterY, 32, 32 };
+        
+        // Get current animation frame using correct method
+        SDL_Texture* currentFrame = partnerAnimator_.getCurrentTexture();
+        SDL_Rect frameRect = partnerAnimator_.getCurrentFrameRect();
+        
+        if (currentFrame) {
+            display.drawTexture(currentFrame, &frameRect, &dest);
+        }
     }
 }

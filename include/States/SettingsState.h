@@ -46,10 +46,13 @@ private:
     // Key rebinding mode
     bool isRebindingKey_ = false;
     GameAction currentRebindAction_ = GameAction::_ACTION_COUNT;
-    
-    // Text scale adjustment
+      // Text scale adjustment
     bool isAdjustingTextScale_ = false;
     float textScaleValue_ = 1.0f;
+    
+    // Asset scale adjustment
+    bool isAdjustingAssetScale_ = false;
+    float assetScaleValue_ = 1.0f;
     
     // Key binding options
     std::vector<KeyBindOption> keyBindOptions_;

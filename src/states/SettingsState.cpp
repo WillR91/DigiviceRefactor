@@ -9,10 +9,13 @@
 
 SettingsState::SettingsState(Game* game) : GameState(game) {
     // Initialize menu options
-    menuOptions_ = {"CONTROLS", "AUDIO", "DISPLAY", "TEXT SCALE", "RETURN TO MENU"};
+    menuOptions_ = {"CONTROLS", "AUDIO", "DISPLAY", "TEXT SCALE", "ASSET SCALE", "RETURN TO MENU"};
     
     // Get current text scale from config
     textScaleValue_ = ConfigManager::getValue<float>("ui.textScale", 1.0f);
+    
+    // Get current asset scale from config
+    assetScaleValue_ = ConfigManager::getValue<float>("graphics.assetScale", 1.0f);
     
     // Load background texture
     if (game_ptr && game_ptr->getAssetManager()) {
@@ -87,6 +90,47 @@ void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerD
         return;
     }
     
+    // If adjusting asset scale
+    if (isAdjustingAssetScale_) {
+        if (inputManager.isActionJustPressed(GameAction::NAV_LEFT)) {
+            // Decrease asset scale (minimum 0.5)
+            assetScaleValue_ = std::max(0.5f, assetScaleValue_ - 0.1f);
+            
+            // Update the config
+            ConfigManager::setValue("graphics.assetScale", assetScaleValue_);
+            ConfigManager::saveChanges();
+            
+            // Update the graphics settings
+            if (game_ptr) {
+                game_ptr->updateFromConfig();
+            }
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Asset scale decreased to %.1f", assetScaleValue_);
+        }
+        else if (inputManager.isActionJustPressed(GameAction::NAV_RIGHT)) {
+            // Increase asset scale (maximum 2.0)
+            assetScaleValue_ = std::min(2.0f, assetScaleValue_ + 0.1f);
+            
+            // Update the config
+            ConfigManager::setValue("graphics.assetScale", assetScaleValue_);
+            ConfigManager::saveChanges();
+            
+            // Update the graphics settings
+            if (game_ptr) {
+                game_ptr->updateFromConfig();
+            }
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Asset scale increased to %.1f", assetScaleValue_);
+        }
+        else if (inputManager.isActionJustPressed(GameAction::CONFIRM) || 
+                 inputManager.isActionJustPressed(GameAction::CANCEL)) {
+            // Exit asset scale adjustment mode
+            isAdjustingAssetScale_ = false;
+        }
+        
+        return;
+    }
+    
     // If adjusting text scale
     if (isAdjustingTextScale_) {
         if (inputManager.isActionJustPressed(GameAction::NAV_LEFT)) {
@@ -156,11 +200,15 @@ void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerD
         } 
         else if (selected == "DISPLAY") {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Display settings not implemented yet");
-        }
-        else if (selected == "TEXT SCALE") {
+        }        else if (selected == "TEXT SCALE") {
             // Enter text scale adjustment mode
             isAdjustingTextScale_ = true;
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Adjusting text scale (current: %.1f)", textScaleValue_);
+        }
+        else if (selected == "ASSET SCALE") {
+            // Enter asset scale adjustment mode
+            isAdjustingAssetScale_ = true;
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Adjusting asset scale (current: %.1f)", assetScaleValue_);
         }
         else if (selected == "RETURN TO MENU" || selected == "BACK") {
             // Return to previous state
@@ -226,6 +274,20 @@ void SettingsState::render(PCDisplay& display) {
         
         return;
     }
+    
+    // Special case for asset scale adjustment mode
+    if (isAdjustingAssetScale_) {
+        textRenderer->drawText(renderer, "ASSET SCALE ADJUSTMENT", MENU_START_X, MENU_START_Y, 1.2f);
+        
+        char valueText[64];
+        sprintf(valueText, "Current Scale: %.1f", assetScaleValue_);
+        textRenderer->drawText(renderer, valueText, MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT, 1.0f);
+        
+        textRenderer->drawText(renderer, "Use LEFT/RIGHT arrows to adjust", MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT * 2, 0.8f);
+        textRenderer->drawText(renderer, "Press CONFIRM/CANCEL when done", MENU_START_X, MENU_START_Y + MENU_ITEM_HEIGHT * 3, 0.8f);
+        
+        return;
+    }
 
     // Draw menu options
     for (size_t i = 0; i < menuOptions_.size(); i++) {
@@ -233,11 +295,16 @@ void SettingsState::render(PCDisplay& display) {
         int y = MENU_START_Y + (static_cast<int>(i) * MENU_ITEM_HEIGHT);
         
         std::string displayText = menuOptions_[i];
-        
-        // If this is the text scale option, show the current value
+          // If this is the text scale option, show the current value
         if (displayText == "TEXT SCALE") {
             char valueText[64];
             sprintf(valueText, "%.1f", textScaleValue_);
+            displayText += ": " + std::string(valueText);
+        }
+        // If this is the asset scale option, show the current value
+        else if (displayText == "ASSET SCALE") {
+            char valueText[64];
+            sprintf(valueText, "%.1f", assetScaleValue_);
             displayText += ": " + std::string(valueText);
         }
         // If we're showing key bindings and this is a key binding option
