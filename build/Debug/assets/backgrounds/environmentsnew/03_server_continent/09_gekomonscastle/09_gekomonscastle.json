@@ -1,0 +1,52 @@
+{"frames": {
+
+"1543_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1543_1_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1543_2_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1543_3_0.png":
+{
+	"frame": {"x":0,"y":384,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1544_0_0.png":
+{
+	"frame": {"x":0,"y":512,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "09_gekomonscastle.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":640},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:e4035af965bba31abde8b4103be6a0d2:b850605c830cc8f822da4a847654fa6b:bfe9896b01f144d2cdcc7d9c200c71a2$"
+}
+}

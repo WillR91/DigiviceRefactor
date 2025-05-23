@@ -1,0 +1,52 @@
+{"frames": {
+
+"1537_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1537_1_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1537_2_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1537_5_0.png":
+{
+	"frame": {"x":0,"y":384,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1538_0_0.png":
+{
+	"frame": {"x":0,"y":512,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "06_amusementpark.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":640},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:36986c15ec55063cb7b018d29c910a5a:8bd93eb75cb031b19cd4e99ee6758d69:48d9259de0dbb29ca5fe46f3ae1d0603$"
+}
+}

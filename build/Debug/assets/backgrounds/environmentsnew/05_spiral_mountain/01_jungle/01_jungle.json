@@ -1,0 +1,36 @@
+{"frames": {
+
+"1559_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1559_3_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1560_0_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "01_jungle.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":384},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:d7f11b1c27f98a9819f35ba734c2e18e:8b662f963f8b783c5482a10834523a6d:a54e5db38b4287e26624f773749a918d$"
+}
+}

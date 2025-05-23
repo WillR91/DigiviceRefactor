@@ -1,0 +1,52 @@
+{"frames": {
+
+"1553_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1553_1_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1553_2_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1553_5_0.png":
+{
+	"frame": {"x":0,"y":384,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1554_0_0.png":
+{
+	"frame": {"x":0,"y":512,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "04_tower.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":640},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:39018355417f5e6ea4894f832c8e0766:1e321688f3e12699b6b002964118dd2d:6eb836036bd366620014bb70ddcd362b$"
+}
+}

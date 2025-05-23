@@ -1,0 +1,36 @@
+{"frames": {
+
+"1551_1_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1551_5_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1552_0_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "03_pier.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":384},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:bf80b9c042c5d419a68341ec8a11718e:029edb6be918bf8aaf8b2264c11e0014:ef379cbf2325324fdc88f66f7de66c89$"
+}
+}

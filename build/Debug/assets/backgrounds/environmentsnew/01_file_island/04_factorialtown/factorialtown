@@ -1,0 +1,36 @@
+{"frames": {
+
+"1509_0_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1509_3_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1510_0_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "factorialtown.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":384},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:19102b184260d9f4dc8c7728cc125433:6c31d8b4305499b001ff6398f35226c3:a8558ccaf25bd8b996a5fbd634f2ce44$"
+}
+}

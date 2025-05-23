@@ -1,0 +1,36 @@
+{"frames": {
+
+"1507_2_0.png":
+{
+	"frame": {"x":0,"y":0,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1507_3_0.png":
+{
+	"frame": {"x":0,"y":128,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+},
+"1508_0_0.png":
+{
+	"frame": {"x":0,"y":256,"w":384,"h":128},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":384,"h":128},
+	"sourceSize": {"w":384,"h":128}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "gearsavannah.png",
+	"format": "RGBA8888",
+	"size": {"w":384,"h":384},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:6e263d3c426761f4bccd425b4be5132f:69c6df68754ebed2986b393a0e3a5d48:3401574fbb879dbad3f8317311000dda$"
+}
+}
