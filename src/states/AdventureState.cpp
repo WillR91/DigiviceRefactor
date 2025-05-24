@@ -17,6 +17,7 @@
 #include "states/BattleState.h"       // Forward declare or include for BattleState later
 #include "Utils/RenderUtils.h"        // Added for sprite scaling utilities
 #include "entities/DigimonRegistry.h" // <<< ADDED for DigimonRegistry access
+#include "Core/BackgroundVariantManager.h" // Added for new variant background system
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -148,8 +149,11 @@ AdventureState::AdventureState(Game* game) :
     const AnimationData* initialAnimData = animManager->getAnimationData(initialAnimId);
     partnerAnimator_.setAnimation(initialAnimData);
     
-    if (!initialAnimData) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load initial animation!");
+    // Try loading backgrounds using the new variant system
+    // Extract environment path from the first background layer
+    if (!nodeData.adventureBackgroundLayers.empty() && 
+        !nodeData.adventureBackgroundLayers[0].texturePaths.empty()) {
+        loadBackgroundVariants(nodeData.adventureBackgroundLayers[0].texturePaths[0]);
     }
 }
 
@@ -507,4 +511,60 @@ std::string AdventureState::getAnimationIdForCurrentState() const {
         case STATE_IDLE:    
         default:            return "Idle";
     }
+}
+
+void AdventureState::loadBackgroundVariants(const std::string& environmentPath) {
+    // This method implements the new variant-based background loading system
+    // It attempts to load 1x scale assets with dynamic scaling
+    
+    AssetManager* assets = game_ptr->getAssetManager();
+    
+    // Map the current environment path to the new naming convention
+    std::string environmentName = Digivice::BackgroundVariantManager::mapEnvironmentName(environmentPath);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+               "AdventureState: Loading variant backgrounds for environment: %s", 
+               environmentName.c_str());
+    
+    // Create a temporary BackgroundLayerData to work with the variant system
+    Digivice::BackgroundLayerData tempLayerData;
+    Digivice::BackgroundVariantManager::initializeVariantsForNode(tempLayerData, environmentName);
+    
+    // Try to load foreground texture (1x scale asset)
+    if (!tempLayerData.foregroundPaths.empty()) {
+        std::string fgPath = Digivice::BackgroundVariantManager::getSelectedPath(
+            tempLayerData.foregroundPaths, tempLayerData.selectedForegroundVariant);
+        std::string fgTexId = environmentName + "_fg_v" + std::to_string(tempLayerData.selectedForegroundVariant + 1);
+        
+        if (assets->loadTexture(fgTexId, fgPath)) {
+            bgTexture0_ = assets->getTexture(fgTexId);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Loaded foreground variant: %s", fgPath.c_str());
+        }
+    }
+    
+    // Try to load middleground texture (1x scale asset)
+    if (!tempLayerData.middlegroundPaths.empty()) {
+        std::string mgPath = Digivice::BackgroundVariantManager::getSelectedPath(
+            tempLayerData.middlegroundPaths, tempLayerData.selectedMiddlegroundVariant);
+        std::string mgTexId = environmentName + "_mg_v" + std::to_string(tempLayerData.selectedMiddlegroundVariant + 1);
+        
+        if (assets->loadTexture(mgTexId, mgPath)) {
+            bgTexture1_ = assets->getTexture(mgTexId);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Loaded middleground variant: %s", mgPath.c_str());
+        }
+    }
+    
+    // Try to load background texture (1x scale asset)
+    if (!tempLayerData.backgroundPaths.empty()) {
+        std::string bgPath = Digivice::BackgroundVariantManager::getSelectedPath(
+            tempLayerData.backgroundPaths, tempLayerData.selectedBackgroundVariant);
+        std::string bgTexId = environmentName + "_bg_v" + std::to_string(tempLayerData.selectedBackgroundVariant + 1);
+        
+        if (assets->loadTexture(bgTexId, bgPath)) {
+            bgTexture2_ = assets->getTexture(bgTexId);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Loaded background variant: %s", bgPath.c_str());
+        }
+    }
+    
+    // Note: The actual scaling will be handled in the render method
+    // For now, we're just loading the 1x scale assets
 }

@@ -68,9 +68,11 @@ private:
     const int MAX_QUEUED_STEPS = 2;
     const float SCROLL_SPEED_0 = 3.0f * 60.0f;
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
-    const float SCROLL_SPEED_2 = 0.5f * 60.0f;
-    const int WINDOW_WIDTH = 466;
-    const int WINDOW_HEIGHT = 466;    // Private Helpers
+    const float SCROLL_SPEED_2 = 0.5f * 60.0f;    const int WINDOW_WIDTH = 466;
+    const int WINDOW_HEIGHT = 466;    
+    
+    // Private Helpers
     std::string getAnimationIdForCurrentState() const;
+    void loadBackgroundVariants(const std::string& environmentPath); // New variant system
 
 }; // End of AdventureState class definition
