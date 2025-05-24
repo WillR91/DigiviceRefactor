@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <vector>
 #include <string>
+#include <iostream>
 #include <cmath>
 #include <memory>
 #include "core/gameconstants.h"
@@ -440,8 +441,9 @@ void AdventureState::render(PCDisplay& display) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Clear to black
     SDL_RenderClear(renderer);
 
-    const int windowW = GameConstants::WINDOW_WIDTH; 
-    const int windowH = GameConstants::WINDOW_HEIGHT; 
+    // Get screen dimensions
+    int windowW = 0, windowH = 0;
+    display.getWindowSize(windowW, windowH);
 
     auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) { 
         if (!tex || texW <= 0 || effectiveWidth <= 0) { 
@@ -463,14 +465,22 @@ void AdventureState::render(PCDisplay& display) {
         } 
     }; 
 
+    // Query texture dimensions for background rendering
     int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
     if(bgTexture0_) { SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); effW0=bgW0*2/3; if(effW0<=0)effW0=bgW0;}
     if(bgTexture1_) { SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); effW1=bgW1*2/3; if(effW1<=0)effW1=bgW1;}
     if(bgTexture2_) { SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); effW2=bgW2*2/3; if(effW2<=0)effW2=bgW2;}
 
+    // Draw background layers (back to front)
     drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+    drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");    
+    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+
+    // Render the partner Digimon sprite
+    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
+    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
+    
+    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
         // Calculate the position for the scaled sprite
         // Note: We need to center the scaled sprite, not the original source size
         int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
@@ -485,8 +495,6 @@ void AdventureState::render(PCDisplay& display) {
 
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     }
-
-    drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
 
     // Render fade_to_battle overlay if active
     if (is_fading_to_battle_ && battle_fade_alpha_ > 0.0f) {
@@ -567,4 +575,62 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
     
     // Note: The actual scaling will be handled in the render method
     // For now, we're just loading the 1x scale assets
+}
+
+void AdventureState::renderScaledBackgroundLayer(PCDisplay& display, SDL_Texture* texture, 
+                                               int screenWidth, int screenHeight, 
+                                               float globalScale, int layerIndex, 
+                                               float scrollOffset) {
+    if (!texture) return;
+    
+    // Get the 1x texture dimensions (new assets are 384×128)
+    int originalWidth, originalHeight;
+    SDL_QueryTexture(texture, nullptr, nullptr, &originalWidth, &originalHeight);
+    
+    // Calculate scaling to fill square display (384×128 → 466×466)
+    float scaleX = static_cast<float>(screenWidth) / originalWidth;   // ~1.21x
+    float scaleY = static_cast<float>(screenHeight) / originalHeight; // ~3.64x
+    
+    // Use larger scale to fill display completely (zoom to fill)
+    float baseScale = std::max(scaleX, scaleY); // Will use ~3.64x for 1x assets
+    
+    // Apply user's global scale preference if provided
+    float finalScale = baseScale * globalScale;
+    
+    // Calculate scaled dimensions
+    int scaledWidth = static_cast<int>(originalWidth * finalScale);
+    int scaledHeight = static_cast<int>(originalHeight * finalScale);
+    
+    // Calculate effective width for tiling (based on parallax factor)
+    int effectiveWidth = scaledWidth;
+    if (layerIndex == 0) {
+        effectiveWidth = scaledWidth * 2/3; // Foreground scrolls fastest
+    } else if (layerIndex == 1) {
+        effectiveWidth = scaledWidth * 2/3; // Middleground moderate speed
+    } else {
+        effectiveWidth = scaledWidth * 2/3; // Background slowest
+    }
+    
+    if (effectiveWidth <= 0) effectiveWidth = scaledWidth;
+    
+    // Apply scroll offset for parallax effect
+    int scrollX = static_cast<int>(scrollOffset);
+    
+    // Calculate position to center vertically in the display
+    int drawY = (screenHeight - scaledHeight) / 2;
+    
+    // Tile horizontally to fill the screen width
+    int startX = scrollX % effectiveWidth;
+    if (startX > 0) startX -= effectiveWidth;
+    
+    // Draw tiled instances
+    for (int drawX = startX; drawX < screenWidth; drawX += effectiveWidth) {
+        SDL_Rect destRect = { drawX, drawY, scaledWidth, scaledHeight };
+        display.drawTexture(texture, nullptr, &destRect);
+    }
+    
+    std::cout << "AdventureState: Rendered scaled layer " << layerIndex 
+              << " - Original: " << originalWidth << "×" << originalHeight
+              << ", Scaled: " << scaledWidth << "×" << scaledHeight 
+              << ", Scale: " << finalScale << "x" << std::endl;
 }

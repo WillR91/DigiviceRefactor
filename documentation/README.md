@@ -1,107 +1,72 @@
-# DigiviceRefactor - Virtual Pet Simulator
+# DigiviceRefactor - Documentation
 
-A modern C++ implementation of a Digimon-style virtual pet device with cross-platform support and authentic retro gameplay mechanics.
+## Overview
 
-## Project Overview
+This directory contains comprehensive documentation for the DigiviceRefactor project. The documentation has been recently refreshed (January 2025) to accurately reflect the current state of the codebase.
 
-DigiviceRefactor is a comprehensive virtual pet simulator that recreates the classic Digimon virtual pet experience with modern graphics and cross-platform compatibility. The project features a state-based architecture, multi-layered rendering system, and authentic battle mechanics.
+## Documentation Files
 
-## Current Build Status
+### 📖 Core Documentation
 
-**✅ Stable Build (January 2025)**
-- All core systems operational
-- Text rendering working via sprite-based font atlas
-- Multi-state navigation functional
-- Asset loading and rendering stable
-- Sound system integrated
-- Cross-platform builds working
+- **`PROJECT_OVERVIEW.md`** - High-level project description, feature list, and current status
+- **`architecture.md`** - System architecture overview and design patterns
+- **`FEATURES.md`** - Detailed feature documentation with current implementation status
+- **`TECHNICAL_ARCHITECTURE.md`** - Technical implementation details and code structure
 
-## Quick Start
+### 🗄️ Archive Information
 
-### Prerequisites
-- CMake 3.20+
-- C++17 compatible compiler
-- SDL2 development libraries
-- SDL2_mixer for audio
+Previous documentation has been preserved in timestamped archives:
+- `archive/documentation-2025-05-23/` - Previous project documentation
+- `archive/memory-bank-2025-05-23/` - Previous development notes and design documents
 
-### Building
-```bash
-mkdir build
-cd build
-cmake ..
-make
-```
+## Current Build Status (January 2025)
 
-### Running
-```bash
-./DigiviceRefactor
-```
+**✅ Stable Build**
+- All core systems functional
+- Complete state management with fade transitions
+- Working animation system with 80+ Digimon
+- Functional battle system with visual effects
+- Debug tools for testing and development
+- Cross-platform SDL2 implementation
 
-## Core Features
+## Quick Reference
 
-### 🎮 Virtual Pet Mechanics
-- **Pet Care**: Feeding, training, and caring for your digital companion
-- **Evolution**: Growth stages from baby to ultimate forms
-- **Stats**: Health, hunger, happiness, and battle statistics
-- **Time-based**: Real-time pet needs and aging
+### 🎯 What Works Now
+- **State System**: MenuState, AdventureState, BattleState, PartnerSelectState, SettingsState
+- **Animation System**: 8 player Digimon + 80+ enemy Digimon with Idle/Walk/Attack animations
+- **Text Rendering**: Custom bitmap font with scaling support
+- **Input System**: Customizable key bindings with real-time configuration
+- **Asset Management**: Automatic texture loading and animation data parsing
+- **Battle System**: Phase-based combat with sprite animations and visual effects
 
-### ⚔️ Battle System
-- Turn-based combat with authentic mechanics
-- Type advantages and special attacks
-- Training to improve battle stats
-- Victory rewards and progression
+### 🔧 Current Architecture
+- **Language**: C++17
+- **Graphics**: SDL2 with texture-based rendering
+- **Build System**: CMake
+- **Asset Format**: JSON + PNG sprite sheets
+- **State Management**: Stack-based with transition effects
 
-### 🗺️ Adventure Mode
-- Multi-layered background environments
-- Exploration and event discovery
-- Dynamic map navigation
-- Environmental storytelling
-
-### 🎨 Graphics & Audio
-- Pixel-perfect sprite rendering
-- Multi-layer parallax backgrounds
-- Retro-styled UI elements
-- Authentic sound effects and music
-
-## Documentation Structure
-
-- `architecture.md` - Technical architecture overview
-- `build-system.md` - Build configuration and dependencies  
-- `game-systems.md` - Core gameplay mechanics
-- `graphics-system.md` - Rendering and visual systems
-- `audio-system.md` - Sound and music implementation
-- `asset-pipeline.md` - Asset organization and loading
-- `development-guide.md` - Development workflow and conventions
-
-## Project Structure
-
+### 📁 Key Directories
 ```
 DigiviceRefactor/
-├── src/                    # Source code
-│   ├── core/              # Core game systems
-│   ├── states/            # Game state implementations
-│   ├── graphics/          # Rendering and graphics
-│   ├── audio/             # Sound system
-│   ├── platform/          # Platform-specific code
-│   └── utils/             # Utility functions
-├── include/               # Header files
-├── assets/                # Game assets
-│   ├── sprites/          # Sprite graphics
-│   ├── backgrounds/      # Background images
-│   ├── ui/               # UI elements and fonts
-│   └── audio/            # Sound effects and music
-├── build/                 # Build output
-└── documentation/         # Project documentation
+├── src/states/          # Game state implementations
+├── src/core/           # Core engine systems
+├── src/graphics/       # Animation and rendering
+├── assets/sprites/     # Character sprite sheets
+├── assets/ui/          # Interface elements
+└── documentation/      # This documentation
 ```
 
-## Recent Changes
+## Getting Started with Documentation
 
-This documentation represents a fresh start as of January 2025, reflecting the current stable build state. Previous documentation has been archived in `archive/documentation-2025-05-23/` and `archive/memory-bank-2025-05-23/`.
+1. **New to the project?** Start with `PROJECT_OVERVIEW.md`
+2. **Understanding the architecture?** Read `architecture.md`
+3. **Feature details?** Check `FEATURES.md`
+4. **Technical implementation?** See `TECHNICAL_ARCHITECTURE.md`
 
-## Contributing
+## Documentation Accuracy
 
-See `development-guide.md` for development workflow, coding standards, and contribution guidelines.
+This documentation is based on direct examination of the current codebase and reflects only features that are actually implemented and working. No speculative or planned features are included unless explicitly marked as such.
 
-## License
-
-[License information to be added]
+---
+*Documentation last updated: January 2025*

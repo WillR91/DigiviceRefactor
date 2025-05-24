@@ -13,6 +13,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -49,7 +52,13 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\platform\pc\pc_display_scale_methods.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState_new.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp">

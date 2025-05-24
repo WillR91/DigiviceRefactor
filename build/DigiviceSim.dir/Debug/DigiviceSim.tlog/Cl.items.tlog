@@ -2,6 +2,7 @@ Z:\DigiviceRefactor\main.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\mai
 Z:\DigiviceRefactor\src\bitmapfont.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\bitmapfont.obj
 Z:\DigiviceRefactor\src\core\AnimationManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationManager.obj
 Z:\DigiviceRefactor\src\core\AssetManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AssetManager.obj
+Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\BackgroundVariantManager.obj
 Z:\DigiviceRefactor\src\core\Game.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Game.obj
 Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager_keybind.obj
 Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager_rebind.obj
@@ -14,7 +15,9 @@ Z:\DigiviceRefactor\src\graphics\animation.cpp;Z:\DigiviceRefactor\build\Digivic
 Z:\DigiviceRefactor\src\graphics\animator.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animator.obj
 Z:\DigiviceRefactor\src\menu.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\menu.obj
 Z:\DigiviceRefactor\src\platform\pc\pc_display.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\pc_display.obj
+Z:\DigiviceRefactor\src\platform\pc\pc_display_scale_methods.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\pc_display_scale_methods.obj
 Z:\DigiviceRefactor\src\states\AdventureState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AdventureState.obj
+Z:\DigiviceRefactor\src\states\AdventureState_new.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AdventureState_new.obj
 Z:\DigiviceRefactor\src\states\BattleState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\BattleState.obj
 Z:\DigiviceRefactor\src\states\EnemyTestState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\EnemyTestState.obj
 Z:\DigiviceRefactor\src\states\MapSystemState.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MapSystemState.obj

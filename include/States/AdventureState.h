@@ -70,9 +70,12 @@ private:
     const float SCROLL_SPEED_1 = 1.0f * 60.0f;
     const float SCROLL_SPEED_2 = 0.5f * 60.0f;    const int WINDOW_WIDTH = 466;
     const int WINDOW_HEIGHT = 466;    
-    
-    // Private Helpers
+      // Private Helpers
     std::string getAnimationIdForCurrentState() const;
     void loadBackgroundVariants(const std::string& environmentPath); // New variant system
+    void renderScaledBackgroundLayer(PCDisplay& display, SDL_Texture* texture, 
+                                   int screenWidth, int screenHeight, 
+                                   float globalScale, int layerIndex, 
+                                   float scrollOffset); // Enhanced scaling renderer
 
 }; // End of AdventureState class definition
