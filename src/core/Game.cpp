@@ -4,6 +4,7 @@
 #include "states/GameState.h"        // Include base class for enter/exit
 #include "states/AdventureState.h"   // Include concrete states used
 #include "states/TransitionState.h" // Include concrete states used
+#include "states/MapSystemState.h"   // Include for createEnvironmentBackground function
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
 #include "platform/pc/pc_display.h" // Needed for PCDisplay type
@@ -200,12 +201,9 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
      assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
-     
-     // Load unlockable Digimon
+       // Load unlockable Digimon
      assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
-     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
-     
-     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
+     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
      assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
      assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
      assets_ok &= assetManager.loadTexture("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
@@ -249,19 +247,8 @@ bool Game::init(const std::string& title, int width, int height) {
         
         // Load unlockable Digimon animations
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
-        
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");        
         // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
-        
-        // Keep loading legacy animation data for backward compatibility
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gabumon_sheet.json", "gabumon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/biyomon_sheet.json", "biyomon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gatomon_sheet.json", "gatomon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gomamon_sheet.json", "gomamon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/digimon/kuwagamon/animation.json", "kuwagamon_sheet");
 
         // Now load all enemy Digimon assets (textures and animations)
         bool enemyAssetsOk = loadAllEnemyDigimonAssets();
@@ -281,7 +268,46 @@ bool Game::init(const std::string& title, int width, int height) {
         assetManager.shutdown();
         display.close();
         SDL_Quit();
-        return false;
+        return false;    }
+    
+    // Initialize PlayerData with default node containing proper background data
+    try {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Setting up default node data for initial state...");
+        
+        // Create a default node with the tropical jungle background
+        Digivice::NodeData defaultNode;
+        defaultNode.id = "01_fi_node_01_tropical_jungle";
+        defaultNode.name = "TROPICAL JUNGLE";
+        defaultNode.continentId = "01_file_island";
+        defaultNode.totalSteps = 20;
+        defaultNode.isUnlocked = true;
+        
+        // Create a simple background layer for now - this ensures the node has background data
+        // which will prevent the legacy system fallback
+        Digivice::BackgroundLayerData layerData;
+        layerData.parallaxFactorX = 0.5f;
+        layerData.parallaxFactorY = 0.0f;
+        
+        // Add some placeholder paths to ensure the variant system has data to work with
+        // The actual variant initialization will happen when AdventureState loads the node
+        layerData.foregroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_fg_v1.png");
+        layerData.middlegroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_mg_v1.png");
+        layerData.backgroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_bg_v1.png");
+        layerData.selectedForegroundVariant = 0;
+        layerData.selectedMiddlegroundVariant = 0;
+        layerData.selectedBackgroundVariant = 0;
+        
+        defaultNode.adventureBackgroundLayers.push_back(layerData);
+        
+        // Set this as the current node in PlayerData
+        playerData_.setCurrentMapNode(defaultNode);
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Default node '%s' initialized with %zu background layers", 
+                   defaultNode.name.c_str(), defaultNode.adventureBackgroundLayers.size());
+                   
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize default node data: %s", e.what());
+        // Continue anyway with empty node data (fallback to legacy system)
     }
 
     // Push Initial State and Call Enter
@@ -809,7 +835,7 @@ bool Game::loadAllEnemyDigimonAssets() {
     assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
     assets_ok &= assetManager.loadTexture("kiwimon", "assets/sprites/enemy_digimon/kiwimon.png");
     assets_ok &= assetManager.loadTexture("monochromon", "assets/sprites/enemy_digimon/monochromon.png");
-    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyrannomon.png");
+    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyranomon.png");
     assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
     assets_ok &= assetManager.loadTexture("shellmon", "assets/sprites/enemy_digimon/shellmon.png");
     
@@ -825,7 +851,7 @@ bool Game::loadAllEnemyDigimonAssets() {
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kiwimon.json", "kiwimon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/monochromon.json", "monochromon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyrannomon.json", "tyrannomon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyranomon.json", "tyrannomon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/shellmon.json", "shellmon");
     

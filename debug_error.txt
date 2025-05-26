@@ -1,0 +1,482 @@
+INFO: --- Creating Game Instance ---
+INFO: ConfigManager: Loaded configuration from config/game_config.json
+INFO: Loaded configuration: Window 466x466, Title: Digivice Sim, Fullscreen: No
+INFO: Loading key bindings from configuration...
+INFO: Successfully loaded key bindings from config.
+INFO: InputManager Initialized with 23 key mappings.
+INFO: Game initializing...
+INFO: --- Initializing Game ---
+INFO: Initializing Game systems...
+INFO: SDL_HINT_RENDER_SCALE_QUALITY set to 0 (Nearest Neighbor).
+INFO: SDL Initialized.
+INFO: VSync enabled
+INFO: Created renderer: direct3d
+INFO: PCDisplay initialized window and renderer.
+INFO: PCDisplay Initialized.
+INFO: AssetManager initialized successfully (SDL_image loaded).
+INFO: AssetManager Initialized.
+INFO: Initializing DigimonRegistry...
+INFO: Initializing DigimonRegistry from path: assets/config/digimon/
+INFO: DigimonRegistry: Loaded 9 Digimon definitions
+INFO: Successfully loaded Digimon definitions from directory.
+INFO: DigimonRegistry Initialized Successfully.
+INFO: DigimonRegistry: Digimon with ID 'kuwagamon' already exists, skipping registration.
+INFO: DigimonRegistry: Registered enemy Digimon: andromon
+INFO: DigimonRegistry: Registered enemy Digimon: apocalymon
+INFO: DigimonRegistry: Registered enemy Digimon: bakemon
+INFO: DigimonRegistry: Registered enemy Digimon: blossomon
+INFO: DigimonRegistry: Registered enemy Digimon: centaurmon
+INFO: DigimonRegistry: Registered enemy Digimon: cherrymon
+INFO: DigimonRegistry: Registered enemy Digimon: cockatrimon
+INFO: DigimonRegistry: Registered enemy Digimon: colosseumgreymon
+INFO: DigimonRegistry: Registered enemy Digimon: darktyranomon
+INFO: DigimonRegistry: Registered enemy Digimon: demidevimon
+INFO: DigimonRegistry: Registered enemy Digimon: deramon
+INFO: DigimonRegistry: Registered enemy Digimon: devidramon
+INFO: DigimonRegistry: Registered enemy Digimon: devimon
+INFO: DigimonRegistry: Registered enemy Digimon: deviwomon
+INFO: DigimonRegistry: Registered enemy Digimon: diablomon
+INFO: DigimonRegistry: Registered enemy Digimon: digitamamon
+INFO: DigimonRegistry: Registered enemy Digimon: divermon
+INFO: DigimonRegistry: Registered enemy Digimon: dokugumon
+INFO: DigimonRegistry: Registered enemy Digimon: drimogemon
+INFO: DigimonRegistry: Registered enemy Digimon: elecmon
+INFO: DigimonRegistry: Registered enemy Digimon: etemon
+INFO: DigimonRegistry: Registered enemy Digimon: evilmon
+INFO: DigimonRegistry: Registered enemy Digimon: floramon
+INFO: DigimonRegistry: Registered enemy Digimon: flymon
+INFO: DigimonRegistry: Registered enemy Digimon: frigimon
+INFO: DigimonRegistry: Registered enemy Digimon: garbagemon
+INFO: DigimonRegistry: Registered enemy Digimon: gazimon
+INFO: DigimonRegistry: Registered enemy Digimon: gekomon
+INFO: DigimonRegistry: Registered enemy Digimon: gesomon
+INFO: DigimonRegistry: Registered enemy Digimon: gigadramon
+INFO: DigimonRegistry: Registered enemy Digimon: gizamon
+INFO: DigimonRegistry: Registered enemy Digimon: gotsumon
+INFO: DigimonRegistry: Registered enemy Digimon: hagurumon
+INFO: DigimonRegistry: Registered enemy Digimon: infermon
+INFO: DigimonRegistry: Registered enemy Digimon: keramon
+INFO: DigimonRegistry: Registered enemy Digimon: kiwimon
+INFO: DigimonRegistry: Registered enemy Digimon: leomon
+INFO: DigimonRegistry: Registered enemy Digimon: machinedramon
+INFO: DigimonRegistry: Registered enemy Digimon: mammothmon
+INFO: DigimonRegistry: Registered enemy Digimon: megadramon
+INFO: DigimonRegistry: Registered enemy Digimon: megaseadramon
+INFO: DigimonRegistry: Registered enemy Digimon: mekanorimon
+INFO: DigimonRegistry: Registered enemy Digimon: meramon
+INFO: DigimonRegistry: Registered enemy Digimon: metaletemon
+INFO: DigimonRegistry: Registered enemy Digimon: metalseadramon
+INFO: DigimonRegistry: Registered enemy Digimon: mojyamon
+INFO: DigimonRegistry: Registered enemy Digimon: monochromon
+INFO: DigimonRegistry: Registered enemy Digimon: monzaemon
+INFO: DigimonRegistry: Registered enemy Digimon: mushmon
+INFO: DigimonRegistry: Registered enemy Digimon: myotismon
+INFO: DigimonRegistry: Registered enemy Digimon: nanimon
+INFO: DigimonRegistry: Registered enemy Digimon: nanomon
+INFO: DigimonRegistry: Registered enemy Digimon: numemon
+INFO: DigimonRegistry: Registered enemy Digimon: ogremon
+INFO: DigimonRegistry: Registered enemy Digimon: otamamon
+INFO: DigimonRegistry: Registered enemy Digimon: parrotmon
+INFO: DigimonRegistry: Registered enemy Digimon: phantomon
+INFO: DigimonRegistry: Registered enemy Digimon: piemon
+INFO: DigimonRegistry: Registered enemy Digimon: piximon
+INFO: DigimonRegistry: Registered enemy Digimon: pumpmon
+INFO: DigimonRegistry: Registered enemy Digimon: puppetmon
+INFO: DigimonRegistry: Registered enemy Digimon: raremon
+INFO: DigimonRegistry: Registered enemy Digimon: redvegimon
+INFO: DigimonRegistry: Registered enemy Digimon: sabreleomon
+INFO: DigimonRegistry: Registered enemy Digimon: scorpiomon
+INFO: DigimonRegistry: Registered enemy Digimon: seadramon
+INFO: DigimonRegistry: Registered enemy Digimon: shellmon
+INFO: DigimonRegistry: Registered enemy Digimon: shogungekomon
+INFO: DigimonRegistry: Registered enemy Digimon: skullmeramon
+INFO: DigimonRegistry: Registered enemy Digimon: snimon
+INFO: DigimonRegistry: Registered enemy Digimon: sukamon
+INFO: DigimonRegistry: Registered enemy Digimon: tankmon
+INFO: DigimonRegistry: Registered enemy Digimon: tuskmon
+INFO: DigimonRegistry: Registered enemy Digimon: tyranomon
+INFO: DigimonRegistry: Registered enemy Digimon: unimon
+INFO: DigimonRegistry: Registered enemy Digimon: vademon
+INFO: DigimonRegistry: Registered enemy Digimon: vegimon
+INFO: DigimonRegistry: Registered enemy Digimon: venommyotismon
+INFO: DigimonRegistry: Registered enemy Digimon: warumonzaemon
+INFO: DigimonRegistry: Registered enemy Digimon: whamon
+INFO: All 81 enemy Digimon registered successfully for testing.
+INFO: Current Working Directory: Z:\DigiviceRefactor
+INFO: Attempting to load initial assets...
+INFO: Successfully loaded texture 'ui_round_mask'.
+INFO: Successfully loaded texture 'round_mask'.
+INFO: Successfully loaded texture 'agumon'.
+INFO: Successfully loaded texture 'gabumon'.
+INFO: Successfully loaded texture 'biyomon'.
+INFO: Successfully loaded texture 'gatomon'.
+INFO: Successfully loaded texture 'gomamon'.
+INFO: Successfully loaded texture 'palmon'.
+INFO: Successfully loaded texture 'tentomon'.
+INFO: Successfully loaded texture 'patamon'.
+INFO: Successfully loaded texture 'veedramon'.
+INFO: Successfully loaded texture 'wizardmon'.
+INFO: Successfully loaded texture 'castle_bg_0'.
+INFO: Successfully loaded texture 'castle_bg_1'.
+INFO: Successfully loaded texture 'castle_bg_2'.
+INFO: Successfully loaded texture 'menu_bg_blue'.
+INFO: Successfully loaded texture 'transition_borders'.
+INFO: Loading UI font...
+INFO: Successfully loaded texture 'ui_font_atlas'.
+INFO: Finished loading initial assets attempt.
+INFO: Initializing TextRenderer...
+INFO: TextRenderer instance created.
+INFO: TextRenderer: Global text scale set to 1.00
+INFO: TextRenderer::loadFontData - Loading from: assets/ui/fonts/bluewhitefont.json
+INFO: TextRenderer::loadFontData: Finished processing frames. Loaded map for 53 characters.
+INFO: TextRenderer initialized successfully.
+INFO: Initializing AnimationManager...
+INFO: AnimationManager instance created.
+INFO: AnimationManager: Loading animation data files...
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/agumon.json' using texture 'agumon'
+INFO: Available frame indices in assets/sprites/player_digimon/agumon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='agumon_Idle', Texture=0x26407c34ae8, Frames=2, Loops=1
+INFO: Storing Anim ID='agumon_Walk', Texture=0x26407c34ae8, Frames=4, Loops=0
+INFO: Storing Anim ID='agumon_WalkLoop', Texture=0x26407c34ae8, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/agumon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/gabumon.json' using texture 'gabumon'
+INFO: Available frame indices in assets/sprites/player_digimon/gabumon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='gabumon_Idle', Texture=0x26407c3f5f0, Frames=2, Loops=1
+INFO: Storing Anim ID='gabumon_Walk', Texture=0x26407c3f5f0, Frames=4, Loops=0
+INFO: Storing Anim ID='gabumon_WalkLoop', Texture=0x26407c3f5f0, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/gabumon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/biyomon.json' using texture 'biyomon'
+INFO: Available frame indices in assets/sprites/player_digimon/biyomon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='biyomon_Idle', Texture=0x26407c3fce8, Frames=2, Loops=1
+INFO: Storing Anim ID='biyomon_Walk', Texture=0x26407c3fce8, Frames=4, Loops=0
+INFO: Storing Anim ID='biyomon_WalkLoop', Texture=0x26407c3fce8, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/biyomon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/gatomon.json' using texture 'gatomon'
+INFO: Available frame indices in assets/sprites/player_digimon/gatomon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='gatomon_Idle', Texture=0x26407c32310, Frames=2, Loops=1
+INFO: Storing Anim ID='gatomon_Walk', Texture=0x26407c32310, Frames=4, Loops=0
+INFO: Storing Anim ID='gatomon_WalkLoop', Texture=0x26407c32310, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/gatomon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/gomamon.json' using texture 'gomamon'
+INFO: Available frame indices in assets/sprites/player_digimon/gomamon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='gomamon_Idle', Texture=0x26407c3f1c8, Frames=2, Loops=1
+INFO: Storing Anim ID='gomamon_Walk', Texture=0x26407c3f1c8, Frames=4, Loops=0
+INFO: Storing Anim ID='gomamon_WalkLoop', Texture=0x26407c3f1c8, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/gomamon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/palmon.json' using texture 'palmon'
+INFO: Available frame indices in assets/sprites/player_digimon/palmon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='palmon_Idle', Texture=0x26407c3f498, Frames=2, Loops=1
+INFO: Storing Anim ID='palmon_Walk', Texture=0x26407c3f498, Frames=4, Loops=0
+INFO: Storing Anim ID='palmon_WalkLoop', Texture=0x26407c3f498, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/palmon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/tentomon.json' using texture 'tentomon'
+INFO: Available frame indices in assets/sprites/player_digimon/tentomon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='tentomon_Idle', Texture=0x26407c32560, Frames=2, Loops=1
+INFO: Storing Anim ID='tentomon_Walk', Texture=0x26407c32560, Frames=4, Loops=0
+INFO: Storing Anim ID='tentomon_WalkLoop', Texture=0x26407c32560, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/tentomon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/patamon.json' using texture 'patamon'
+INFO: Available frame indices in assets/sprites/player_digimon/patamon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='patamon_Idle', Texture=0x26407c3f3b0, Frames=2, Loops=1
+INFO: Storing Anim ID='patamon_Walk', Texture=0x26407c3f3b0, Frames=4, Loops=0
+INFO: Storing Anim ID='patamon_WalkLoop', Texture=0x26407c3f3b0, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/patamon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/veedramon.json' using texture 'veedramon'
+INFO: Available frame indices in assets/sprites/player_digimon/veedramon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='veedramon_Idle', Texture=0x26407c3f0e0, Frames=2, Loops=1
+INFO: Storing Anim ID='veedramon_Walk', Texture=0x26407c3f0e0, Frames=4, Loops=0
+INFO: Storing Anim ID='veedramon_WalkLoop', Texture=0x26407c3f0e0, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/veedramon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/wizardmon.json' using texture 'wizardmon'
+INFO: Available frame indices in assets/sprites/player_digimon/wizardmon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='wizardmon_Idle', Texture=0x26407c3fed0, Frames=2, Loops=1
+INFO: Storing Anim ID='wizardmon_Walk', Texture=0x26407c3fed0, Frames=4, Loops=0
+INFO: Storing Anim ID='wizardmon_WalkLoop', Texture=0x26407c3fed0, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/wizardmon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/agumon_sheet.json' using texture 'agumon_sheet'
+WARN: Texture 'agumon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'agumon_sheet' not found in AssetManager for JSON 'assets/sprites/agumon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/gabumon_sheet.json' using texture 'gabumon_sheet'
+WARN: Texture 'gabumon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'gabumon_sheet' not found in AssetManager for JSON 'assets/sprites/gabumon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/biyomon_sheet.json' using texture 'biyomon_sheet'
+WARN: Texture 'biyomon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'biyomon_sheet' not found in AssetManager for JSON 'assets/sprites/biyomon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/gatomon_sheet.json' using texture 'gatomon_sheet'
+WARN: Texture 'gatomon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'gatomon_sheet' not found in AssetManager for JSON 'assets/sprites/gatomon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/gomamon_sheet.json' using texture 'gomamon_sheet'
+WARN: Texture 'gomamon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'gomamon_sheet' not found in AssetManager for JSON 'assets/sprites/gomamon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/palmon_sheet.json' using texture 'palmon_sheet'
+WARN: Texture 'palmon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'palmon_sheet' not found in AssetManager for JSON 'assets/sprites/palmon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/tentomon_sheet.json' using texture 'tentomon_sheet'
+WARN: Texture 'tentomon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'tentomon_sheet' not found in AssetManager for JSON 'assets/sprites/tentomon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/patamon_sheet.json' using texture 'patamon_sheet'
+WARN: Texture 'patamon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'patamon_sheet' not found in AssetManager for JSON 'assets/sprites/patamon_sheet.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/digimon/kuwagamon/animation.json' using texture 'kuwagamon_sheet'
+WARN: Texture 'kuwagamon_sheet' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'kuwagamon_sheet' not found in AssetManager for JSON 'assets/sprites/digimon/kuwagamon/animation.json'.
+INFO: Loading all enemy Digimon assets...
+INFO: Successfully loaded texture 'kuwagamon'.
+INFO: Successfully loaded texture 'andromon'.
+INFO: Successfully loaded texture 'devimon'.
+INFO: Successfully loaded texture 'etemon'.
+INFO: Successfully loaded texture 'kiwimon'.
+INFO: Successfully loaded texture 'monochromon'.
+ERROR: BASIC FILE CHECK FAILED for 'assets/sprites/enemy_digimon/tyrannomon.png'. File likely missing/inaccessible at this path relative to CWD.
+ERROR: Attempted IMG_Load would likely fail. IMG_GetError() currently reports: 
+INFO: Successfully loaded texture 'seadramon'.
+INFO: Successfully loaded texture 'shellmon'.
+WARN: Texture 'veedramon' already loaded. Skipping.
+WARN: Texture 'wizardmon' already loaded. Skipping.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/kuwagamon.json' using texture 'kuwagamon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/kuwagamon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='kuwagamon_Idle', Texture=0x26407c3ea20, Frames=2, Loops=1
+INFO: Storing Anim ID='kuwagamon_Walk', Texture=0x26407c3ea20, Frames=4, Loops=0
+INFO: Storing Anim ID='kuwagamon_WalkLoop', Texture=0x26407c3ea20, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/kuwagamon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/andromon.json' using texture 'andromon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/andromon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='andromon_Idle', Texture=0x26407c3eb60, Frames=2, Loops=1
+INFO: Storing Anim ID='andromon_Walk', Texture=0x26407c3eb60, Frames=4, Loops=0
+INFO: Storing Anim ID='andromon_WalkLoop', Texture=0x26407c3eb60, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/andromon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/devimon.json' using texture 'devimon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/devimon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='devimon_Idle', Texture=0x26407c3ebf8, Frames=2, Loops=1
+INFO: Storing Anim ID='devimon_Walk', Texture=0x26407c3ebf8, Frames=4, Loops=0
+INFO: Storing Anim ID='devimon_WalkLoop', Texture=0x26407c3ebf8, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/devimon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/etemon.json' using texture 'etemon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/etemon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='etemon_Idle', Texture=0x26407c3ede0, Frames=2, Loops=1
+INFO: Storing Anim ID='etemon_Walk', Texture=0x26407c3ede0, Frames=4, Loops=0
+INFO: Storing Anim ID='etemon_WalkLoop', Texture=0x26407c3ede0, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/etemon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/kiwimon.json' using texture 'kiwimon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/kiwimon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='kiwimon_Idle', Texture=0x26407c3ef20, Frames=2, Loops=1
+INFO: Storing Anim ID='kiwimon_Walk', Texture=0x26407c3ef20, Frames=4, Loops=0
+INFO: Storing Anim ID='kiwimon_WalkLoop', Texture=0x26407c3ef20, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/kiwimon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/monochromon.json' using texture 'monochromon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/monochromon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='monochromon_Idle', Texture=0x26407c3ee78, Frames=2, Loops=1
+INFO: Storing Anim ID='monochromon_Walk', Texture=0x26407c3ee78, Frames=4, Loops=0
+INFO: Storing Anim ID='monochromon_WalkLoop', Texture=0x26407c3ee78, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/monochromon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/tyrannomon.json' using texture 'tyrannomon'
+WARN: Texture 'tyrannomon' not found in AssetManager.
+ERROR: AnimationManager Error: Texture 'tyrannomon' not found in AssetManager for JSON 'assets/sprites/enemy_digimon/tyrannomon.json'.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/seadramon.json' using texture 'seadramon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/seadramon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='seadramon_Idle', Texture=0x26407c3f880, Frames=2, Loops=1
+INFO: Storing Anim ID='seadramon_Walk', Texture=0x26407c3f880, Frames=4, Loops=0
+INFO: Storing Anim ID='seadramon_WalkLoop', Texture=0x26407c3f880, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/seadramon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/enemy_digimon/shellmon.json' using texture 'shellmon'
+INFO: Available frame indices in assets/sprites/enemy_digimon/shellmon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO: Storing Anim ID='shellmon_Idle', Texture=0x26407c3fa68, Frames=2, Loops=1
+INFO: Storing Anim ID='shellmon_Walk', Texture=0x26407c3fa68, Frames=4, Loops=0
+INFO: Storing Anim ID='shellmon_WalkLoop', Texture=0x26407c3fa68, Frames=4, Loops=1
+INFO: AnimationManager: Finished processing 'assets/sprites/enemy_digimon/shellmon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/veedramon.json' using texture 'veedramon'
+INFO: Available frame indices in assets/sprites/player_digimon/veedramon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='veedramon_Idle', Texture=0x26407c3f0e0, Frames=2, Loops=1
+WARN: storeAnimation: Animation definition with ID 'veedramon_Idle' already exists. Overwriting.
+INFO: Storing Anim ID='veedramon_Walk', Texture=0x26407c3f0e0, Frames=4, Loops=0
+WARN: storeAnimation: Animation definition with ID 'veedramon_Walk' already exists. Overwriting.
+INFO: Storing Anim ID='veedramon_WalkLoop', Texture=0x26407c3f0e0, Frames=4, Loops=1
+WARN: storeAnimation: Animation definition with ID 'veedramon_WalkLoop' already exists. Overwriting.
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/veedramon.json'. Stored 3 animation definitions.
+INFO: AnimationManager: Loading animations from 'assets/sprites/player_digimon/wizardmon.json' using texture 'wizardmon'
+INFO: Available frame indices in assets/sprites/player_digimon/wizardmon.json:
+INFO:   Frame index 1: Rect = {0, 0, 64, 64}
+INFO:   Frame index 2: Rect = {64, 0, 64, 64}
+INFO:   Frame index 3: Rect = {0, 64, 64, 64}
+INFO:   Frame index 4: Rect = {64, 64, 64, 64}
+INFO:   Frame index 5: Rect = {0, 128, 64, 64}
+INFO:   Frame index 6: Rect = {64, 128, 64, 64}
+INFO:   Frame index 7: Rect = {0, 192, 64, 64}
+INFO:   Frame index 8: Rect = {64, 192, 64, 64}
+INFO:   Frame index 9: Rect = {0, 256, 64, 64}
+INFO:   Frame index 10: Rect = {64, 256, 64, 64}
+INFO: Storing Anim ID='wizardmon_Idle', Texture=0x26407c3fed0, Frames=2, Loops=1
+WARN: storeAnimation: Animation definition with ID 'wizardmon_Idle' already exists. Overwriting.
+INFO: Storing Anim ID='wizardmon_Walk', Texture=0x26407c3fed0, Frames=4, Loops=0
+WARN: storeAnimation: Animation definition with ID 'wizardmon_Walk' already exists. Overwriting.
+INFO: Storing Anim ID='wizardmon_WalkLoop', Texture=0x26407c3fed0, Frames=4, Loops=1
+WARN: storeAnimation: Animation definition with ID 'wizardmon_WalkLoop' already exists. Overwriting.
+INFO: AnimationManager: Finished processing 'assets/sprites/player_digimon/wizardmon.json'. Stored 3 animation definitions.
+INFO: Enemy Digimon asset loading failed
+WARN: Some enemy Digimon assets failed to load. EnemyTestState may not work properly.
+WARN: One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.
+INFO: AdventureState: Loaded node '' with step goal: 10
+ERROR: Failed to load foreground from node data, using default
+ERROR: Failed to load midground from node data, using default
+ERROR: Failed to load background from node data, using default
+INFO: Animator: Set animation to 'agumon_Idle'
+INFO: Initial AdventureState created and added.
+INFO: Animator: Resetting animation 'agumon_Idle'
+INFO: Called enter() on initial state.
+INFO: Fade step reset to NONE during initialization.
+INFO: Game Initialization Successful.
+INFO: --- Starting Game Loop ---
+INFO: Entering main game loop.
+INFO: Quit requested.
+INFO: --- Cleaning Up Game (via Game destructor) ---
+INFO: ConfigManager: Shutdown complete
+INFO: --- Exiting ---
+INFO: AdventureState Destructor called.
+INFO: AnimationManager instance destroyed.
+INFO: InputManager Shutdown.
+INFO: Shutting down AssetManager...
+INFO: AssetManager shutdown complete.
+INFO: Closing PCDisplay...
+INFO: PCDisplay closed.

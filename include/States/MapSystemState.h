@@ -2,7 +2,7 @@
 #define MAP_SYSTEM_STATE_H
 
 #include "states/GameState.h" // Corrected: Include GameState.h from states directory
-#include "Core/MapData.h"
+#include "core/MapData.h"
 #include <vector>
 #include <string>
 
@@ -62,6 +62,9 @@ namespace Digivice {
 
         void load_map_data(); // For initial hardcoded data loading
     };
+
+    // Helper function to create BackgroundLayerData using the new variant system
+    BackgroundLayerData createEnvironmentBackground(const std::string& environmentName, float parallaxX = 0.5f, float parallaxY = 0.0f);
 
 } // namespace Digivice
 

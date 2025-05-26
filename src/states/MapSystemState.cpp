@@ -6,9 +6,43 @@
 #include "UI/TextRenderer.h"   // Added for rendering text
 #include "platform/pc/pc_display.h" // Corrected path for PCDisplay.h
 #include "../../include/states/adventurestate.h" // Ensure AdventureState is included
+#include "core/BackgroundVariantManager.h" // Added for variant system
 #include <algorithm> // Added for std::min and std::max
+#include <iostream> // Added for std::cout debug logging
+#include <set> // Added for tracking failed texture attempts
+#include <cmath> // Added for sin function
 
 namespace Digivice {
+    
+    // Helper function to create BackgroundLayerData using the new variant system
+    BackgroundLayerData createEnvironmentBackground(const std::string& environmentName, float parallaxX, float parallaxY) {
+        BackgroundLayerData layerData;
+        layerData.parallaxFactorX = parallaxX;
+        layerData.parallaxFactorY = parallaxY;
+        
+        std::cout << "createEnvironmentBackground: Creating background for '" << environmentName << "'" << std::endl;
+        
+        // Initialize variants using the BackgroundVariantManager
+        BackgroundVariantManager::initializeVariantsForNode(layerData, environmentName);
+        
+        std::cout << "createEnvironmentBackground: Created background for '" << environmentName 
+                  << "' with FG:" << layerData.foregroundPaths.size() 
+                  << " MG:" << layerData.middlegroundPaths.size() 
+                  << " BG:" << layerData.backgroundPaths.size() << " variants" << std::endl;
+        
+        // Debug: Print first path from each layer to verify generation
+        if (!layerData.foregroundPaths.empty()) {
+            std::cout << "createEnvironmentBackground: Sample FG path: " << layerData.foregroundPaths[0] << std::endl;
+        }
+        if (!layerData.middlegroundPaths.empty()) {
+            std::cout << "createEnvironmentBackground: Sample MG path: " << layerData.middlegroundPaths[0] << std::endl;
+        }
+        if (!layerData.backgroundPaths.empty()) {
+            std::cout << "createEnvironmentBackground: Sample BG path: " << layerData.backgroundPaths[0] << std::endl;
+        }
+        
+        return layerData;
+    }
 
     MapSystemState::MapSystemState(Game* game) // Uncommented Game* game parameter
         : GameState(game), // Uncommented game, passing it to GameState constructor
@@ -153,108 +187,62 @@ namespace Digivice {
         tropicalJungleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png"; 
         tropicalJungleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_tj_idle.png"; 
         tropicalJungleNode.totalSteps = 20; 
-        tropicalJungleNode.isUnlocked = true;
-
-        tropicalJungleNode.adventureBackgroundLayers.push_back(
-            BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_0.png"}, 
-                0.5f,  
-                0.0f   
-            )
-        );
-        tropicalJungleNode.adventureBackgroundLayers.push_back(
-            BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_1.png"}, 
-                0.25f, 
-                0.0f   
-            )
-        );
-        tropicalJungleNode.adventureBackgroundLayers.push_back(
-            BackgroundLayerData(
-                {"assets/backgrounds/environments/01_file_island/01_tropical_jungle/layer_2.png"}, 
-                0.1f,  
-                0.0f   
-            )
-        );
+        tropicalJungleNode.isUnlocked = true;        tropicalJungleNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("tropicaljungle"));
         fileIsland.nodes.push_back(tropicalJungleNode);
         // --- Define Node: 02_lake ---
         NodeData lakeNode;
         lakeNode.id = "01_fi_node_02_lake"; // Adjusted ID prefix
         lakeNode.name = "LAKE";
-        lakeNode.continentId = fileIsland.id;
-        lakeNode.mapPositionX = 200.0f; 
+        lakeNode.continentId = fileIsland.id;        lakeNode.mapPositionX = 200.0f; 
         lakeNode.mapPositionY = 100.0f; 
         lakeNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        lakeNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
+        lakeNode.bossSpritePath = "assets/sprites/enemy_digimon/seadramon.png";
         lakeNode.totalSteps = 20; 
-        lakeNode.isUnlocked = true; 
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_0.png"}, 0.5f, 0.0f));
-        // Note: Lake has multiple layer_1 and layer_2 files, this is a simplified representation.
-        // You might need a more complex loading or data structure if these are used simultaneously or for animation.
-        // For now, picking one of each for simplicity.
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_1_0.png"}, 0.25f, 0.0f)); 
-        lakeNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/02_lake/layer_2_0.png"}, 0.1f, 0.0f));
+        lakeNode.isUnlocked = true;        lakeNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("lake"));
         fileIsland.nodes.push_back(lakeNode);
         // --- Define Node: 03_gear_savannah ---
         NodeData gearSavannahNode;
         gearSavannahNode.id = "01_fi_node_03_gear_savannah"; // Adjusted ID prefix
         gearSavannahNode.name = "GEAR SAVANNAH";
         gearSavannahNode.continentId = fileIsland.id;
-        gearSavannahNode.mapPositionX = 300.0f; 
-        gearSavannahNode.mapPositionY = 180.0f; 
+        gearSavannahNode.mapPositionX = 300.0f;        gearSavannahNode.mapPositionY = 180.0f; 
         gearSavannahNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        gearSavannahNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
+        gearSavannahNode.bossSpritePath = "assets/sprites/enemy_digimon/hagurumon.png";
         gearSavannahNode.totalSteps = 20; 
-        gearSavannahNode.isUnlocked = true; 
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_0.png"}, 0.5f, 0.0f));
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_1.png"}, 0.25f, 0.0f));
-        gearSavannahNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/03_gear_savannah/layer_2.png"}, 0.1f, 0.0f));
+        gearSavannahNode.isUnlocked = true;        gearSavannahNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("gearsavannah"));
         fileIsland.nodes.push_back(gearSavannahNode);
         // --- Define Node: 04_factorial_town ---
         NodeData factorialTownNode;
         factorialTownNode.id = "01_fi_node_04_factorial_town"; // Adjusted ID prefix
         factorialTownNode.name = "FACTORIAL TOWN";
-        factorialTownNode.continentId = fileIsland.id;
-        factorialTownNode.mapPositionX = 350.0f; 
+        factorialTownNode.continentId = fileIsland.id;        factorialTownNode.mapPositionX = 350.0f; 
         factorialTownNode.mapPositionY = 120.0f; 
         factorialTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        factorialTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
+        factorialTownNode.bossSpritePath = "assets/sprites/enemy_digimon/mekanorimon.png";
         factorialTownNode.totalSteps = 20; 
-        factorialTownNode.isUnlocked = true; 
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_0.png"}, 0.5f, 0.0f));
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_1.png"}, 0.25f, 0.0f));
-        factorialTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/04_factorial_town/layer_2.png"}, 0.1f, 0.0f));
+        factorialTownNode.isUnlocked = true;        factorialTownNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("factorialtown"));
         fileIsland.nodes.push_back(factorialTownNode);
         // --- Define Node: 05_toy_town ---
         NodeData toyTownNode;
         toyTownNode.id = "01_fi_node_05_toy_town"; // Adjusted ID prefix
         toyTownNode.name = "TOY TOWN";
-        toyTownNode.continentId = fileIsland.id;
-        toyTownNode.mapPositionX = 250.0f; 
+        toyTownNode.continentId = fileIsland.id;        toyTownNode.mapPositionX = 250.0f; 
         toyTownNode.mapPositionY = 220.0f; 
         toyTownNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        toyTownNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
-        toyTownNode.totalSteps = 20; 
-        toyTownNode.isUnlocked = true; 
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_0.png"}, 0.5f, 0.0f));
-        // Note: Toy Town has multiple layer_2 files. Using one for simplicity.
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_1.png"}, 0.25f, 0.0f));
-        toyTownNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/05_toy_town/layer_2_0.png"}, 0.1f, 0.0f));
+        toyTownNode.bossSpritePath = "assets/sprites/enemy_digimon/monzaemon.png";
+        toyTownNode.totalSteps = 20;        toyTownNode.isUnlocked = true; 
+        toyTownNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("toytown"));
         fileIsland.nodes.push_back(toyTownNode);
         // --- Define Node: 06_infinity_mountain ---
         NodeData infinityMountainNode;
         infinityMountainNode.id = "01_fi_node_06_infinity_mountain"; // Adjusted ID prefix
         infinityMountainNode.name = "INFINITY MOUNTAIN";
-        infinityMountainNode.continentId = fileIsland.id;
-        infinityMountainNode.mapPositionX = 180.0f; 
+        infinityMountainNode.continentId = fileIsland.id;        infinityMountainNode.mapPositionX = 180.0f; 
         infinityMountainNode.mapPositionY = 280.0f; 
         infinityMountainNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        infinityMountainNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png"; 
-        infinityMountainNode.totalSteps = 20; 
-        infinityMountainNode.isUnlocked = true; 
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_0.png"}, 0.5f, 0.0f));
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_1.png"}, 0.25f, 0.0f));
-        infinityMountainNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/01_file_island/06_infinity_mountain/layer_2.png"}, 0.1f, 0.0f));
+        infinityMountainNode.bossSpritePath = "assets/sprites/enemy_digimon/mammothmon.png";
+        infinityMountainNode.totalSteps = 20;        infinityMountainNode.isUnlocked = true; 
+        infinityMountainNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("infinitymountain"));
         fileIsland.nodes.push_back(infinityMountainNode);
         continents_.push_back(fileIsland);
 
@@ -272,12 +260,9 @@ namespace Digivice {
         freezelandNode.mapPositionX = 100.0f; 
         freezelandNode.mapPositionY = 100.0f;
         freezelandNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        freezelandNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        freezelandNode.totalSteps = 20;
-        freezelandNode.isUnlocked = true;
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_0.png"}, 0.5f, 0.0f));
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_1.png"}, 0.25f, 0.0f));
-        freezelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/01_freezeland/layer_2.png"}, 0.1f, 0.0f));
+        freezelandNode.bossSpritePath = "assets/sprites/enemy_digimon/frigimon.png";
+        freezelandNode.totalSteps = 20;        freezelandNode.isUnlocked = true;
+        freezelandNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("freezeland"));
         fileIslandBroken.nodes.push_back(freezelandNode);
 
         // Node: 02_ancientdinoregion
@@ -288,12 +273,9 @@ namespace Digivice {
         ancientDinoRegionNode.mapPositionX = 200.0f; 
         ancientDinoRegionNode.mapPositionY = 100.0f;
         ancientDinoRegionNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        ancientDinoRegionNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        ancientDinoRegionNode.totalSteps = 20;
-        ancientDinoRegionNode.isUnlocked = true;
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_0.png"}, 0.5f, 0.0f));
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_1.png"}, 0.25f, 0.0f));
-        ancientDinoRegionNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/02_ancientdinoregion/layer_2.png"}, 0.1f, 0.0f));
+        ancientDinoRegionNode.bossSpritePath = "assets/sprites/enemy_digimon/tyranomon.png";
+        ancientDinoRegionNode.totalSteps = 20;        ancientDinoRegionNode.isUnlocked = true;
+        ancientDinoRegionNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("ancientdinoregion"));
         fileIslandBroken.nodes.push_back(ancientDinoRegionNode);
         
         // Node: 03_overdellcemetary
@@ -304,12 +286,9 @@ namespace Digivice {
         overdellCemetaryNode.mapPositionX = 300.0f;
         overdellCemetaryNode.mapPositionY = 100.0f;
         overdellCemetaryNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        overdellCemetaryNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        overdellCemetaryNode.totalSteps = 20;
-        overdellCemetaryNode.isUnlocked = true;
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_0.png"}, 0.5f, 0.0f));
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_1.png"}, 0.25f, 0.0f));
-        overdellCemetaryNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/03_overdellcemetary/layer_2.png"}, 0.1f, 0.0f));
+        overdellCemetaryNode.bossSpritePath = "assets/sprites/enemy_digimon/phantomon.png";
+        overdellCemetaryNode.totalSteps = 20;        overdellCemetaryNode.isUnlocked = true;
+        overdellCemetaryNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("overdellcemetary"));
         fileIslandBroken.nodes.push_back(overdellCemetaryNode);
 
         // Node: 04_townofbeginnings
@@ -320,12 +299,9 @@ namespace Digivice {
         townOfBeginningsNode.mapPositionX = 100.0f;
         townOfBeginningsNode.mapPositionY = 200.0f;
         townOfBeginningsNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        townOfBeginningsNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        townOfBeginningsNode.totalSteps = 20;
-        townOfBeginningsNode.isUnlocked = true;
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_0.png"}, 0.5f, 0.0f));
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_1.png"}, 0.25f, 0.0f));
-        townOfBeginningsNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/04_townofbeginnings/layer_2.png"}, 0.1f, 0.0f));
+        townOfBeginningsNode.bossSpritePath = "assets/sprites/enemy_digimon/elecmon.png";
+        townOfBeginningsNode.totalSteps = 20;        townOfBeginningsNode.isUnlocked = true;
+        townOfBeginningsNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("townofbeginnings"));
         fileIslandBroken.nodes.push_back(townOfBeginningsNode);
         
         // Node: 05_infinitymountain2
@@ -336,12 +312,9 @@ namespace Digivice {
         infinityMountain2Node.mapPositionX = 200.0f;
         infinityMountain2Node.mapPositionY = 200.0f;
         infinityMountain2Node.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        infinityMountain2Node.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        infinityMountain2Node.totalSteps = 20;
-        infinityMountain2Node.isUnlocked = true;
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_0.png"}, 0.5f, 0.0f));
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_1.png"}, 0.25f, 0.0f));
-        infinityMountain2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/05_infinitymountain2/layer_2.png"}, 0.1f, 0.0f));
+        infinityMountain2Node.bossSpritePath = "assets/sprites/enemy_digimon/unimon.png";
+        infinityMountain2Node.totalSteps = 20;        infinityMountain2Node.isUnlocked = true;
+        infinityMountain2Node.adventureBackgroundLayers.push_back(createEnvironmentBackground("infinitymountain2"));
         fileIslandBroken.nodes.push_back(infinityMountain2Node);
 
         // Node: 06_opensea
@@ -352,12 +325,9 @@ namespace Digivice {
         openSeaNode.mapPositionX = 300.0f;
         openSeaNode.mapPositionY = 200.0f;
         openSeaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        openSeaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        openSeaNode.totalSteps = 20;
-        openSeaNode.isUnlocked = true;
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_0.png"}, 0.5f, 0.0f));
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_1.png"}, 0.25f, 0.0f));
-        openSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/02_file_island_broken/06_opensea/layer_2.png"}, 0.1f, 0.0f));
+        openSeaNode.bossSpritePath = "assets/sprites/enemy_digimon/whamon.png";
+        openSeaNode.totalSteps = 20;        openSeaNode.isUnlocked = true;
+        openSeaNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("opensea"));
         fileIslandBroken.nodes.push_back(openSeaNode);
 
         continents_.push_back(fileIslandBroken);
@@ -375,12 +345,9 @@ namespace Digivice {
         koromonsVillageNode.mapPositionX = 100.0f; 
         koromonsVillageNode.mapPositionY = 100.0f;
         koromonsVillageNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        koromonsVillageNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        koromonsVillageNode.totalSteps = 20;
-        koromonsVillageNode.isUnlocked = true;
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_0.png"}, 0.5f, 0.0f));
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_1.png"}, 0.25f, 0.0f));
-        koromonsVillageNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/01_koromonsvillage/layer_2.png"}, 0.1f, 0.0f));
+        koromonsVillageNode.bossSpritePath = "assets/sprites/enemy_digimon/koromon.png";
+        koromonsVillageNode.totalSteps = 20;        koromonsVillageNode.isUnlocked = true;
+        koromonsVillageNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("koromonsvillage"));
         serverContinent.nodes.push_back(koromonsVillageNode);
 
         NodeData scColosseumNode; 
@@ -390,12 +357,9 @@ namespace Digivice {
         scColosseumNode.mapPositionX = 150.0f; 
         scColosseumNode.mapPositionY = 100.0f;
         scColosseumNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        scColosseumNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        scColosseumNode.totalSteps = 20;
-        scColosseumNode.isUnlocked = true;
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_0.png"}, 0.5f, 0.0f));
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_1.png"}, 0.25f, 0.0f));
-        scColosseumNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/02_colosseum/layer_2.png"}, 0.1f, 0.0f));
+        scColosseumNode.bossSpritePath = "assets/sprites/enemy_digimon/leomon.png";
+        scColosseumNode.totalSteps = 20;        scColosseumNode.isUnlocked = true;
+        scColosseumNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("colosseum"));
         serverContinent.nodes.push_back(scColosseumNode);
 
         NodeData desertNode;
@@ -405,12 +369,9 @@ namespace Digivice {
         desertNode.mapPositionX = 200.0f; 
         desertNode.mapPositionY = 100.0f;
         desertNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        desertNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        desertNode.totalSteps = 20;
-        desertNode.isUnlocked = true;
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_0.png"}, 0.5f, 0.0f));
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_1.png"}, 0.25f, 0.0f));
-        desertNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/03_desert/layer_2.png"}, 0.1f, 0.0f));
+        desertNode.bossSpritePath = "assets/sprites/enemy_digimon/monochromon.png";
+        desertNode.totalSteps = 20;        desertNode.isUnlocked = true;
+        desertNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("desert"));
         serverContinent.nodes.push_back(desertNode);
         
         NodeData piccolomonsForestNode;
@@ -420,12 +381,9 @@ namespace Digivice {
         piccolomonsForestNode.mapPositionX = 250.0f; 
         piccolomonsForestNode.mapPositionY = 100.0f;
         piccolomonsForestNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        piccolomonsForestNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        piccolomonsForestNode.totalSteps = 20;
-        piccolomonsForestNode.isUnlocked = true;
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_0.png"}, 0.5f, 0.0f));
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_1.png"}, 0.25f, 0.0f));
-        piccolomonsForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/04_piccolomonsforest/layer_2.png"}, 0.1f, 0.0f));
+        piccolomonsForestNode.bossSpritePath = "assets/sprites/enemy_digimon/cherrymon.png";
+        piccolomonsForestNode.totalSteps = 20;        piccolomonsForestNode.isUnlocked = true;
+        piccolomonsForestNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("piccolomonsforest"));
         serverContinent.nodes.push_back(piccolomonsForestNode);
 
         NodeData reversePyramidNode;
@@ -435,12 +393,9 @@ namespace Digivice {
         reversePyramidNode.mapPositionX = 300.0f; 
         reversePyramidNode.mapPositionY = 100.0f;
         reversePyramidNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        reversePyramidNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        reversePyramidNode.totalSteps = 20;
-        reversePyramidNode.isUnlocked = true;
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_0.png"}, 0.5f, 0.0f));
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_1.png"}, 0.25f, 0.0f));
-        reversePyramidNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/05_reversepyramid/layer_2.png"}, 0.1f, 0.0f));
+        reversePyramidNode.bossSpritePath = "assets/sprites/enemy_digimon/sandyanmamon.png";
+        reversePyramidNode.totalSteps = 20;        reversePyramidNode.isUnlocked = true;
+        reversePyramidNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("reversepyramid"));
         serverContinent.nodes.push_back(reversePyramidNode);
 
         NodeData amusementParkNode;
@@ -450,12 +405,9 @@ namespace Digivice {
         amusementParkNode.mapPositionX = 100.0f; 
         amusementParkNode.mapPositionY = 200.0f;
         amusementParkNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        amusementParkNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        amusementParkNode.totalSteps = 20;
-        amusementParkNode.isUnlocked = true;
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_0.png"}, 0.5f, 0.0f));
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_1.png"}, 0.25f, 0.0f));
-        amusementParkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/06_amusementpark/layer_2.png"}, 0.1f, 0.0f));
+        amusementParkNode.bossSpritePath = "assets/sprites/enemy_digimon/etemon.png";
+        amusementParkNode.totalSteps = 20;        amusementParkNode.isUnlocked = true;
+        amusementParkNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("amusementpark"));
         serverContinent.nodes.push_back(amusementParkNode);
         
         NodeData restaurantNode;
@@ -465,12 +417,9 @@ namespace Digivice {
         restaurantNode.mapPositionX = 150.0f; 
         restaurantNode.mapPositionY = 200.0f;
         restaurantNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        restaurantNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        restaurantNode.totalSteps = 20;
-        restaurantNode.isUnlocked = true;
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_0.png"}, 0.5f, 0.0f));
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_1.png"}, 0.25f, 0.0f));
-        restaurantNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/07_restaurant/layer_2.png"}, 0.1f, 0.0f));
+        restaurantNode.bossSpritePath = "assets/sprites/enemy_digimon/digitamamon.png";
+        restaurantNode.totalSteps = 20;        restaurantNode.isUnlocked = true;
+        restaurantNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("restaurant"));
         serverContinent.nodes.push_back(restaurantNode);
 
         NodeData differentSpaceNode;
@@ -480,12 +429,9 @@ namespace Digivice {
         differentSpaceNode.mapPositionX = 200.0f; 
         differentSpaceNode.mapPositionY = 200.0f;
         differentSpaceNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        differentSpaceNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        differentSpaceNode.totalSteps = 20;
-        differentSpaceNode.isUnlocked = true;
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_0.png"}, 0.5f, 0.0f));
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_1.png"}, 0.25f, 0.0f));
-        differentSpaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/08_differentspace/layer_2.png"}, 0.1f, 0.0f));
+        differentSpaceNode.bossSpritePath = "assets/sprites/enemy_digimon/vademon.png";
+        differentSpaceNode.totalSteps = 20;        differentSpaceNode.isUnlocked = true;
+        differentSpaceNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("differentspace"));
         serverContinent.nodes.push_back(differentSpaceNode);
         
         NodeData gekomonsCastleNode;
@@ -495,12 +441,9 @@ namespace Digivice {
         gekomonsCastleNode.mapPositionX = 250.0f; 
         gekomonsCastleNode.mapPositionY = 200.0f;
         gekomonsCastleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        gekomonsCastleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        gekomonsCastleNode.totalSteps = 20;
-        gekomonsCastleNode.isUnlocked = true;
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_0.png"}, 0.5f, 0.0f));
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_1.png"}, 0.25f, 0.0f));
-        gekomonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/09_gekomonscastle/layer_2.png"}, 0.1f, 0.0f));
+        gekomonsCastleNode.bossSpritePath = "assets/sprites/enemy_digimon/gekomon.png";
+        gekomonsCastleNode.totalSteps = 20;        gekomonsCastleNode.isUnlocked = true;
+        gekomonsCastleNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("gekomonscastle"));
         serverContinent.nodes.push_back(gekomonsCastleNode);
 
         NodeData myotismonsCastleNode;
@@ -510,12 +453,9 @@ namespace Digivice {
         myotismonsCastleNode.mapPositionX = 300.0f; 
         myotismonsCastleNode.mapPositionY = 200.0f;
         myotismonsCastleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        myotismonsCastleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        myotismonsCastleNode.totalSteps = 20;
-        myotismonsCastleNode.isUnlocked = true;
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_0.png"}, 0.5f, 0.0f));
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_1.png"}, 0.25f, 0.0f));
-        myotismonsCastleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/03_server_continent/10_myotismonscastle/layer_2.png"}, 0.1f, 0.0f));
+        myotismonsCastleNode.bossSpritePath = "assets/sprites/enemy_digimon/myotismon.png";
+        myotismonsCastleNode.totalSteps = 20;        myotismonsCastleNode.isUnlocked = true;
+        myotismonsCastleNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("myotismonscastle"));
         serverContinent.nodes.push_back(myotismonsCastleNode);
 
         continents_.push_back(serverContinent);
@@ -533,12 +473,9 @@ namespace Digivice {
         hikarigoakaNode.mapPositionX = 100.0f; 
         hikarigoakaNode.mapPositionY = 100.0f;
         hikarigoakaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        hikarigoakaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        hikarigoakaNode.totalSteps = 20;
-        hikarigoakaNode.isUnlocked = true;
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_0.png"}, 0.5f, 0.0f));
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_1.png"}, 0.25f, 0.0f));
-        hikarigoakaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/01_hikarigoaka/layer_2.png"}, 0.1f, 0.0f));
+        hikarigoakaNode.bossSpritePath = "assets/sprites/enemy_digimon/raremon.png";
+        hikarigoakaNode.totalSteps = 20;        hikarigoakaNode.isUnlocked = true;
+        hikarigoakaNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("hikarigoaka"));
         tokyo.nodes.push_back(hikarigoakaNode);
         
         NodeData harumiNode;
@@ -548,12 +485,9 @@ namespace Digivice {
         harumiNode.mapPositionX = 200.0f; 
         harumiNode.mapPositionY = 100.0f;
         harumiNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        harumiNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        harumiNode.totalSteps = 20;
-        harumiNode.isUnlocked = true;
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_0.png"}, 0.5f, 0.0f));
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_1.png"}, 0.25f, 0.0f));
-        harumiNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/02_harumi/layer_2.png"}, 0.1f, 0.0f));
+        harumiNode.bossSpritePath = "assets/sprites/enemy_digimon/gesomon.png";
+        harumiNode.totalSteps = 20;        harumiNode.isUnlocked = true;
+        harumiNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("harumi"));
         tokyo.nodes.push_back(harumiNode);
 
         NodeData pierNode;
@@ -563,12 +497,9 @@ namespace Digivice {
         pierNode.mapPositionX = 300.0f; 
         pierNode.mapPositionY = 100.0f;
         pierNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        pierNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        pierNode.totalSteps = 20;
-        pierNode.isUnlocked = true;
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_0.png"}, 0.5f, 0.0f));
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_1.png"}, 0.25f, 0.0f));
-        pierNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/03_pier/layer_2.png"}, 0.1f, 0.0f));
+        pierNode.bossSpritePath = "assets/sprites/enemy_digimon/shellmon.png";
+        pierNode.totalSteps = 20;        pierNode.isUnlocked = true;
+        pierNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("pier"));
         tokyo.nodes.push_back(pierNode);
 
         NodeData towerNode;
@@ -578,12 +509,9 @@ namespace Digivice {
         towerNode.mapPositionX = 100.0f; 
         towerNode.mapPositionY = 200.0f;
         towerNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        towerNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        towerNode.totalSteps = 20;
-        towerNode.isUnlocked = true;
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_0.png"}, 0.5f, 0.0f));
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_1.png"}, 0.25f, 0.0f));
-        towerNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/04_tower/layer_2.png"}, 0.1f, 0.0f));
+        towerNode.bossSpritePath = "assets/sprites/enemy_digimon/machinedramon.png";
+        towerNode.totalSteps = 20;        towerNode.isUnlocked = true;
+        towerNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("tower"));
         tokyo.nodes.push_back(towerNode);
         
         NodeData shibuyaNode;
@@ -593,12 +521,9 @@ namespace Digivice {
         shibuyaNode.mapPositionX = 200.0f; 
         shibuyaNode.mapPositionY = 200.0f;
         shibuyaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        shibuyaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
-        shibuyaNode.totalSteps = 20;
-        shibuyaNode.isUnlocked = true;
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_0.png"}, 0.5f, 0.0f));
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_1.png"}, 0.25f, 0.0f));
-        shibuyaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/05_shibuya/layer_2.png"}, 0.1f, 0.0f));
+        shibuyaNode.bossSpritePath = "assets/sprites/enemy_digimon/ogremon.png";
+        shibuyaNode.totalSteps = 20;        shibuyaNode.isUnlocked = true;
+        shibuyaNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("shibuya"));
         tokyo.nodes.push_back(shibuyaNode);
 
         NodeData exhibitionCentreNode;
@@ -608,12 +533,9 @@ namespace Digivice {
         exhibitionCentreNode.mapPositionX = 300.0f; 
         exhibitionCentreNode.mapPositionY = 200.0f;
         exhibitionCentreNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        exhibitionCentreNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        exhibitionCentreNode.bossSpritePath = "assets/sprites/enemy_digimon/andromon.png";
         exhibitionCentreNode.totalSteps = 20;
-        exhibitionCentreNode.isUnlocked = true;
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_0.png"}, 0.5f, 0.0f));
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_1.png"}, 0.25f, 0.0f));
-        exhibitionCentreNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/04_tokyo/06_exhibitioncentre/layer_2.png"}, 0.1f, 0.0f));
+        exhibitionCentreNode.isUnlocked = true;        exhibitionCentreNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("exhibitioncentre"));
         tokyo.nodes.push_back(exhibitionCentreNode);
 
         continents_.push_back(tokyo);
@@ -631,12 +553,9 @@ namespace Digivice {
         smJungleNode.mapPositionX = 100.0f; 
         smJungleNode.mapPositionY = 100.0f;
         smJungleNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        smJungleNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        smJungleNode.bossSpritePath = "assets/sprites/enemy_digimon/kiwimon.png";
         smJungleNode.totalSteps = 20;
-        smJungleNode.isUnlocked = true;
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_0.png"}, 0.5f, 0.0f));
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_1.png"}, 0.25f, 0.0f));
-        smJungleNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/01_jungle/layer_2.png"}, 0.1f, 0.0f));
+        smJungleNode.isUnlocked = true;        smJungleNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("jungle"));
         spiralMountain.nodes.push_back(smJungleNode);
         
         NodeData smColosseum2Node;
@@ -646,12 +565,9 @@ namespace Digivice {
         smColosseum2Node.mapPositionX = 200.0f; 
         smColosseum2Node.mapPositionY = 100.0f;
         smColosseum2Node.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        smColosseum2Node.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        smColosseum2Node.bossSpritePath = "assets/sprites/enemy_digimon/colosseumgreymon.png";
         smColosseum2Node.totalSteps = 20;
-        smColosseum2Node.isUnlocked = true;
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_0.png"}, 0.5f, 0.0f));
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_1.png"}, 0.25f, 0.0f));
-        smColosseum2Node.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/02_colosseum2/layer_2.png"}, 0.1f, 0.0f));
+        smColosseum2Node.isUnlocked = true;        smColosseum2Node.adventureBackgroundLayers.push_back(createEnvironmentBackground("colosseum2"));
         spiralMountain.nodes.push_back(smColosseum2Node);
 
         NodeData digitalSeaNode;
@@ -661,12 +577,9 @@ namespace Digivice {
         digitalSeaNode.mapPositionX = 300.0f; 
         digitalSeaNode.mapPositionY = 100.0f;
         digitalSeaNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        digitalSeaNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        digitalSeaNode.bossSpritePath = "assets/sprites/enemy_digimon/megaseadramon.png";
         digitalSeaNode.totalSteps = 20;
-        digitalSeaNode.isUnlocked = true;
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_0.png"}, 0.5f, 0.0f));
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_1.png"}, 0.25f, 0.0f));
-        digitalSeaNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/03_digitalsea/layer_2.png"}, 0.1f, 0.0f));
+        digitalSeaNode.isUnlocked = true;        digitalSeaNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("digitalsea"));
         spiralMountain.nodes.push_back(digitalSeaNode);
 
         NodeData digitalForestNode;
@@ -676,12 +589,9 @@ namespace Digivice {
         digitalForestNode.mapPositionX = 100.0f; 
         digitalForestNode.mapPositionY = 200.0f;
         digitalForestNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        digitalForestNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        digitalForestNode.bossSpritePath = "assets/sprites/enemy_digimon/floramon.png";
         digitalForestNode.totalSteps = 20;
-        digitalForestNode.isUnlocked = true;
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_0.png"}, 0.5f, 0.0f));
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_1.png"}, 0.25f, 0.0f));
-        digitalForestNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/04_digitalforest/layer_2.png"}, 0.1f, 0.0f));
+        digitalForestNode.isUnlocked = true;        digitalForestNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("digitalforest"));
         spiralMountain.nodes.push_back(digitalForestNode);
         
         NodeData digitalCityNode;
@@ -691,12 +601,9 @@ namespace Digivice {
         digitalCityNode.mapPositionX = 200.0f; 
         digitalCityNode.mapPositionY = 200.0f;
         digitalCityNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        digitalCityNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        digitalCityNode.bossSpritePath = "assets/sprites/enemy_digimon/guardromon.png";
         digitalCityNode.totalSteps = 20;
-        digitalCityNode.isUnlocked = true;
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_0.png"}, 0.5f, 0.0f));
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_1.png"}, 0.25f, 0.0f));
-        digitalCityNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/05_digitalcity/layer_2.png"}, 0.1f, 0.0f));
+        digitalCityNode.isUnlocked = true;        digitalCityNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("digitalcity"));
         spiralMountain.nodes.push_back(digitalCityNode);
 
         NodeData wastelandNode;
@@ -706,12 +613,9 @@ namespace Digivice {
         wastelandNode.mapPositionX = 300.0f; 
         wastelandNode.mapPositionY = 200.0f;
         wastelandNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        wastelandNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        wastelandNode.bossSpritePath = "assets/sprites/enemy_digimon/bakemon.png";
         wastelandNode.totalSteps = 20;
-        wastelandNode.isUnlocked = true;
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_0.png"}, 0.5f, 0.0f));
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_1.png"}, 0.25f, 0.0f));
-        wastelandNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/05_spiral_mountain/06_wasteland/layer_2.png"}, 0.1f, 0.0f));
+        wastelandNode.isUnlocked = true;        wastelandNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("wasteland"));
         spiralMountain.nodes.push_back(wastelandNode);
         
         continents_.push_back(spiralMountain);
@@ -729,12 +633,9 @@ namespace Digivice {
         subspaceNode.mapPositionX = 150.0f; 
         subspaceNode.mapPositionY = 150.0f; 
         subspaceNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        subspaceNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        subspaceNode.bossSpritePath = "assets/sprites/enemy_digimon/piedmon.png";
         subspaceNode.totalSteps = 20;
-        subspaceNode.isUnlocked = true;
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_0.png"}, 0.5f, 0.0f));
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_1.png"}, 0.25f, 0.0f));
-        subspaceNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/06_subspace/01_subspace/layer_2.png"}, 0.1f, 0.0f));
+        subspaceNode.isUnlocked = true;        subspaceNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("subspace"));
         subspace.nodes.push_back(subspaceNode);
         continents_.push_back(subspace);
 
@@ -751,12 +652,9 @@ namespace Digivice {
         networkNode.mapPositionX = 150.0f; 
         networkNode.mapPositionY = 150.0f; 
         networkNode.unlockedSpritePath = "assets/ui/node_white_placeholder.png";
-        networkNode.bossSpritePath = "assets/sprites/enemies/boss_placeholder_generic_idle.png";
+        networkNode.bossSpritePath = "assets/sprites/enemy_digimon/keramon.png";
         networkNode.totalSteps = 20;
-        networkNode.isUnlocked = true;
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_0.png"}, 0.5f, 0.0f));
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_1.png"}, 0.25f, 0.0f));
-        networkNode.adventureBackgroundLayers.push_back(BackgroundLayerData({"assets/backgrounds/environments/07_network/01_network/layer_2.png"}, 0.1f, 0.0f));
+        networkNode.isUnlocked = true;        networkNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("network"));
         network.nodes.push_back(networkNode);
         continents_.push_back(network);
 
@@ -1032,13 +930,29 @@ namespace Digivice {
             // Calculate position for the node icon
             int iconX = static_cast<int>(node.mapPositionX) - (NODE_ICON_SIZE / 2);
             int iconY = static_cast<int>(node.mapPositionY) - (NODE_ICON_SIZE / 2);
-            
-            // Load the node sprite if needed
+              // Load the node sprite if needed (with caching to prevent per-frame loading attempts)
             std::string nodeTextureId = node.id + "_icon";
             SDL_Texture* nodeTexture = assetManager->getTexture(nodeTextureId);
-            if (!nodeTexture) {
-                // If we don't have a specific node icon yet, load the placeholder
-                if (assetManager->loadTexture(nodeTextureId, node.unlockedSpritePath)) {
+            
+            // Use a static set to track failed loading attempts to prevent repeated spam
+            static std::set<std::string> failedTextureAttempts;
+            
+            if (!nodeTexture && failedTextureAttempts.find(nodeTextureId) == failedTextureAttempts.end()) {
+                // First attempt to load the specific node icon
+                if (!assetManager->loadTexture(nodeTextureId, node.unlockedSpritePath)) {
+                    // Mark this texture as failed to prevent future spam
+                    failedTextureAttempts.insert(nodeTextureId);
+                    
+                    // Try to load a generic fallback node icon
+                    std::string fallbackTextureId = "generic_node_icon";
+                    SDL_Texture* fallbackTexture = assetManager->getTexture(fallbackTextureId);
+                    if (!fallbackTexture && failedTextureAttempts.find(fallbackTextureId) == failedTextureAttempts.end()) {
+                        // Try to load a generic placeholder - only attempt once
+                        if (!assetManager->loadTexture(fallbackTextureId, "assets/ui/generic_node_icon.png")) {
+                            failedTextureAttempts.insert(fallbackTextureId);
+                        }
+                    }
+                } else {
                     nodeTexture = assetManager->getTexture(nodeTextureId);
                 }
             }
@@ -1107,16 +1021,14 @@ namespace Digivice {
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
         
         textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, nodeTextScale);
-    }
-
-    void MapSystemState::render_node_detail(PCDisplay& display) {
+    }    void MapSystemState::render_node_detail(PCDisplay& display) {
         if (!game_ptr) return;
-        AssetManager* assetManager = game_ptr->getAssetManager(); // Added for boss sprites
+        AssetManager* assetManager = game_ptr->getAssetManager();
         TextRenderer* textRenderer = game_ptr->getTextRenderer();
 
         if (!assetManager) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MapSystemState::render_node_detail - AssetManager is null!");
-            if (textRenderer) { // Check if textRenderer is valid before using
+            if (textRenderer) {
                 textRenderer->drawText(display.getRenderer(), "ERROR: ASSET MANAGER NULL", 10, 10, 1.0f);
             }
             return;
@@ -1128,68 +1040,98 @@ namespace Digivice {
 
         if (currentContinentIndex_ < 0 || currentContinentIndex_ >= static_cast<int>(continents_.size()) ||
             currentNodeIndex_ < 0 || currentNodeIndex_ >= static_cast<int>(continents_[currentContinentIndex_].nodes.size())) {
-            textRenderer->drawText(display.getRenderer(), "NODE DETAIL: INVALID NODE/CONTINENT", 10, 70, 1.0f); // Changed to uppercase
+            textRenderer->drawText(display.getRenderer(), "NODE DETAIL: INVALID NODE/CONTINENT", 10, 70, 1.0f);
             return;
         }
         
         const auto& node = continents_[currentContinentIndex_].nodes[currentNodeIndex_];
         
-        // Render basic info for now
         int screenWidth = 0, screenHeight = 0;
         display.getWindowSize(screenWidth, screenHeight);
 
-        // Display Node Name
-        float nodeNameScale_detail = 1.5f;
-        SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name); // Name is already uppercase
-        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * nodeNameScale_detail;
-        // float scaled_node_name_height_detail = static_cast<float>(unscaled_node_name_size_detail.y) * nodeNameScale_detail; // Not needed if Y is fixed
-        textRenderer->drawText(display.getRenderer(), node.name, (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2, 30, nodeNameScale_detail);
+        // Render fullscreen environment background layers behind UI
+        if (!node.adventureBackgroundLayers.empty()) {
+            const auto& layerData = node.adventureBackgroundLayers[0]; // Use the first (and usually only) layer
+            
+            // Define fullscreen destination rect
+            SDL_Rect fullscreenRect = { 0, 0, screenWidth, screenHeight };
+            
+            // Render Background Layer (BG) - furthest back
+            if (!layerData.backgroundPaths.empty()) {
+                std::string bgPath = BackgroundVariantManager::getSelectedPath(
+                    layerData.backgroundPaths, layerData.selectedBackgroundVariant);
+                std::string bgTextureId = node.id + "_nodedetail_bg";
+                
+                SDL_Texture* bgTexture = assetManager->getTexture(bgTextureId);
+                if (!bgTexture && !bgPath.empty()) {
+                    if (assetManager->loadTexture(bgTextureId, bgPath)) {
+                        bgTexture = assetManager->getTexture(bgTextureId);
+                        std::cout << "MapSystemState: Loaded node detail BG: " << bgPath << std::endl;
+                    }
+                }
+                
+                if (bgTexture) {
+                    display.drawTexture(bgTexture, nullptr, &fullscreenRect);
+                }
+            }
+            
+            // Render Middleground Layer (MG) - middle depth
+            if (!layerData.middlegroundPaths.empty()) {
+                std::string mgPath = BackgroundVariantManager::getSelectedPath(
+                    layerData.middlegroundPaths, layerData.selectedMiddlegroundVariant);
+                std::string mgTextureId = node.id + "_nodedetail_mg";
+                
+                SDL_Texture* mgTexture = assetManager->getTexture(mgTextureId);
+                if (!mgTexture && !mgPath.empty()) {
+                    if (assetManager->loadTexture(mgTextureId, mgPath)) {
+                        mgTexture = assetManager->getTexture(mgTextureId);
+                        std::cout << "MapSystemState: Loaded node detail MG: " << mgPath << std::endl;
+                    }
+                }
+                
+                if (mgTexture) {
+                    display.drawTexture(mgTexture, nullptr, &fullscreenRect);
+                }
+            }
+            
+            // Render Foreground Layer (FG) - closest to camera
+            if (!layerData.foregroundPaths.empty()) {
+                std::string fgPath = BackgroundVariantManager::getSelectedPath(
+                    layerData.foregroundPaths, layerData.selectedForegroundVariant);
+                std::string fgTextureId = node.id + "_nodedetail_fg";
+                
+                SDL_Texture* fgTexture = assetManager->getTexture(fgTextureId);
+                if (!fgTexture && !fgPath.empty()) {
+                    if (assetManager->loadTexture(fgTextureId, fgPath)) {
+                        fgTexture = assetManager->getTexture(fgTextureId);
+                        std::cout << "MapSystemState: Loaded node detail FG: " << fgPath << std::endl;
+                    }
+                }
+                
+                if (fgTexture) {
+                    display.drawTexture(fgTexture, nullptr, &fullscreenRect);
+                }
+            }
+        }
+        
+        // Render semi-transparent UI overlay panel
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(display.getRenderer(), 0, 20, 60, 180); // Semi-transparent dark blue
+        SDL_RenderFillRect(display.getRenderer(), nullptr); // Fill entire screen
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
 
-        // Display "NODE DETAIL VIEW (WIP)" or more specific details
-        // textRenderer->drawText(display.getRenderer(), "NODE DETAIL VIEW (WIP)", 10, 70, 1.0f); // Changed to uppercase
+        // Display Node Name on top of overlay
+        float nodeNameScale_detail = 1.5f;
+        SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name);
+        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * nodeNameScale_detail;
+        textRenderer->drawText(display.getRenderer(), node.name, (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2, 30, nodeNameScale_detail);
 
         // Display Step Count
         std::string stepsText = "STEPS: " + std::to_string(node.totalSteps);
         float stepsTextScale = 1.0f;
         SDL_Point unscaled_steps_text_size = textRenderer->getTextDimensions(stepsText);
         float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * stepsTextScale;
-        // float scaled_steps_text_height = static_cast<float>(unscaled_steps_text_size.y) * stepsTextScale; // Not needed if Y is fixed
-        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);
-          // Load and render the environment background as a preview
-        if (!node.adventureBackgroundLayers.empty() && node.adventureBackgroundLayers.size() >= 3) {
-            // Use the background layer (layer 2) as a preview
-            const auto& bgLayer = node.adventureBackgroundLayers[2]; // Background layer
-            
-            if (!bgLayer.texturePaths.empty()) {
-                std::string bgTextureId = node.id + "_bg_preview";
-                SDL_Texture* bgTexture = assetManager->getTexture(bgTextureId);
-                
-                if (!bgTexture) {
-                    // Load the texture if it's not already loaded
-                    if (assetManager->loadTexture(bgTextureId, bgLayer.texturePaths[0])) {
-                        bgTexture = assetManager->getTexture(bgTextureId);
-                    }
-                }
-                
-                if (bgTexture) {
-                    // Draw the background in the center area of the screen
-                    int previewWidth = screenWidth / 2;
-                    int previewHeight = screenHeight / 3;
-                    SDL_Rect dstRect = {
-                        (screenWidth - previewWidth) / 2,
-                        80, // Position below the title
-                        previewWidth,
-                        previewHeight
-                    };
-                    display.drawTexture(bgTexture, nullptr, &dstRect);
-                    
-                    // Draw a frame around the preview
-                    SDL_SetRenderDrawColor(display.getRenderer(), 255, 255, 255, 255);
-                    SDL_RenderDrawRect(display.getRenderer(), &dstRect);
-                }
-            }
-        }
-        
+        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);        
         // Load and render the boss sprite
         std::string bossTextureId = node.id + "_boss";
         SDL_Texture* bossTexture = assetManager->getTexture(bossTextureId);

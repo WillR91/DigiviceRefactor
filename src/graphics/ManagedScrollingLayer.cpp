@@ -98,42 +98,23 @@ void ManagedScrollingLayer::setScrollSpeed(float speed) {
 
 void ManagedScrollingLayer::update(float deltaTime) {
     if (currentTextureWidth_ == 0) return; // Avoid division by zero or issues if texture not loaded
-
+    
     float scrollAmount = scrollSpeed_ * deltaTime;
-    scrollOffset_ -= scrollAmount; // Player moves right, so background elements move from R to L on screen
-
-    bool variantChanged = false;
-
-    // Check if the texture has scrolled at least one full width to the left
-    if (scrollOffset_ <= -static_cast<float>(currentTextureWidth_)) {
-        // Normalize scrollOffset_ using fmod.
-        // For a negative scrollOffset_ and positive currentTextureWidth_,
-        // std::fmod will return a value in (-currentTextureWidth_, 0].
-        // Example: fmod(-301.0, 300.0) -> -1.0
-        // Example: fmod(-300.0, 300.0) -> 0.0 (or -0.0)
-        scrollOffset_ = std::fmod(scrollOffset_, static_cast<float>(currentTextureWidth_));
-
-        if (texturePaths_.size() > 1) {
-            currentVariantIndex_ = (currentVariantIndex_ + 1) % texturePaths_.size();
-            variantChanged = true;
-        }
+    scrollOffset_ -= scrollAmount; // Background scrolls left to right to simulate player moving left
+      // Handle wrapping for negative scroll offset values using numerically stable approach
+    // This ensures scrollOffset_ always remains in the range [0, currentTextureWidth_)
+    float textureWidthf = static_cast<float>(currentTextureWidth_);
+    while (scrollOffset_ < 0.0f) {
+        scrollOffset_ += textureWidthf;
     }
-    // It is highly unlikely that scrollOffset_ will become positive if it starts at 0
-    // and scrollSpeed_ is positive, as scrollAmount is subtracted.
-    // However, if there was a case where scrollOffset_ could become > 0 (e.g. scrollSpeed_ becomes negative briefly),
-    // a similar fmod and variant change logic might be needed:
-    // else if (scrollOffset_ > 0.0f) { // Scrolled "backwards" past the origin
-    //     scrollOffset_ = std::fmod(scrollOffset_, static_cast<float>(currentTextureWidth_));
-    //     // If it was positive, fmod might keep it positive, e.g. fmod(1.0, 300.0) -> 1.0.
-    //     // We need it in (-width, 0]. So, if it's positive, subtract width.
-    //     if (scrollOffset_ > 0.0f) { // This condition might seem redundant with the else-if, but fmod could be 0
-    //         scrollOffset_ -= static_cast<float>(currentTextureWidth_);
-    //     }
-    //     if (texturePaths_.size() > 1) {
-    //         currentVariantIndex_ = (currentVariantIndex_ - 1 + texturePaths_.size()) % texturePaths_.size(); // Cycle backwards
-    //         variantChanged = true;
-    //     }
-    // }
+    while (scrollOffset_ >= textureWidthf) {
+        scrollOffset_ -= textureWidthf;
+    }
+    
+    bool variantChanged = false;
+    // Note: Since we normalize scrollOffset_ every frame, we don't need boundary checking
+    // for variant cycling. Variant cycling could be implemented based on distance traveled
+    // or time elapsed if needed in the future.
 
 
     if (variantChanged) {

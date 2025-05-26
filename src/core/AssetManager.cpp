@@ -87,9 +87,14 @@ SDL_Texture* AssetManager::getTexture(const std::string& textureId) const {
     if (it != textures_.end()) {
         return it->second;
     } else {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Texture '%s' not found in AssetManager.", textureId.c_str());
+        // Note: Removed warning log here as getTexture is often used for existence checks
+        // Warning logs should be in calling code when appropriate
         return nullptr;
     }
+}
+
+bool AssetManager::hasTexture(const std::string& textureId) const {
+    return textures_.find(textureId) != textures_.end();
 }
 
 void AssetManager::shutdown() {

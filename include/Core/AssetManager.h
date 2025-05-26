@@ -11,11 +11,10 @@ struct SDL_Renderer;
 class AssetManager {
 public:
     AssetManager() = default;
-    ~AssetManager();
-
-    bool init(SDL_Renderer* renderer);
+    ~AssetManager();    bool init(SDL_Renderer* renderer);
     bool loadTexture(const std::string& textureId, const std::string& filePath);
     SDL_Texture* getTexture(const std::string& textureId) const;
+    bool hasTexture(const std::string& textureId) const; // Check if texture exists without warnings
     void shutdown();
 
 private:

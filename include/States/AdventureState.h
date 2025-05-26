@@ -3,6 +3,7 @@
 
 #include "states/GameState.h"
 #include "graphics/Animator.h"
+#include "core/MapData.h"  // For BackgroundLayerData
 #include "../entities/Digimon.h" // Keep for backward compatibility
 #include "../entities/DigimonDefinition.h" // Add for DigimonDefinition
 // Reduce includes if possible, move SDL includes to cpp if only needed there
@@ -53,26 +54,29 @@ private:
     SDL_Texture* bgTexture2_ = nullptr;
     const Digimon::DigimonDefinition* current_partner_definition_ = nullptr;
     PlayerState current_state_ = STATE_IDLE;
-    int queued_steps_ = 0;
-    float bg_scroll_offset_0_ = 0.0f;
+    int queued_steps_ = 0;    float bg_scroll_offset_0_ = 0.0f;
     float bg_scroll_offset_1_ = 0.0f;
     float bg_scroll_offset_2_ = 0.0f;
+    float previous_bg_scroll_offset_0_ = 0.0f;
+    float previous_bg_scroll_offset_1_ = 0.0f;
+    float previous_bg_scroll_offset_2_ = 0.0f;
+    float smooth_scroll_factor_ = 1.0f;
     bool firstWalkUpdate_ = true;
-    float timeSinceLastStep_ = 0.0f; // Added: Timer for returning to Idle
-
-    // Rate Limiting Members
+    float timeSinceLastStep_ = 0.0f; // Added: Timer for returning to Idle    // Rate Limiting Members
     float stepWindowTimer_ = 0.0f;  // Timer tracking the current window
     int stepsInWindow_ = 0;         // Steps counted in the current window
 
     // Constants
     const int MAX_QUEUED_STEPS = 2;
-    const float SCROLL_SPEED_0 = 3.0f * 60.0f;
-    const float SCROLL_SPEED_1 = 1.0f * 60.0f;
-    const float SCROLL_SPEED_2 = 0.5f * 60.0f;    const int WINDOW_WIDTH = 466;
-    const int WINDOW_HEIGHT = 466;    
-      // Private Helpers
+    const float SCROLL_SPEED_0 = 1.2f * 60.0f;  // Foreground - fastest layer
+    const float SCROLL_SPEED_1 = 0.8f * 60.0f;  // Middleground - medium speed
+    const float SCROLL_SPEED_2 = 0.4f * 60.0f;  // Background - slowest layer    const int WINDOW_WIDTH = 466;
+    const int WINDOW_HEIGHT = 466;
+    
+    // Private Helpers
     std::string getAnimationIdForCurrentState() const;
-    void loadBackgroundVariants(const std::string& environmentPath); // New variant system
+    void loadBackgroundVariants(const std::string& environmentPath); // New variant system (legacy path mapping)
+    void loadBackgroundVariantsFromNodeData(const Digivice::BackgroundLayerData& layerData, const std::string& nodeId); // New variant system (direct loading)
     void renderScaledBackgroundLayer(PCDisplay& display, SDL_Texture* texture, 
                                    int screenWidth, int screenHeight, 
                                    float globalScale, int layerIndex, 
