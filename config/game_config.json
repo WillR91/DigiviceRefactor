@@ -28,7 +28,7 @@
         "difficultyLevel": "normal",
         "debugMode": false,
         "transitionSpeed": 0.3,
-        "stepGoal": 10
+        "stepGoal": 100
     },
     "ui": {
         "textScale": 1.0

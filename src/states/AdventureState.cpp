@@ -170,19 +170,19 @@ void AdventureState::enter() {
                    bgTexture2_ ? "LOADED" : "NULL", 
                    bgTexture1_ ? "LOADED" : "NULL", 
                    bgTexture0_ ? "LOADED" : "NULL");
-        
-        // Add background layers from back to front (reverse order for proper layering)
+          // Add background layers from back to front (reverse order for proper layering)
+        // NOTE: Negative scroll speeds make backgrounds move right when Digimon appears to move left
         if (bgTexture2_) {
-            backgroundRenderer_->addLayer(bgTexture2_, SCROLL_SPEED_2);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added background layer (speed: %f)", SCROLL_SPEED_2);
+            backgroundRenderer_->addLayer(bgTexture2_, -SCROLL_SPEED_2);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added background layer (speed: %f)", -SCROLL_SPEED_2);
         }
         if (bgTexture1_) {
-            backgroundRenderer_->addLayer(bgTexture1_, SCROLL_SPEED_1);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", SCROLL_SPEED_1);
+            backgroundRenderer_->addLayer(bgTexture1_, -SCROLL_SPEED_1);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", -SCROLL_SPEED_1);
         }
         if (bgTexture0_) {
-            backgroundRenderer_->addLayer(bgTexture0_, SCROLL_SPEED_0);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", SCROLL_SPEED_0);
+            backgroundRenderer_->addLayer(bgTexture0_, -SCROLL_SPEED_0);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", -SCROLL_SPEED_0);
         }
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: SeamlessBackgroundRenderer initialized with %zu layers", 
@@ -409,16 +409,16 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
             // Gradually increase smooth factor to normal speed over several frames
             smooth_scroll_factor_ = std::min(1.0f, smooth_scroll_factor_ + delta_time * 8.0f);
         }
-        
-        // Update background scrolling using the new renderer
+          // Update background scrolling using the new renderer
         float adjustedDeltaTime = delta_time * smooth_scroll_factor_;
         backgroundRenderer_->updateScroll(adjustedDeltaTime);
         
         // Store legacy scroll offsets for battle state compatibility (if needed)
-        // These can be calculated from backgroundRenderer scroll positions if required
-        bg_scroll_offset_0_ -= SCROLL_SPEED_0 * adjustedDeltaTime;
-        bg_scroll_offset_1_ -= SCROLL_SPEED_1 * adjustedDeltaTime;
-        bg_scroll_offset_2_ -= SCROLL_SPEED_2 * adjustedDeltaTime;
+        // NOTE: Negative speeds make backgrounds scroll right (Digimon appears to move left)
+        // For legacy offsets, we use opposite sign since the legacy system works differently
+        bg_scroll_offset_0_ += SCROLL_SPEED_0 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
+        bg_scroll_offset_1_ += SCROLL_SPEED_1 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
+        bg_scroll_offset_2_ += SCROLL_SPEED_2 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
         
     } else {        // Reset smooth scrolling when not walking
         if (current_state_ == STATE_IDLE) {

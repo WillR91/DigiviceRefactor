@@ -54,7 +54,10 @@ void SeamlessBackgroundRenderer::updateScroll(float deltaTime) {
         
         // Normalize to prevent floating point precision issues
         if (layer.scaledWidth > 0) {
+            // Use proper modulo to handle both positive and negative scroll directions
             layer.scrollPosition = fmod(layer.scrollPosition, static_cast<float>(layer.scaledWidth));
+            
+            // Ensure position is always positive (0 to width-1) regardless of scroll direction
             if (layer.scrollPosition < 0) {
                 layer.scrollPosition += layer.scaledWidth;
             }
@@ -112,21 +115,30 @@ void SeamlessBackgroundRenderer::renderLayer(const CachedLayer& layer) {
     // Set blend mode for proper layer compositing
     SDL_SetTextureBlendMode(layer.scaledTexture, SDL_BLENDMODE_BLEND);
     
-    // Calculate seamless tiling positions
-    float normalizedOffset = fmod(layer.scrollPosition, static_cast<float>(layer.scaledWidth));
-    if (normalizedOffset < 0) normalizedOffset += layer.scaledWidth;
+    // Overlap-based tiling implementation
+    // Each tile overlaps by 1/3 with the previous tile for seamless effect
+    const float OVERLAP_RATIO = 1.0f / 3.0f; // 1/3 overlap as described
+    float effectiveTileWidth = layer.scaledWidth * (1.0f - OVERLAP_RATIO);
     
-    int offsetX = static_cast<int>(normalizedOffset);
-    int tilesNeeded = (targetWidth_ / layer.scaledWidth) + 2; // +2 for seamless coverage
+    // Calculate normalized offset within one effective tile cycle
+    float normalizedOffset = fmod(layer.scrollPosition, effectiveTileWidth);
+    if (normalizedOffset < 0) normalizedOffset += effectiveTileWidth;
     
-    // Center vertically - this ensures backgrounds aren't stuck to the top of the screen
+    // Center vertically
     int drawY = (targetHeight_ - layer.scaledHeight) / 2;
     
-    for (int i = -1; i <= tilesNeeded; ++i) {
-        int drawX = (i * layer.scaledWidth) - offsetX;
+    // Calculate starting position - need to start before screen to handle overlaps
+    int startX = static_cast<int>(-normalizedOffset - layer.scaledWidth);
+    
+    // Calculate number of tiles needed with overlap consideration
+    int tilesNeeded = static_cast<int>((targetWidth_ + 2 * layer.scaledWidth) / effectiveTileWidth) + 2;
+    
+    // Render tiles with overlap
+    for (int i = 0; i < tilesNeeded; ++i) {
+        int drawX = startX + static_cast<int>(i * effectiveTileWidth);
         
-        // Only render tiles that are visible
-        if (drawX + layer.scaledWidth >= 0 && drawX < targetWidth_) {
+        // Only render tiles that could be visible on screen (with some margin for overlap)
+        if (drawX + layer.scaledWidth >= -layer.scaledWidth && drawX < targetWidth_ + layer.scaledWidth) {
             SDL_Rect destRect = {
                 drawX,
                 drawY,
