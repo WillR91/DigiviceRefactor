@@ -66,10 +66,9 @@ PlayerTestState::PlayerTestState(Game* game) :
         playerDigimonIds_ = {"agumon", "gabumon", "biyomon", "gatomon", "gomamon", "palmon", "tentomon", "patamon"};
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PlayerTestState: DigimonRegistry not available, using default player Digimon");
     }
-    
-    AssetManager* assets = game_ptr->getAssetManager();
+      AssetManager* assets = game_ptr->getAssetManager();
     if (assets) {
-        backgroundTexture_ = assets->getTexture("menu_bg_blue");
+        backgroundTexture_ = assets->requestTexture("menu_bg_blue");
         if (!backgroundTexture_) {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "PlayerTestState: Background texture not found!");
         }

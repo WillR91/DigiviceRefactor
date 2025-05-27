@@ -152,13 +152,11 @@ void AnimationManager::storeAnimation(
 // Loads animation definitions from a JSON file - REVISED LOGIC
 bool AnimationManager::loadAnimationDataFromFile(const std::string& jsonPath, const std::string& textureAtlasId) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager: Loading animations from '%s' using texture '%s'", 
-                jsonPath.c_str(), textureAtlasId.c_str());
-
-    if (!assetManager_) {
+                jsonPath.c_str(), textureAtlasId.c_str());    if (!assetManager_) {
          SDL_LogError(SDL_LOG_CATEGORY_ERROR, "AnimationManager::loadAnimationDataFromFile - AssetManager is null!");
          return false;
     }
-    SDL_Texture* texture = assetManager_->getTexture(textureAtlasId);
+    SDL_Texture* texture = assetManager_->requestTexture(textureAtlasId);
     if (!texture) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager Error: Texture '%s' not found in AssetManager for JSON '%s'.", 
                     textureAtlasId.c_str(), jsonPath.c_str());

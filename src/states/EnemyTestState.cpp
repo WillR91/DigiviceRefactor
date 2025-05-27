@@ -52,10 +52,9 @@ EnemyTestState::EnemyTestState(Game* game) :
         enemyDigimonIds_ = {"kuwagamon"};
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "EnemyTestState: DigimonRegistry not available, using default enemy");
     }
-    
-    AssetManager* assets = game_ptr->getAssetManager();
+      AssetManager* assets = game_ptr->getAssetManager();
     if (assets) {
-        backgroundTexture_ = assets->getTexture("menu_bg_blue");
+        backgroundTexture_ = assets->requestTexture("menu_bg_blue");
         if (!backgroundTexture_) {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "EnemyTestState: Background texture not found!");
         }

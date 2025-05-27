@@ -48,34 +48,22 @@ void ManagedScrollingLayer::loadVariants(const std::vector<std::string>& texture
         if (path.empty()) {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Encountered empty texture path, skipping.");
             continue;
-        }
-        // Use the path itself as the texture ID for AssetManager
-        // AssetManager::loadTexture will handle if it's already loaded.
-        if (assetManager_->loadTexture(path, path)) { // path is used for both filePath and textureId
-            SDL_Texture* tex = assetManager_->getTexture(path);
-            if (tex) {
-                textureVariants_.push_back(tex);
-                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Successfully loaded and added texture: '%s'", path.c_str());
-            } else {
-                // This case should ideally not be hit if loadTexture succeeded and used 'path' as ID.
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Texture loaded for path '%s' but getTexture returned null.", path.c_str());
-            }
+        }        // Use the path itself as the texture ID for AssetManager
+        // AssetManager::requestTexture will handle loading if needed
+        SDL_Texture* tex = assetManager_->requestTexture(path, path); // path is used for both filePath and textureId
+        if (tex) {
+            textureVariants_.push_back(tex);
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Successfully loaded and added texture: '%s'", path.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Failed to load texture: '%s'", path.c_str());
         }
-    }
-
-    if (textureVariants_.empty()) {
+    }    if (textureVariants_.empty()) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - No specific variants loaded or provided. Attempting to load default: '%s'", defaultTexturePath.c_str());
         if (!defaultTexturePath.empty()) {
-            if (assetManager_->loadTexture(defaultTexturePath, defaultTexturePath)) {
-                SDL_Texture* tex = assetManager_->getTexture(defaultTexturePath);
-                if (tex) {
-                    textureVariants_.push_back(tex);
-                    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Successfully loaded and added default texture: '%s'", defaultTexturePath.c_str());
-                } else {
-                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Default texture loaded for path '%s' but getTexture returned null.", defaultTexturePath.c_str());
-                }
+            SDL_Texture* tex = assetManager_->requestTexture(defaultTexturePath, defaultTexturePath);
+            if (tex) {
+                textureVariants_.push_back(tex);
+                SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Successfully loaded and added default texture: '%s'", defaultTexturePath.c_str());
             } else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ManagedScrollingLayer::loadVariants - Failed to load default texture: '%s'", defaultTexturePath.c_str());
             }

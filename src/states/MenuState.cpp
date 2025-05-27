@@ -36,13 +36,12 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
     if (!game_ptr || !game_ptr->getAssetManager()) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MenuState requires valid Game pointer with initialized AssetManager!");
         // Consider throwing an exception or handling this error more robustly
-    }
-    else {
+    }    else {
         AssetManager* assets = game_ptr->getAssetManager();
-        backgroundTexture_ = assets->getTexture("menu_bg_blue");
+        backgroundTexture_ = assets->requestTexture("menu_bg_blue");
         // fontTexture_ = assets->getTexture("ui_font_atlas"); // Removed
         // Cursor texture loading - kept assuming it's used independently
-        cursorTexture_ = assets->getTexture("menu_cursor"); // Assuming a cursor texture ID
+        cursorTexture_ = assets->requestTexture("menu_cursor"); // Assuming a cursor texture ID
         if (!backgroundTexture_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState Warning: Background texture 'menu_bg_blue' not found."); }
         if (!cursorTexture_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState Warning: Cursor texture 'menu_cursor' not found."); }
 

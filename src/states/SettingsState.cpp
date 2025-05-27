@@ -13,10 +13,9 @@ SettingsState::SettingsState(Game* game) : GameState(game) {
     
     // Get current text scale from config
     textScaleValue_ = ConfigManager::getValue<float>("ui.textScale", 1.0f);
-    
-    // Load background texture
+      // Load background texture
     if (game_ptr && game_ptr->getAssetManager()) {
-        backgroundTexture_ = game_ptr->getAssetManager()->getTexture("menu_bg_blue");
+        backgroundTexture_ = game_ptr->getAssetManager()->requestTexture("menu_bg_blue");
         if (!backgroundTexture_) {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "SettingsState: Background texture not found");
         }

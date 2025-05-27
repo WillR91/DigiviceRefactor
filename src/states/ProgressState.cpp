@@ -25,10 +25,8 @@ ProgressState::ProgressState(Game* game) :
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "ProgressState: Missing required game systems!");
         // Consider throwing or setting an error state
         return;
-    }
-
-    AssetManager* assets = game_ptr->getAssetManager();
-    backgroundTexture_ = assets->getTexture("menu_bg_blue"); // Or a custom background
+    }    AssetManager* assets = game_ptr->getAssetManager();
+    backgroundTexture_ = assets->requestTexture("menu_bg_blue"); // Or a custom background
     if (!backgroundTexture_) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "ProgressState: Background texture not found!");
     }

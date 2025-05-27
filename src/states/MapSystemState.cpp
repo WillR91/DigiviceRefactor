@@ -798,19 +798,14 @@ namespace Digivice {
             return;
         }
 
-        const auto& continent = continents_[currentContinentIndex_];
-        // Create a unique ID for the texture, e.g., by appending "_map" to the continent ID.
+        const auto& continent = continents_[currentContinentIndex_];        // Create a unique ID for the texture, e.g., by appending "_map" to the continent ID.
         std::string continentMapTextureId = continent.id + "_map_texture"; 
 
-        // Corrected: loadTexture to take ID and path.
-        // Only load if not already loaded. AssetManager::getTexture can check this.
-        if (!assetManager->getTexture(continentMapTextureId)) { 
-            if (!assetManager->loadTexture(continentMapTextureId, continent.mapImagePath)) { // Pass ID and path
-                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load texture: %s for ID: %s", continent.mapImagePath.c_str(), continentMapTextureId.c_str());
-                // Texture will be nullptr if loading fails, handled below
-            }
+        // Use requestTexture for lazy loading with automatic fallback
+        SDL_Texture* continentMapTexture = assetManager->requestTexture(continentMapTextureId, continent.mapImagePath);
+        if (!continentMapTexture) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load texture: %s for ID: %s", continent.mapImagePath.c_str(), continentMapTextureId.c_str());
         }
-        SDL_Texture* continentMapTexture = assetManager->getTexture(continentMapTextureId);
         
         int screenWidth = 0, screenHeight = 0;
         display.getWindowSize(screenWidth, screenHeight);
@@ -877,15 +872,9 @@ namespace Digivice {
         }
 
         const auto& continent = continents_[currentContinentIndex_];
-        
-        // First, render the continent map as the background for node selection
+          // First, render the continent map as the background for node selection
         std::string continentMapTextureId = continent.id + "_map_texture";
-        SDL_Texture* continentMapTexture = assetManager->getTexture(continentMapTextureId);
-        if (!continentMapTexture) { // Attempt to load if not found (e.g., if we came here directly for debugging)
-            if (assetManager->loadTexture(continentMapTextureId, continent.mapImagePath)) {
-                continentMapTexture = assetManager->getTexture(continentMapTextureId);
-            }
-        }
+        SDL_Texture* continentMapTexture = assetManager->requestTexture(continentMapTextureId, continent.mapImagePath);
 
         int screenWidth = 0, screenHeight = 0;
         display.getWindowSize(screenWidth, screenHeight);
@@ -929,31 +918,15 @@ namespace Digivice {
             
             // Calculate position for the node icon
             int iconX = static_cast<int>(node.mapPositionX) - (NODE_ICON_SIZE / 2);
-            int iconY = static_cast<int>(node.mapPositionY) - (NODE_ICON_SIZE / 2);
-              // Load the node sprite if needed (with caching to prevent per-frame loading attempts)
+            int iconY = static_cast<int>(node.mapPositionY) - (NODE_ICON_SIZE / 2);            // Load the node sprite with lazy loading and fallback handling
             std::string nodeTextureId = node.id + "_icon";
-            SDL_Texture* nodeTexture = assetManager->getTexture(nodeTextureId);
+            SDL_Texture* nodeTexture = assetManager->requestTexture(nodeTextureId, node.unlockedSpritePath);
             
-            // Use a static set to track failed loading attempts to prevent repeated spam
-            static std::set<std::string> failedTextureAttempts;
-            
-            if (!nodeTexture && failedTextureAttempts.find(nodeTextureId) == failedTextureAttempts.end()) {
-                // First attempt to load the specific node icon
-                if (!assetManager->loadTexture(nodeTextureId, node.unlockedSpritePath)) {
-                    // Mark this texture as failed to prevent future spam
-                    failedTextureAttempts.insert(nodeTextureId);
-                    
-                    // Try to load a generic fallback node icon
-                    std::string fallbackTextureId = "generic_node_icon";
-                    SDL_Texture* fallbackTexture = assetManager->getTexture(fallbackTextureId);
-                    if (!fallbackTexture && failedTextureAttempts.find(fallbackTextureId) == failedTextureAttempts.end()) {
-                        // Try to load a generic placeholder - only attempt once
-                        if (!assetManager->loadTexture(fallbackTextureId, "assets/ui/generic_node_icon.png")) {
-                            failedTextureAttempts.insert(fallbackTextureId);
-                        }
-                    }
-                } else {
-                    nodeTexture = assetManager->getTexture(nodeTextureId);
+            // If the specific node texture failed, try fallback
+            if (!nodeTexture) {
+                nodeTexture = assetManager->requestTexture("generic_node_icon");
+                if (!nodeTexture) {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MapSystemState: Failed to load node texture for '%s' and fallback", nodeTextureId.c_str());
                 }
             }
             
@@ -1055,59 +1028,35 @@ namespace Digivice {
             
             // Define fullscreen destination rect
             SDL_Rect fullscreenRect = { 0, 0, screenWidth, screenHeight };
-            
-            // Render Background Layer (BG) - furthest back
+              // Render Background Layer (BG) - furthest back
             if (!layerData.backgroundPaths.empty()) {
                 std::string bgPath = BackgroundVariantManager::getSelectedPath(
                     layerData.backgroundPaths, layerData.selectedBackgroundVariant);
                 std::string bgTextureId = node.id + "_nodedetail_bg";
                 
-                SDL_Texture* bgTexture = assetManager->getTexture(bgTextureId);
-                if (!bgTexture && !bgPath.empty()) {
-                    if (assetManager->loadTexture(bgTextureId, bgPath)) {
-                        bgTexture = assetManager->getTexture(bgTextureId);
-                        std::cout << "MapSystemState: Loaded node detail BG: " << bgPath << std::endl;
-                    }
-                }
-                
+                SDL_Texture* bgTexture = assetManager->requestTexture(bgTextureId, bgPath);
                 if (bgTexture) {
                     display.drawTexture(bgTexture, nullptr, &fullscreenRect);
                 }
             }
-            
-            // Render Middleground Layer (MG) - middle depth
+              // Render Middleground Layer (MG) - middle depth
             if (!layerData.middlegroundPaths.empty()) {
                 std::string mgPath = BackgroundVariantManager::getSelectedPath(
                     layerData.middlegroundPaths, layerData.selectedMiddlegroundVariant);
                 std::string mgTextureId = node.id + "_nodedetail_mg";
                 
-                SDL_Texture* mgTexture = assetManager->getTexture(mgTextureId);
-                if (!mgTexture && !mgPath.empty()) {
-                    if (assetManager->loadTexture(mgTextureId, mgPath)) {
-                        mgTexture = assetManager->getTexture(mgTextureId);
-                        std::cout << "MapSystemState: Loaded node detail MG: " << mgPath << std::endl;
-                    }
-                }
-                
+                SDL_Texture* mgTexture = assetManager->requestTexture(mgTextureId, mgPath);
                 if (mgTexture) {
                     display.drawTexture(mgTexture, nullptr, &fullscreenRect);
                 }
             }
-            
-            // Render Foreground Layer (FG) - closest to camera
+              // Render Foreground Layer (FG) - closest to camera
             if (!layerData.foregroundPaths.empty()) {
                 std::string fgPath = BackgroundVariantManager::getSelectedPath(
                     layerData.foregroundPaths, layerData.selectedForegroundVariant);
                 std::string fgTextureId = node.id + "_nodedetail_fg";
                 
-                SDL_Texture* fgTexture = assetManager->getTexture(fgTextureId);
-                if (!fgTexture && !fgPath.empty()) {
-                    if (assetManager->loadTexture(fgTextureId, fgPath)) {
-                        fgTexture = assetManager->getTexture(fgTextureId);
-                        std::cout << "MapSystemState: Loaded node detail FG: " << fgPath << std::endl;
-                    }
-                }
-                
+                SDL_Texture* fgTexture = assetManager->requestTexture(fgTextureId, fgPath);
                 if (fgTexture) {
                     display.drawTexture(fgTexture, nullptr, &fullscreenRect);
                 }
@@ -1131,17 +1080,9 @@ namespace Digivice {
         float stepsTextScale = 1.0f;
         SDL_Point unscaled_steps_text_size = textRenderer->getTextDimensions(stepsText);
         float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * stepsTextScale;
-        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);        
-        // Load and render the boss sprite
+        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);          // Load and render the boss sprite using lazy loading
         std::string bossTextureId = node.id + "_boss";
-        SDL_Texture* bossTexture = assetManager->getTexture(bossTextureId);
-        
-        if (!bossTexture) {
-            // Load the texture if it's not already loaded
-            if (assetManager->loadTexture(bossTextureId, node.bossSpritePath)) {
-                bossTexture = assetManager->getTexture(bossTextureId);
-            }
-        }
+        SDL_Texture* bossTexture = assetManager->requestTexture(bossTextureId, node.bossSpritePath);
         
         if (bossTexture) {
             // Get the texture dimensions

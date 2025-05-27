@@ -188,13 +188,12 @@ bool Game::init(const std::string& title, int width, int height) {
 
     // Load Initial Assets
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
-     bool assets_ok = true;
-     assets_ok &= assetManager.loadTexture("ui_round_mask", "assets/ui/mask/round_mask.png"); // Use forward slashes for consistency
-     ui_mask_texture_ = assetManager.getTexture("ui_round_mask"); // Load and store the mask texture
+     bool assets_ok = true;     assets_ok &= assetManager.loadTexture("ui_round_mask", "assets/ui/mask/round_mask.png"); // Use forward slashes for consistency
+     ui_mask_texture_ = assetManager.requestTexture("ui_round_mask"); // Load and store the mask texture
      if (!ui_mask_texture_) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load UI mask texture: assets/ui/mask/round_mask.png");
          // Decide if this is a critical failure or if the game can run without it
-     }     assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
+     }assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
      
      // Load new player Digimon sprite sheets with their new textureIds
      assets_ok &= assetManager.loadTexture("agumon", "assets/sprites/player_digimon/agumon.png");
@@ -251,13 +250,14 @@ bool Game::init(const std::string& title, int width, int height) {
         // Load unlockable Digimon animations
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");        
-        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
-
-        // Now load all enemy Digimon assets (textures and animations)
-        bool enemyAssetsOk = loadAllEnemyDigimonAssets();
-        if (!enemyAssetsOk) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Some enemy Digimon assets failed to load. EnemyTestState may not work properly.");
-        }
+        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()    // Now register all enemy Digimon assets for lazy loading instead of loading them
+    registerAllEnemyDigimonAssets();
+    
+    // Register common UI and background assets for lazy loading
+    registerCommonAssets();
+    
+    // Set reasonable memory limits
+    assetManager.setMemoryLimit(150); // 150MB limit for textures
 
         if (!anims_ok) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
@@ -942,9 +942,63 @@ bool Game::loadAllEnemyDigimonAssets() {
     // Load unlockable Digimon animations
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
-    
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
+      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
     return assets_ok && anims_ok;
+}
+
+// Register all enemy Digimon assets for lazy loading
+void Game::registerAllEnemyDigimonAssets() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering all enemy Digimon assets for lazy loading...");
+    
+    // Get all enemy and boss Digimon from the registry
+    Digimon::DigimonRegistry& registry = Digimon::DigimonRegistry::getInstance();
+    auto enemyDefs = registry.getDefinitionsByClass(Digimon::DigimonClass::StandardEnemy);
+    auto bossDefs = registry.getDefinitionsByClass(Digimon::DigimonClass::Boss);
+    
+    int registeredCount = 0;
+    
+    // Register all enemy Digimon assets
+    for (const auto& def : enemyDefs) {
+        if (def && !def->spriteBaseId.empty()) {
+            std::string texturePath = "assets/sprites/enemy_digimon/" + def->spriteBaseId + ".png";
+            assetManager.registerAssetPath(def->spriteBaseId, texturePath);
+            registeredCount++;
+        }
+    }
+    
+    // Register all boss Digimon assets
+    for (const auto& def : bossDefs) {
+        if (def && !def->spriteBaseId.empty()) {
+            std::string texturePath = "assets/sprites/enemy_digimon/" + def->spriteBaseId + ".png";
+            assetManager.registerAssetPath(def->spriteBaseId, texturePath);
+            registeredCount++;
+        }
+    }
+      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered %d enemy Digimon assets for lazy loading", registeredCount);
+}
+
+void Game::registerCommonAssets() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering common UI and background assets for lazy loading...");
+    
+    // Register common UI textures
+    assetManager.registerAssetPath("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
+    assetManager.registerAssetPath("ui_font_atlas", "assets/ui/fonts/bluewhitefont.png");
+    assetManager.registerAssetPath("menu_cursor", "assets/ui/menu_cursor.png");
+    assetManager.registerAssetPath("transition_borders", "assets/ui/transition/transition_borders.png");
+    assetManager.registerAssetPath("ui_mask", "assets/ui/ui_mask.png");
+    
+    // Register common background textures
+    assetManager.registerAssetPath("castlebackground0", "assets/backgrounds/castlebackground0.png");
+    assetManager.registerAssetPath("castlebackground1", "assets/backgrounds/castlebackground1.png");
+    assetManager.registerAssetPath("castlebackground2", "assets/backgrounds/castlebackground2.png");
+    assetManager.registerAssetPath("castle_bg_0", "assets/backgrounds/castlebackground0.png");
+    assetManager.registerAssetPath("castle_bg_1", "assets/backgrounds/castlebackground1.png");
+    assetManager.registerAssetPath("castle_bg_2", "assets/backgrounds/castlebackground2.png");
+    
+    // Register fallback/generic assets
+    assetManager.registerAssetPath("generic_node_icon", "assets/ui/generic_node_icon.png");
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered common UI and background assets for lazy loading");
 }
 
 // Implementation of the missing processPopUntil function

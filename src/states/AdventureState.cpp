@@ -118,20 +118,18 @@ AdventureState::AdventureState(Game* game) :
     } else {
         // No background layers found in node data
     }
-      // Check final texture loading state for debugging if needed
-      // Fallback to default backgrounds if loading fails
+      // Check final texture loading state for debugging if needed    // Fallback to default backgrounds if loading fails
     if (!bgTexture0_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load foreground from node data, using default");
-        bgTexture0_ = assets->getTexture("castlebackground0");
+        bgTexture0_ = assets->requestTexture("castlebackground0");
         if (!bgTexture0_) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback foreground: castlebackground0");
         } else {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback foreground: castlebackground0");
         }
-    }
-    if (!bgTexture1_) {
+    }    if (!bgTexture1_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load midground from node data, using default");
-        bgTexture1_ = assets->getTexture("castlebackground1");
+        bgTexture1_ = assets->requestTexture("castlebackground1");
         if (!bgTexture1_) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback middleground: castlebackground1");
         } else {
@@ -140,7 +138,7 @@ AdventureState::AdventureState(Game* game) :
     }
     if (!bgTexture2_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load background from node data, using default");
-        bgTexture2_ = assets->getTexture("castlebackground2");
+        bgTexture2_ = assets->requestTexture("castlebackground2");
         if (!bgTexture2_) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback background: castlebackground2");
         } else {
@@ -623,8 +621,7 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
     
     // Create a temporary BackgroundLayerData to work with the variant system
     Digivice::BackgroundLayerData tempLayerData;
-    Digivice::BackgroundVariantManager::initializeVariantsForNode(tempLayerData, environmentName);
-      // Try to load foreground texture (1x scale asset)
+    Digivice::BackgroundVariantManager::initializeVariantsForNode(tempLayerData, environmentName);    // Try to load foreground texture (1x scale asset)
     if (!tempLayerData.foregroundPaths.empty()) {
         std::string fgPath = Digivice::BackgroundVariantManager::getSelectedPath(
             tempLayerData.foregroundPaths, tempLayerData.selectedForegroundVariant);
@@ -632,14 +629,13 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load FG path: %s with ID: %s", fgPath.c_str(), fgTexId.c_str());
         
-        if (assets->loadTexture(fgTexId, fgPath)) {
-            bgTexture0_ = assets->getTexture(fgTexId);
+        bgTexture0_ = assets->requestTexture(fgTexId, fgPath);
+        if (bgTexture0_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded foreground variant: %s", fgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load foreground variant: %s", fgPath.c_str());
         }
-    }
-      // Try to load middleground texture (1x scale asset)
+    }      // Try to load middleground texture (1x scale asset)
     if (!tempLayerData.middlegroundPaths.empty()) {
         std::string mgPath = Digivice::BackgroundVariantManager::getSelectedPath(
             tempLayerData.middlegroundPaths, tempLayerData.selectedMiddlegroundVariant);
@@ -647,14 +643,13 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load MG path: %s with ID: %s", mgPath.c_str(), mgTexId.c_str());
         
-        if (assets->loadTexture(mgTexId, mgPath)) {
-            bgTexture1_ = assets->getTexture(mgTexId);
+        bgTexture1_ = assets->requestTexture(mgTexId, mgPath);
+        if (bgTexture1_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded middleground variant: %s", mgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load middleground variant: %s", mgPath.c_str());
         }
-    }
-      // Try to load background texture (1x scale asset)
+    }      // Try to load background texture (1x scale asset)
     if (!tempLayerData.backgroundPaths.empty()) {
         std::string bgPath = Digivice::BackgroundVariantManager::getSelectedPath(
             tempLayerData.backgroundPaths, tempLayerData.selectedBackgroundVariant);
@@ -662,8 +657,8 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load BG path: %s with ID: %s", bgPath.c_str(), bgTexId.c_str());
         
-        if (assets->loadTexture(bgTexId, bgPath)) {
-            bgTexture2_ = assets->getTexture(bgTexId);
+        bgTexture2_ = assets->requestTexture(bgTexId, bgPath);
+        if (bgTexture2_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded background variant: %s", bgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load background variant: %s", bgPath.c_str());

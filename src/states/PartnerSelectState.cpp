@@ -36,12 +36,10 @@ PartnerSelectState::PartnerSelectState(Game* game) :
     
     if (availablePartnerIds_.empty()) {
         throw std::runtime_error("PartnerSelectState: No available partners defined!");
-    }
-
-    AssetManager* assets = game_ptr->getAssetManager();
+    }    AssetManager* assets = game_ptr->getAssetManager();
     if (!assets) { throw std::runtime_error("PartnerSelectState requires a valid AssetManager!"); }
 
-    backgroundTexture_ = assets->getTexture("menu_bg_blue");
+    backgroundTexture_ = assets->requestTexture("menu_bg_blue");
     if (!backgroundTexture_) { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"PartnerSelectState: Background texture not found!"); }
 
     PlayerData* pd = game_ptr->getPlayerData();
