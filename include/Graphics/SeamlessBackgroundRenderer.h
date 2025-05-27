@@ -43,10 +43,12 @@ public:
     void updateScroll(float deltaTime);
     void render();
     void clearLayers();
-    
-    // Configuration
+      // Configuration
     void setTargetResolution(int width, int height);
     void invalidateCache();
+    
+    // Individual layer rendering
+    void renderLayer(size_t layerIndex);
     
     // Synchronization
     void setLayerScrollPosition(int layerIndex, float scrollPosition);

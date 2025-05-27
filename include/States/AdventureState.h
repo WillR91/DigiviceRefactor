@@ -52,10 +52,10 @@ private:    // Animator
     bool is_fading_to_battle_;          // True if currently fading out for a battle
     float battle_fade_alpha_;           // Alpha for the fade-to-black overlay (0.0 to 255.0)
     const float BATTLE_FADE_DURATION_SECONDS = 0.5f; // How long the fade to black should take
-    const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition    // Other Data Members    
-    SDL_Texture* bgTexture0_ = nullptr;
-    SDL_Texture* bgTexture1_ = nullptr;
-    SDL_Texture* bgTexture2_ = nullptr;
+    const float BATTLE_TRANSITION_SCROLL_ADVANCE_SECONDS = 1.5f; // How much to advance scroll for battle transition    // Environment Layer Textures (clearer naming)
+    SDL_Texture* foregroundTexture_ = nullptr;   // Closest to camera (was bgTexture0_)
+    SDL_Texture* middlegroundTexture_ = nullptr; // Middle depth (was bgTexture1_)
+    SDL_Texture* backgroundTexture_ = nullptr;   // Furthest back (was bgTexture2_)
     const Digimon::DigimonDefinition* current_partner_definition_ = nullptr;
     PlayerState current_state_ = STATE_IDLE;
     int queued_steps_ = 0;    float bg_scroll_offset_0_ = 0.0f;

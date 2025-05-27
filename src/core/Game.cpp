@@ -203,11 +203,8 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
      assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
-       // Load unlockable Digimon
-     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
-     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
-     assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
-     assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
+       // Load unlockable Digimon     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
+     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
      assets_ok &= assetManager.loadTexture("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
      assets_ok &= assetManager.loadTexture("transition_borders", "assets/ui/transition/transition_borders.png");
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading UI font...");
@@ -986,15 +983,7 @@ void Game::registerCommonAssets() {
     assetManager.registerAssetPath("menu_cursor", "assets/ui/menu_cursor.png");
     assetManager.registerAssetPath("transition_borders", "assets/ui/transition/transition_borders.png");
     assetManager.registerAssetPath("ui_mask", "assets/ui/ui_mask.png");
-    
-    // Register common background textures
-    assetManager.registerAssetPath("castlebackground0", "assets/backgrounds/castlebackground0.png");
-    assetManager.registerAssetPath("castlebackground1", "assets/backgrounds/castlebackground1.png");
-    assetManager.registerAssetPath("castlebackground2", "assets/backgrounds/castlebackground2.png");
-    assetManager.registerAssetPath("castle_bg_0", "assets/backgrounds/castlebackground0.png");
-    assetManager.registerAssetPath("castle_bg_1", "assets/backgrounds/castlebackground1.png");
-    assetManager.registerAssetPath("castle_bg_2", "assets/backgrounds/castlebackground2.png");
-    
+      
     // Register fallback/generic assets
     assetManager.registerAssetPath("generic_node_icon", "assets/ui/generic_node_icon.png");
     

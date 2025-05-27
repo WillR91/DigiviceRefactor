@@ -57,14 +57,14 @@ AdventureState::AdventureState(Game* game) :
     timeSinceLastStep_(0.0f),
     stepWindowTimer_(0.0f),
     stepsInWindow_(0),
-    // Initialize battle trigger members
-    current_area_step_goal_(0),
+    // Initialize battle trigger members    current_area_step_goal_(0),
     total_steps_taken_in_area_(0),
     current_area_enemy_id_("DefaultEnemy"), // Placeholder
     is_fading_to_battle_(false),
-    battle_fade_alpha_(0.0f),    bgTexture0_(nullptr),
-    bgTexture1_(nullptr),
-    bgTexture2_(nullptr),
+    battle_fade_alpha_(0.0f),
+    foregroundTexture_(nullptr),
+    middlegroundTexture_(nullptr),
+    backgroundTexture_(nullptr),
     current_partner_definition_(nullptr),
     backgroundRenderer_(nullptr)
 {
@@ -107,43 +107,21 @@ AdventureState::AdventureState(Game* game) :
     // Check if this node uses the new variant system (has variant paths) or old system (has texture paths)
     if (!nodeData.adventureBackgroundLayers.empty()) {
         const auto& firstLayer = nodeData.adventureBackgroundLayers[0];
-          // Check layer paths for proper background loading
-          if (!firstLayer.foregroundPaths.empty() || !firstLayer.middlegroundPaths.empty() || !firstLayer.backgroundPaths.empty()) {            // New variant system - load variants directly
+        
+        // Check layer paths for proper background loading
+        if (!firstLayer.foregroundPaths.empty() || !firstLayer.middlegroundPaths.empty() || !firstLayer.backgroundPaths.empty()) {
+            // New variant system - load variants directly
             loadBackgroundVariantsFromNodeData(nodeData.adventureBackgroundLayers[0], nodeData.id);
-        } else if (!firstLayer.texturePaths.empty()) {            // Old system - map to new variant system
+        } else if (!firstLayer.texturePaths.empty()) {
+            // Old system - map to new variant system
             loadBackgroundVariants(firstLayer.texturePaths[0]);
         } else {
             // No valid background paths found in layer data
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No valid background paths found in layer data");
         }
     } else {
         // No background layers found in node data
-    }
-      // Check final texture loading state for debugging if needed    // Fallback to default backgrounds if loading fails
-    if (!bgTexture0_) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load foreground from node data, using default");
-        bgTexture0_ = assets->requestTexture("castlebackground0");
-        if (!bgTexture0_) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback foreground: castlebackground0");
-        } else {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback foreground: castlebackground0");
-        }
-    }    if (!bgTexture1_) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load midground from node data, using default");
-        bgTexture1_ = assets->requestTexture("castlebackground1");
-        if (!bgTexture1_) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback middleground: castlebackground1");
-        } else {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback middleground: castlebackground1");
-        }
-    }
-    if (!bgTexture2_) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load background from node data, using default");
-        bgTexture2_ = assets->requestTexture("castlebackground2");
-        if (!bgTexture2_) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback background: castlebackground2");
-        } else {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback background: castlebackground2");
-        }
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No background layers found in node data");
     }
 }
 
@@ -161,32 +139,31 @@ void AdventureState::enter() {
     }    // Initialize SeamlessBackgroundRenderer
     PCDisplay* display = game_ptr->get_display();
     if (display) {
-        backgroundRenderer_ = std::make_unique<SeamlessBackgroundRenderer>(display, display->getRenderer());
-        
-        // Debug: Check which textures are available
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Texture status - BG2: %s, BG1: %s, BG0: %s", 
-                   bgTexture2_ ? "LOADED" : "NULL", 
-                   bgTexture1_ ? "LOADED" : "NULL", 
-                   bgTexture0_ ? "LOADED" : "NULL");
-          // Add background layers from back to front (reverse order for proper layering)
-        // NOTE: Negative scroll speeds make backgrounds move right when Digimon appears to move left
-        if (bgTexture2_) {
-            backgroundRenderer_->addLayer(bgTexture2_, -SCROLL_SPEED_2);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added background layer (speed: %f)", -SCROLL_SPEED_2);
-        }
-        if (bgTexture1_) {
-            backgroundRenderer_->addLayer(bgTexture1_, -SCROLL_SPEED_1);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", -SCROLL_SPEED_1);
-        }        if (bgTexture0_) {
-            backgroundRenderer_->addLayer(bgTexture0_, -SCROLL_SPEED_0);
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", -SCROLL_SPEED_0);
-        }          // Synchronize initial scroll positions to prevent first-frame jump
+        backgroundRenderer_ = std::make_unique<SeamlessBackgroundRenderer>(display, display->getRenderer());            // Debug: Check which textures are available
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Texture status - BG: %s, MG: %s, FG: %s",
+                       backgroundTexture_ ? "LOADED" : "NULL", 
+                       middlegroundTexture_ ? "LOADED" : "NULL", 
+                       foregroundTexture_ ? "LOADED" : "NULL");
+              // Add background layers from back to front (reverse order for proper layering)
+            // NOTE: Negative scroll speeds make backgrounds move right when Digimon appears to move left
+            if (backgroundTexture_) {
+                backgroundRenderer_->addLayer(backgroundTexture_, -SCROLL_SPEED_2);
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added background layer (speed: %f)", -SCROLL_SPEED_2);
+            }
+            if (middlegroundTexture_) {
+                backgroundRenderer_->addLayer(middlegroundTexture_, -SCROLL_SPEED_1);
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", -SCROLL_SPEED_1);
+            }
+            if (foregroundTexture_) {
+                backgroundRenderer_->addLayer(foregroundTexture_, -SCROLL_SPEED_0);
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", -SCROLL_SPEED_0);
+            }// Synchronize initial scroll positions to prevent first-frame jump
         // Instead of starting at 0, use a small initial offset for seamless appearance
         int screenWidth, screenHeight;
         game_ptr->get_display()->getWindowSize(screenWidth, screenHeight);
         float initialOffset = screenWidth * 0.1f; // Small offset to avoid edge artifacts
         
-        // The layers are added in order: [0]=bgTexture2_, [1]=bgTexture1_, [2]=bgTexture0_
+        // The layers are added in order: [0]=backgroundTexture_, [1]=middlegroundTexture_, [2]=foregroundTexture_
         if (backgroundRenderer_->getLayerCount() >= 1) {
             backgroundRenderer_->setLayerScrollPosition(0, initialOffset);
         }
@@ -305,13 +282,12 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
                     battle_fade_alpha_ = 0.0f;
                     return;
                  }            }
-            
-            // Pass the legacy DigimonType for now, or update BattleState to take IDs/Definitions            
+              // Pass the legacy DigimonType for now, or update BattleState to take IDs/Definitions            
             game_ptr->requestPushState(std::make_unique<BattleState>(
                 game_ptr, 
                 playerDef->legacyEnum, // Need to pass the legacy enum since BattleState still uses it
                 enemyDef->id,          // Pass enemy ID
-                bgTexture0_, bgTexture1_, bgTexture2_,
+                foregroundTexture_, middlegroundTexture_, backgroundTexture_,
                 bg_scroll_offset_0_, bg_scroll_offset_1_, bg_scroll_offset_2_
             ));
             // The fade out is complete, BattleState will handle its own fade in or entry.
@@ -455,35 +431,16 @@ void AdventureState::render(PCDisplay& display) {
 
     // Clear the screen (this should ideally be a common color or handled by a specific background)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Clear to black
-    SDL_RenderClear(renderer);
-
-    // Get screen dimensions
+    SDL_RenderClear(renderer);    // Get screen dimensions
     int windowW = 0, windowH = 0;
-    display.getWindowSize(windowW, windowH);    auto drawTiledBg = [&](SDL_Texture* tex, float offset, int texW, int texH, int effectiveWidth, const char* layerName) { 
-        if (!tex || texW <= 0 || effectiveWidth <= 0) { 
-            return; 
-        } 
-          // Use proper float modulo for smooth scrolling (same fix as in scaled renderer)
-        float normalizedOffset = std::fmod(offset, static_cast<float>(effectiveWidth));
-        if (normalizedOffset < 0.0f) {
-            normalizedOffset += static_cast<float>(effectiveWidth);
-        }
-        
-        // Calculate starting position for seamless tiling with extra coverage
-        // Ensure we have multiple tiles extending beyond both edges to prevent gaps
-        int startX = -effectiveWidth * 2 - static_cast<int>(normalizedOffset);
-        
-        // Draw sufficient tiles to cover the entire screen width plus overlap
-        for (int x = startX; x <= windowW + effectiveWidth * 2; x += effectiveWidth) {
-            SDL_Rect dstRect = { x, 0, texW, texH }; 
-            display.drawTexture(tex, NULL, &dstRect);        }
-    };    // REFACTOR: Always use the new SeamlessBackgroundRenderer regardless of asset dimensions
+    display.getWindowSize(windowW, windowH);
+
+    // REFACTOR: Always use the new SeamlessBackgroundRenderer
     // This eliminates the problematic overlap-based tiling system entirely
     bool usingNewAssets = true;
-    
-    // For debugging: Log texture dimensions to verify what we're working with
-    if (bgTexture0_ || bgTexture1_ || bgTexture2_) {
-        std::vector<SDL_Texture*> textures = {bgTexture2_, bgTexture1_, bgTexture0_};
+      // For debugging: Log texture dimensions to verify what we're working with
+    if (foregroundTexture_ || middlegroundTexture_ || backgroundTexture_) {
+        std::vector<SDL_Texture*> textures = {backgroundTexture_, middlegroundTexture_, foregroundTexture_};
         for (SDL_Texture* tex : textures) {
             if (tex) {
                 int testW = 0, testH = 0;
@@ -499,27 +456,59 @@ void AdventureState::render(PCDisplay& display) {
             }
         }
     }
-    
-    // Always log which path we're taking
-    std::cout << "RENDERING PATH: " << (usingNewAssets ? "NEW_SCALED" : "LEGACY_TILED") << std::endl;
-    
-    // Enhanced diagnostic logging for asset type detection
+      // Always log which path we're taking
+    std::cout << "RENDERING PATH: NEW_SCALED" << std::endl;
+      // Enhanced diagnostic logging for asset type detection
     static int renderFrameCount = 0;
     renderFrameCount++;
     if (renderFrameCount % 180 == 0) { // Log every 180 frames (every ~3 seconds at 60fps)
         // Get texture dimensions for logging
-        int bg0W=0, bg0H=0, bg1W=0, bg1H=0, bg2W=0, bg2H=0;
-        if (bgTexture0_) SDL_QueryTexture(bgTexture0_, nullptr, nullptr, &bg0W, &bg0H);
-        if (bgTexture1_) SDL_QueryTexture(bgTexture1_, nullptr, nullptr, &bg1W, &bg1H);
-        if (bgTexture2_) SDL_QueryTexture(bgTexture2_, nullptr, nullptr, &bg2W, &bg2H);
+        int fgW=0, fgH=0, mgW=0, mgH=0, bgW=0, bgH=0;
+        if (foregroundTexture_) SDL_QueryTexture(foregroundTexture_, nullptr, nullptr, &fgW, &fgH);
+        if (middlegroundTexture_) SDL_QueryTexture(middlegroundTexture_, nullptr, nullptr, &mgW, &mgH);
+        if (backgroundTexture_) SDL_QueryTexture(backgroundTexture_, nullptr, nullptr, &bgW, &bgH);
         
-        std::cout << "Render Mode: " << (usingNewAssets ? "NEW_ASSETS" : "LEGACY") 
-                  << " | Textures: FG=" << bg0W << "x" << bg0H 
-                  << ", MG=" << bg1W << "x" << bg1H 
-                  << ", BG=" << bg2W << "x" << bg2H << std::endl;
-    }    if (usingNewAssets && backgroundRenderer_) {
-        // Use SeamlessBackgroundRenderer for optimized rendering
-        backgroundRenderer_->render();
+        std::cout << "Render Mode: NEW_ASSETS" 
+                  << " | Textures: FG=" << fgW << "x" << fgH 
+                  << ", MG=" << mgW << "x" << mgH 
+                  << ", BG=" << bgW << "x" << bgH << std::endl;
+    }if (usingNewAssets && backgroundRenderer_) {
+        // Use SeamlessBackgroundRenderer for optimized rendering with proper depth sorting
+        
+        // Render background layer (furthest back)
+        if (backgroundRenderer_->getLayerCount() > 0) {
+            backgroundRenderer_->renderLayer(0);  // Background layer (backgroundTexture_)
+        }
+        
+        // Render middleground layer
+        if (backgroundRenderer_->getLayerCount() > 1) {
+            backgroundRenderer_->renderLayer(1);  // Middleground layer (middlegroundTexture_)
+        }
+        
+        // Render the partner Digimon sprite (middle depth - between middleground and foreground)
+        SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
+        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
+        
+        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            // Calculate the position for the scaled sprite
+            // Note: We need to center the scaled sprite, not the original source size
+            int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
+            int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
+            
+            int drawX = (windowW / 2) - (scaledWidth / 2);
+            int verticalOffset = 7; // This might need to be a constant or configurable
+            int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
+            
+            // Create scaled destination rectangle
+            SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
+
+            display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+        }
+        
+        // Render foreground layer (closest to camera, appears in front of Digimon)
+        if (backgroundRenderer_->getLayerCount() > 2) {
+            backgroundRenderer_->renderLayer(2);  // Foreground layer (foregroundTexture_)
+        }
         
         // Debug: Log renderer status occasionally
         static int debugFrameCount = 0;
@@ -530,56 +519,49 @@ void AdventureState::render(PCDisplay& display) {
                         "SeamlessBackgroundRenderer: %zu layers, %d render calls, %d texture updates",
                         backgroundRenderer_->getLayerCount(), stats.renderCalls, stats.textureUpdates);
         }
-    } else {// Fallback to legacy tiled rendering for old upscaled assets        // Query texture dimensions for background rendering with consistent parallax factors
-        int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
-        if(bgTexture0_) { 
-            SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); 
-            effW0 = static_cast<int>(bgW0 * 0.667f); // Foreground: 2/3 for standard tiling speed
-            if(effW0<=0) effW0=bgW0;
-        }
-        if(bgTexture1_) { 
-            SDL_QueryTexture(bgTexture1_,0,0,&bgW1,&bgH1); 
-            effW1 = static_cast<int>(bgW1 * 0.75f); // Middleground: 3/4 for slightly slower parallax
-            if(effW1<=0) effW1=bgW1;
-        }
-        if(bgTexture2_) { 
-            SDL_QueryTexture(bgTexture2_,0,0,&bgW2,&bgH2); 
-            effW2 = static_cast<int>(bgW2 * 0.833f); // Background: 5/6 for slowest parallax
-            if(effW2<=0) effW2=bgW2;
-        }        // Draw background layers (back to front)
-        drawTiledBg(bgTexture2_, bg_scroll_offset_2_, bgW2, bgH2, effW2, "Layer 2");
-        drawTiledBg(bgTexture1_, bg_scroll_offset_1_, bgW1, bgH1, effW1, "Layer 1");    
-        drawTiledBg(bgTexture0_, bg_scroll_offset_0_, bgW0, bgH0, effW0, "Layer 0");
+    } else {
+        // Fallback: Render using simple texture drawing if SeamlessBackgroundRenderer is not available
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: SeamlessBackgroundRenderer not available, using simple texture rendering");
         
-        // DEBUG: Log scroll offsets in legacy mode every 60 frames
-        static int legacyScrollCount = 0;
-        legacyScrollCount++;
-        if (legacyScrollCount % 60 == 0) {
-            std::cout << "LEGACY SCROLL: Layer0=" << bg_scroll_offset_0_ 
-                      << ", Layer1=" << bg_scroll_offset_1_ 
-                      << ", Layer2=" << bg_scroll_offset_2_ 
-                      << " | effW=[" << effW0 << "," << effW1 << "," << effW2 << "]" << std::endl;
+        // Render background layer
+        if (backgroundTexture_) {
+            int bgW, bgH;
+            SDL_QueryTexture(backgroundTexture_, nullptr, nullptr, &bgW, &bgH);
+            SDL_Rect bgRect = {0, 0, windowW, windowH};
+            display.drawTexture(backgroundTexture_, nullptr, &bgRect);
         }
-    }
-
-    // Render the partner Digimon sprite
-    SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-    SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-    
-    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-        // Calculate the position for the scaled sprite
-        // Note: We need to center the scaled sprite, not the original source size
-        int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
-        int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
         
-        int drawX = (windowW / 2) - (scaledWidth / 2);
-        int verticalOffset = 7; // This might need to be a constant or configurable
-        int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
+        // Render middleground layer
+        if (middlegroundTexture_) {
+            int mgW, mgH;
+            SDL_QueryTexture(middlegroundTexture_, nullptr, nullptr, &mgW, &mgH);
+            SDL_Rect mgRect = {0, 0, windowW, windowH};
+            display.drawTexture(middlegroundTexture_, nullptr, &mgRect);
+        }
         
-        // Create scaled destination rectangle
-        SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
-
-        display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+        // Render the partner Digimon sprite
+        SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
+        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
+        
+        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
+            int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
+            
+            int drawX = (windowW / 2) - (scaledWidth / 2);
+            int verticalOffset = 7;
+            int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
+            
+            SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
+            display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+        }
+        
+        // Render foreground layer
+        if (foregroundTexture_) {
+            int fgW, fgH;
+            SDL_QueryTexture(foregroundTexture_, nullptr, nullptr, &fgW, &fgH);
+            SDL_Rect fgRect = {0, 0, windowW, windowH};
+            display.drawTexture(foregroundTexture_, nullptr, &fgRect);
+        }
     }
 
     // Render fade_to_battle overlay if active
@@ -628,9 +610,8 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         std::string fgTexId = environmentName + "_fg_v" + std::to_string(tempLayerData.selectedForegroundVariant + 1);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load FG path: %s with ID: %s", fgPath.c_str(), fgTexId.c_str());
-        
-        bgTexture0_ = assets->requestTexture(fgTexId, fgPath);
-        if (bgTexture0_) {
+          foregroundTexture_ = assets->requestTexture(fgTexId, fgPath);
+        if (foregroundTexture_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded foreground variant: %s", fgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load foreground variant: %s", fgPath.c_str());
@@ -642,9 +623,8 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         std::string mgTexId = environmentName + "_mg_v" + std::to_string(tempLayerData.selectedMiddlegroundVariant + 1);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load MG path: %s with ID: %s", mgPath.c_str(), mgTexId.c_str());
-        
-        bgTexture1_ = assets->requestTexture(mgTexId, mgPath);
-        if (bgTexture1_) {
+          middlegroundTexture_ = assets->requestTexture(mgTexId, mgPath);
+        if (middlegroundTexture_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded middleground variant: %s", mgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load middleground variant: %s", mgPath.c_str());
@@ -656,9 +636,8 @@ void AdventureState::loadBackgroundVariants(const std::string& environmentPath) 
         std::string bgTexId = environmentName + "_bg_v" + std::to_string(tempLayerData.selectedBackgroundVariant + 1);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load BG path: %s with ID: %s", bgPath.c_str(), bgTexId.c_str());
-        
-        bgTexture2_ = assets->requestTexture(bgTexId, bgPath);
-        if (bgTexture2_) {
+          backgroundTexture_ = assets->requestTexture(bgTexId, bgPath);
+        if (backgroundTexture_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded background variant: %s", bgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load background variant: %s", bgPath.c_str());
@@ -710,9 +689,8 @@ void AdventureState::loadBackgroundVariantsFromNodeData(const Digivice::Backgrou
         std::string fgTexId = nodeId + "_adventure_fg_" + std::to_string(layerData.selectedForegroundVariant);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load FG path: %s with ID: %s", fgPath.c_str(), fgTexId.c_str());
-        
-        if (assets->loadTexture(fgTexId, fgPath)) {
-            bgTexture0_ = assets->getTexture(fgTexId);
+          if (assets->loadTexture(fgTexId, fgPath)) {
+            foregroundTexture_ = assets->getTexture(fgTexId);
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded foreground variant: %s", fgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load foreground variant: %s", fgPath.c_str());
@@ -725,9 +703,8 @@ void AdventureState::loadBackgroundVariantsFromNodeData(const Digivice::Backgrou
         std::string mgTexId = nodeId + "_adventure_mg_" + std::to_string(layerData.selectedMiddlegroundVariant);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load MG path: %s with ID: %s", mgPath.c_str(), mgTexId.c_str());
-        
-        if (assets->loadTexture(mgTexId, mgPath)) {
-            bgTexture1_ = assets->getTexture(mgTexId);
+          if (assets->loadTexture(mgTexId, mgPath)) {
+            middlegroundTexture_ = assets->getTexture(mgTexId);
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded middleground variant: %s", mgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load middleground variant: %s", mgPath.c_str());
@@ -740,9 +717,8 @@ void AdventureState::loadBackgroundVariantsFromNodeData(const Digivice::Backgrou
         std::string bgTexId = nodeId + "_adventure_bg_" + std::to_string(layerData.selectedBackgroundVariant);
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Attempting to load BG path: %s with ID: %s", bgPath.c_str(), bgTexId.c_str());
-        
-        if (assets->loadTexture(bgTexId, bgPath)) {
-            bgTexture2_ = assets->getTexture(bgTexId);
+          if (assets->loadTexture(bgTexId, bgPath)) {
+            backgroundTexture_ = assets->getTexture(bgTexId);
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Successfully loaded background variant: %s", bgPath.c_str());
         } else {
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Failed to load background variant: %s", bgPath.c_str());

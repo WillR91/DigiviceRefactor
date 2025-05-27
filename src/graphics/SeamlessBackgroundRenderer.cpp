@@ -306,6 +306,22 @@ void SeamlessBackgroundRenderer::setLayerScrollPosition(int layerIndex, float sc
     }
 }
 
+void SeamlessBackgroundRenderer::renderLayer(size_t layerIndex) {
+    if (!renderer_ || layerIndex >= layers_.size()) {
+        return;
+    }
+    
+    // Update scaled textures if needed
+    if (cacheDirty_) {
+        updateLayerScaling();
+        cacheDirty_ = false;
+    }
+    
+    // Render the specific layer
+    const auto& layer = layers_[layerIndex];
+    renderLayer(layer);  // Call the private implementation
+}
+
 const SeamlessBackgroundRenderer::PerformanceStats& SeamlessBackgroundRenderer::getPerformanceStats() const {
     return stats_;
 }
