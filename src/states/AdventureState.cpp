@@ -19,6 +19,7 @@
 #include "Utils/RenderUtils.h"        // Added for sprite scaling utilities
 #include "entities/DigimonRegistry.h" // <<< ADDED for DigimonRegistry access
 #include "Core/BackgroundVariantManager.h" // Added for new variant background system
+#include "graphics/SeamlessBackgroundRenderer.h" // Added for new background rendering
 #include <SDL_log.h>
 #include <stdexcept>
 #include <fstream>
@@ -61,11 +62,11 @@ AdventureState::AdventureState(Game* game) :
     total_steps_taken_in_area_(0),
     current_area_enemy_id_("DefaultEnemy"), // Placeholder
     is_fading_to_battle_(false),
-    battle_fade_alpha_(0.0f),
-    bgTexture0_(nullptr),
+    battle_fade_alpha_(0.0f),    bgTexture0_(nullptr),
     bgTexture1_(nullptr),
     bgTexture2_(nullptr),
-    current_partner_definition_(nullptr)
+    current_partner_definition_(nullptr),
+    backgroundRenderer_(nullptr)
 {
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Initializing...");
     
@@ -118,19 +119,33 @@ AdventureState::AdventureState(Game* game) :
         // No background layers found in node data
     }
       // Check final texture loading state for debugging if needed
-    
-    // Fallback to default backgrounds if loading fails
+      // Fallback to default backgrounds if loading fails
     if (!bgTexture0_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load foreground from node data, using default");
-        bgTexture0_ = assets->getTexture("castle_bg_0");
+        bgTexture0_ = assets->getTexture("castlebackground0");
+        if (!bgTexture0_) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback foreground: castlebackground0");
+        } else {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback foreground: castlebackground0");
+        }
     }
     if (!bgTexture1_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load midground from node data, using default");
-        bgTexture1_ = assets->getTexture("castle_bg_1");
+        bgTexture1_ = assets->getTexture("castlebackground1");
+        if (!bgTexture1_) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback middleground: castlebackground1");
+        } else {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback middleground: castlebackground1");
+        }
     }
     if (!bgTexture2_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load background from node data, using default");
-        bgTexture2_ = assets->getTexture("castle_bg_2");
+        bgTexture2_ = assets->getTexture("castlebackground2");
+        if (!bgTexture2_) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load fallback background: castlebackground2");
+        } else {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded fallback background: castlebackground2");
+        }
     }
 }
 
@@ -145,6 +160,35 @@ void AdventureState::enter() {
     if (!game_ptr || !game_ptr->getPlayerData() || !game_ptr->getAnimationManager() || !game_ptr->getDigimonRegistry()) { // <<< ADDED getDigimonRegistry() check
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter() - Missing required game systems!");
         return;
+    }    // Initialize SeamlessBackgroundRenderer
+    PCDisplay* display = game_ptr->get_display();
+    if (display) {
+        backgroundRenderer_ = std::make_unique<SeamlessBackgroundRenderer>(display, display->getRenderer());
+        
+        // Debug: Check which textures are available
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Texture status - BG2: %s, BG1: %s, BG0: %s", 
+                   bgTexture2_ ? "LOADED" : "NULL", 
+                   bgTexture1_ ? "LOADED" : "NULL", 
+                   bgTexture0_ ? "LOADED" : "NULL");
+        
+        // Add background layers from back to front (reverse order for proper layering)
+        if (bgTexture2_) {
+            backgroundRenderer_->addLayer(bgTexture2_, SCROLL_SPEED_2);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added background layer (speed: %f)", SCROLL_SPEED_2);
+        }
+        if (bgTexture1_) {
+            backgroundRenderer_->addLayer(bgTexture1_, SCROLL_SPEED_1);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", SCROLL_SPEED_1);
+        }
+        if (bgTexture0_) {
+            backgroundRenderer_->addLayer(bgTexture0_, SCROLL_SPEED_0);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", SCROLL_SPEED_0);
+        }
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: SeamlessBackgroundRenderer initialized with %zu layers", 
+                   backgroundRenderer_->getLayerCount());
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AdventureState::enter() - Failed to get display for background renderer!");
     }
 
     PlayerData* playerData = game_ptr->getPlayerData();
@@ -355,23 +399,9 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         battle_fade_alpha_ = 0.0f; // Start fade from transparent
         // current_state_ = STATE_IDLE; // Optionally stop walking animation
         // queued_steps_ = 0;
-    }    // Scroll Background (Only if walking and not fading to battle)
-    // DEBUG: Log scroll state every 60 frames
-    static int scroll_debug_counter = 0;
-    scroll_debug_counter++;
-    if (scroll_debug_counter % 60 == 0) {
-        SDL_Log("SCROLL DEBUG: current_state_=%d (WALKING=%d), is_fading_to_battle_=%s, delta_time=%f", 
-                current_state_, STATE_WALKING, is_fading_to_battle_ ? "true" : "false", delta_time);
-    }
-    
-    if (current_state_ == STATE_WALKING && !is_fading_to_battle_) {
-        // Store previous offsets for smooth transitions
-        previous_bg_scroll_offset_0_ = bg_scroll_offset_0_;
-        previous_bg_scroll_offset_1_ = bg_scroll_offset_1_;
-        previous_bg_scroll_offset_2_ = bg_scroll_offset_2_;
-          float scrollAmount0 = SCROLL_SPEED_0 * delta_time;
-        float scrollAmount1 = SCROLL_SPEED_1 * delta_time;
-        float scrollAmount2 = SCROLL_SPEED_2 * delta_time;// Apply smooth scrolling factor on the first frame of walking to prevent initial lurch
+    }    // Scroll Background using SeamlessBackgroundRenderer (Only if walking and not fading to battle)
+    if (current_state_ == STATE_WALKING && !is_fading_to_battle_ && backgroundRenderer_) {
+        // Apply smooth scrolling factor on the first frame of walking to prevent initial lurch
         if (firstWalkUpdate_) {
             smooth_scroll_factor_ = 0.1f; // Start very low to prevent sudden jump
             firstWalkUpdate_ = false;
@@ -379,73 +409,17 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
             // Gradually increase smooth factor to normal speed over several frames
             smooth_scroll_factor_ = std::min(1.0f, smooth_scroll_factor_ + delta_time * 8.0f);
         }
-          scrollAmount0 *= smooth_scroll_factor_;
-        scrollAmount1 *= smooth_scroll_factor_;
-        scrollAmount2 *= smooth_scroll_factor_;
         
-        // DEBUG: Log scroll amounts every 60 frames
-        if (scroll_debug_counter % 60 == 0) {
-            SDL_Log("SCROLL AMOUNTS: raw=[%f,%f,%f], smooth_factor=%f, final=[%f,%f,%f]", 
-                    SCROLL_SPEED_0 * delta_time, SCROLL_SPEED_1 * delta_time, SCROLL_SPEED_2 * delta_time,
-                    smooth_scroll_factor_, scrollAmount0, scrollAmount1, scrollAmount2);
-        }
+        // Update background scrolling using the new renderer
+        float adjustedDeltaTime = delta_time * smooth_scroll_factor_;
+        backgroundRenderer_->updateScroll(adjustedDeltaTime);
         
-        int effW0 = 0, effW1 = 0, effW2 = 0;        if (bgTexture0_) {
-            int w;
-            SDL_QueryTexture(bgTexture0_, 0, 0, &w, 0);
-            effW0 = static_cast<int>(w * 0.667f);  // Foreground: 2/3 for standard tiling speed
-            if (effW0 <= 0) effW0 = w;
-        }
-        if (bgTexture1_) {
-            int w;
-            SDL_QueryTexture(bgTexture1_, 0, 0, &w, 0);
-            effW1 = static_cast<int>(w * 0.75f);   // Middleground: 3/4 for slightly slower parallax
-            if (effW1 <= 0) effW1 = w;
-        }
-        if (bgTexture2_) {
-            int w;
-            SDL_QueryTexture(bgTexture2_, 0, 0, &w, 0);
-            effW2 = static_cast<int>(w * 0.833f);  // Background: 5/6 for slowest parallax
-            if (effW2 <= 0) effW2 = w;
-        }        // Apply smoothed scrolling with numerically stable wrap-around for seamless looping
-        if (effW0 > 0) {
-            float old_offset = bg_scroll_offset_0_;
-            bg_scroll_offset_0_ -= scrollAmount0;  // Subtract for correct parallax direction (bg moves opposite to player)
-            // Use while-loop wrap-around to eliminate floating-point precision errors
-            float effW0f = static_cast<float>(effW0);
-            while (bg_scroll_offset_0_ < 0.0f) {
-                bg_scroll_offset_0_ += effW0f;
-            }
-            while (bg_scroll_offset_0_ >= effW0f) {
-                bg_scroll_offset_0_ -= effW0f;
-            }
-            
-            // DEBUG: Log offset changes every 60 frames
-            if (scroll_debug_counter % 60 == 0) {
-                SDL_Log("SCROLL UPDATE Layer0: old_offset=%f, scrollAmount0=%f, new_offset=%f, effW0=%d", 
-                        old_offset, scrollAmount0, bg_scroll_offset_0_, effW0);
-            }
-        }
-        if (effW1 > 0) {
-            bg_scroll_offset_1_ -= scrollAmount1;  // Subtract for correct parallax direction (bg moves opposite to player)
-            float effW1f = static_cast<float>(effW1);
-            while (bg_scroll_offset_1_ < 0.0f) {
-                bg_scroll_offset_1_ += effW1f;
-            }
-            while (bg_scroll_offset_1_ >= effW1f) {
-                bg_scroll_offset_1_ -= effW1f;
-            }
-        }
-        if (effW2 > 0) {
-            bg_scroll_offset_2_ -= scrollAmount2;  // Subtract for correct parallax direction (bg moves opposite to player)
-            float effW2f = static_cast<float>(effW2);
-            while (bg_scroll_offset_2_ < 0.0f) {
-                bg_scroll_offset_2_ += effW2f;
-            }
-            while (bg_scroll_offset_2_ >= effW2f) {
-                bg_scroll_offset_2_ -= effW2f;
-            }
-        }
+        // Store legacy scroll offsets for battle state compatibility (if needed)
+        // These can be calculated from backgroundRenderer scroll positions if required
+        bg_scroll_offset_0_ -= SCROLL_SPEED_0 * adjustedDeltaTime;
+        bg_scroll_offset_1_ -= SCROLL_SPEED_1 * adjustedDeltaTime;
+        bg_scroll_offset_2_ -= SCROLL_SPEED_2 * adjustedDeltaTime;
+        
     } else {        // Reset smooth scrolling when not walking
         if (current_state_ == STATE_IDLE) {
             firstWalkUpdate_ = true;
@@ -497,12 +471,11 @@ void AdventureState::render(PCDisplay& display) {
         for (int x = startX; x <= windowW + effectiveWidth * 2; x += effectiveWidth) {
             SDL_Rect dstRect = { x, 0, texW, texH }; 
             display.drawTexture(tex, NULL, &dstRect);        }
-    };    // Check if we have new 1x scale assets loaded by the variant system
-    // If so, use the enhanced scaling renderer, otherwise fallback to legacy tiled rendering
-    bool usingNewAssets = false;
+    };    // REFACTOR: Always use the new SeamlessBackgroundRenderer regardless of asset dimensions
+    // This eliminates the problematic overlap-based tiling system entirely
+    bool usingNewAssets = true;
     
-    // Check if any of the textures are from the new variant system (1x scale assets)
-    // Improved detection: check all available textures for 1x scale dimensions
+    // For debugging: Log texture dimensions to verify what we're working with
     if (bgTexture0_ || bgTexture1_ || bgTexture2_) {
         std::vector<SDL_Texture*> textures = {bgTexture2_, bgTexture1_, bgTexture0_};
         for (SDL_Texture* tex : textures) {
@@ -513,17 +486,9 @@ void AdventureState::render(PCDisplay& display) {
                 // Debug: Always log the first texture dimensions we check
                 static bool firstCheck = true;
                 if (firstCheck) {
-                    std::cout << "FIRST TEXTURE CHECK: " << testW << "x" << testH 
-                              << " (should be ~384x128 for new assets)" << std::endl;
+                    std::cout << "TEXTURE DIMENSIONS: " << testW << "x" << testH 
+                              << " (using SeamlessBackgroundRenderer for all assets)" << std::endl;
                     firstCheck = false;
-                }
-                
-                // Check for 1x scale assets (384x128 or similar small dimensions)
-                if (testW <= 500 && testH <= 200) // More generous bounds for 1x assets
-                {
-                    usingNewAssets = true;
-                    std::cout << "NEW ASSETS DETECTED: " << testW << "x" << testH << " - Using scaled renderer!" << std::endl;
-                    break;
                 }
             }
         }
@@ -546,26 +511,20 @@ void AdventureState::render(PCDisplay& display) {
                   << " | Textures: FG=" << bg0W << "x" << bg0H 
                   << ", MG=" << bg1W << "x" << bg1H 
                   << ", BG=" << bg2W << "x" << bg2H << std::endl;
-    }
-      if (usingNewAssets) {        // Use enhanced scaling renderer for new 1x scale assets
+    }    if (usingNewAssets && backgroundRenderer_) {
+        // Use SeamlessBackgroundRenderer for optimized rendering
+        backgroundRenderer_->render();
         
-        // Debug: Check texture pointers before rendering
+        // Debug: Log renderer status occasionally
         static int debugFrameCount = 0;
         debugFrameCount++;
         if (debugFrameCount % 120 == 0) { // Log every 120 frames
-            std::cout << "TEXTURE POINTERS: BG2=" << (bgTexture2_ ? "VALID" : "NULL") 
-                      << ", BG1=" << (bgTexture1_ ? "VALID" : "NULL") 
-                      << ", BG0=" << (bgTexture0_ ? "VALID" : "NULL") << std::endl;
-        }        
-        // Render background layers with proper scaling (back to front)
-        std::cout << "RENDER SEQUENCE: About to call Layer 2" << std::endl;
-        renderScaledBackgroundLayer(display, bgTexture2_, windowW, windowH, 1.0f, 2, bg_scroll_offset_2_);
-        std::cout << "RENDER SEQUENCE: Layer 2 completed, about to call Layer 1" << std::endl;
-        renderScaledBackgroundLayer(display, bgTexture1_, windowW, windowH, 1.0f, 1, bg_scroll_offset_1_);
-        std::cout << "RENDER SEQUENCE: Layer 1 completed, about to call Layer 0" << std::endl;
-        renderScaledBackgroundLayer(display, bgTexture0_, windowW, windowH, 1.0f, 0, bg_scroll_offset_0_);
-        std::cout << "RENDER SEQUENCE: All layers completed successfully" << std::endl;
-    } else {        // Fallback to legacy tiled rendering for old upscaled assets        // Query texture dimensions for background rendering with consistent parallax factors
+            const auto& stats = backgroundRenderer_->getPerformanceStats();
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, 
+                        "SeamlessBackgroundRenderer: %zu layers, %d render calls, %d texture updates",
+                        backgroundRenderer_->getLayerCount(), stats.renderCalls, stats.textureUpdates);
+        }
+    } else {// Fallback to legacy tiled rendering for old upscaled assets        // Query texture dimensions for background rendering with consistent parallax factors
         int bgW0=0,bgH0=0,effW0=0, bgW1=0,bgH1=0,effW1=0, bgW2=0,bgH2=0,effW2=0;
         if(bgTexture0_) { 
             SDL_QueryTexture(bgTexture0_,0,0,&bgW0,&bgH0); 

@@ -16,6 +16,12 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\ErrorManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\FrameRateManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -38,6 +44,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\SeamlessBackgroundRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animation.cpp">

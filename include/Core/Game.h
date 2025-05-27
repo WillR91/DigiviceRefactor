@@ -19,6 +19,9 @@
 // Forward declarations
 class TextRenderer;
 class AnimationManager;
+class FrameRateManager;
+class ErrorManager;
+class SeamlessBackgroundRenderer;
 
 // These constants will be used as defaults if the configuration file doesn't specify values
 const int DEFAULT_SMALL_SCREEN_WIDTH = 172;
@@ -70,9 +73,11 @@ public:
     GameState* getCurrentState();
     GameState* getUnderlyingState(const GameState* currentState); // <<< --- ADDED DECLARATION --- >>>
     InputManager* getInputManager();
-    PlayerData* getPlayerData();
-    TextRenderer* getTextRenderer();
+    PlayerData* getPlayerData();    TextRenderer* getTextRenderer();
     AnimationManager* getAnimationManager();
+    FrameRateManager* getFrameRateManager();
+    ErrorManager* getErrorManager();
+    SeamlessBackgroundRenderer* getBackgroundRenderer();
     Digimon::DigimonRegistry* getDigimonRegistry(); // <<< ADD THIS LINE
 
     // Debug helper
@@ -98,10 +103,12 @@ private:
     // Member Variables
     PCDisplay display;
     AssetManager assetManager;
-    InputManager inputManager;
-    PlayerData playerData_;
+    InputManager inputManager;    PlayerData playerData_;
     std::unique_ptr<TextRenderer> textRenderer_;
     std::unique_ptr<AnimationManager> animationManager_;
+    std::unique_ptr<FrameRateManager> frameRateManager_;
+    std::unique_ptr<ErrorManager> errorManager_;
+    std::unique_ptr<SeamlessBackgroundRenderer> backgroundRenderer_;
     bool is_running = false;
     std::vector<std::unique_ptr<GameState>> states_;
     Uint32 last_frame_time = 0;

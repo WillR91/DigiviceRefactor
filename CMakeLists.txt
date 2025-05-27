@@ -70,6 +70,17 @@ add_custom_command(
     VERBATIM
 )
 
+# --- Copy SDL2 DLLs to Output Directory Post-Build ---
+set(SDL2_DLL_DIR "Z:/Libraries/SDL2-2.32.0/lib/x64")
+set(SDL2_IMAGE_DLL_DIR "Z:/Libraries/SDL2_image-2.8.6/lib/x64")
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_DLL_DIR}/SDL2.dll" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${SDL2_IMAGE_DLL_DIR}/SDL2_image.dll" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/SDL2_image.dll"
+    COMMENT "Copying SDL2 DLLs to output directory..."
+    VERBATIM
+)
+
 # --- Optional: Add build options for debugging ---
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT CMAKE_BUILD_TYPE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)

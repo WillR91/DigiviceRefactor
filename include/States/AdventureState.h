@@ -14,12 +14,14 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>   // Needed for helper return types
+#include <memory>   // For std::unique_ptr
 
 // Forward declarations
 class Game;
 class InputManager;
 class PlayerData;
 class PCDisplay;
+class SeamlessBackgroundRenderer;
 // SDL_Texture is included via SDL_render.h
 
 // Enums specific to AdventureState logic
@@ -37,9 +39,11 @@ public:
     void render(PCDisplay& display) override;
     StateType getType() const override;
 
-private:
-    // Animator
+private:    // Animator
     Animator partnerAnimator_;
+
+    // Background Rendering
+    std::unique_ptr<SeamlessBackgroundRenderer> backgroundRenderer_;
 
     // Battle Trigger Members
     int current_area_step_goal_;        // How many steps to trigger a battle in the current area

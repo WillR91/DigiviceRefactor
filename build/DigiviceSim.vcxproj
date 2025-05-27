@@ -121,7 +121,7 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Debug/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Debug/config...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Debug/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Debug/config...	Copying SDL2 DLLs to output directory...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/Debug/assets
 if %errorlevel% neq 0 goto :cmEnd
@@ -133,6 +133,17 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd
 setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/Debug/config
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2-2.32.0/lib/x64/SDL2.dll Z:/DigiviceRefactor/build/Debug/SDL2.dll
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.dll Z:/DigiviceRefactor/build/Debug/SDL2_image.dll
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -192,7 +203,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Release/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Release/config...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/Release/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/Release/config...	Copying SDL2 DLLs to output directory...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/Release/assets
 if %errorlevel% neq 0 goto :cmEnd
@@ -204,6 +215,17 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd
 setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/Release/config
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2-2.32.0/lib/x64/SDL2.dll Z:/DigiviceRefactor/build/Release/SDL2.dll
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.dll Z:/DigiviceRefactor/build/Release/SDL2_image.dll
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -263,7 +285,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/MinSizeRel/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/MinSizeRel/config...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/MinSizeRel/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/MinSizeRel/config...	Copying SDL2 DLLs to output directory...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/MinSizeRel/assets
 if %errorlevel% neq 0 goto :cmEnd
@@ -275,6 +297,17 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd
 setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/MinSizeRel/config
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2-2.32.0/lib/x64/SDL2.dll Z:/DigiviceRefactor/build/MinSizeRel/SDL2.dll
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.dll Z:/DigiviceRefactor/build/MinSizeRel/SDL2_image.dll
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -334,7 +367,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/RelWithDebInfo/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/RelWithDebInfo/config...</Message>
+      <Message>Copying assets from Z:/DigiviceRefactor/assets to Z:/DigiviceRefactor/build/RelWithDebInfo/assets...	Copying config from Z:/DigiviceRefactor/config to Z:/DigiviceRefactor/build/RelWithDebInfo/config...	Copying SDL2 DLLs to output directory...</Message>
       <Command>setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/assets Z:/DigiviceRefactor/build/RelWithDebInfo/assets
 if %errorlevel% neq 0 goto :cmEnd
@@ -346,6 +379,17 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd
 setlocal
 "C:\Program Files\CMake\bin\cmake.exe" -E copy_directory Z:/DigiviceRefactor/config Z:/DigiviceRefactor/build/RelWithDebInfo/config
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2-2.32.0/lib/x64/SDL2.dll Z:/DigiviceRefactor/build/RelWithDebInfo/SDL2.dll
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.dll Z:/DigiviceRefactor/build/RelWithDebInfo/SDL2_image.dll
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -431,6 +475,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AnimationManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\ErrorManager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\FrameRateManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp" />
@@ -439,6 +485,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\entities\DigimonDefinition.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\entities\DigimonRegistry.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\graphics\SeamlessBackgroundRenderer.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animation.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\graphics\animator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\menu.cpp" />

@@ -3,6 +3,8 @@ Z:\DigiviceRefactor\src\bitmapfont.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir
 Z:\DigiviceRefactor\src\core\AnimationManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AnimationManager.obj
 Z:\DigiviceRefactor\src\core\AssetManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AssetManager.obj
 Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\BackgroundVariantManager.obj
+Z:\DigiviceRefactor\src\core\ErrorManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ErrorManager.obj
+Z:\DigiviceRefactor\src\core\FrameRateManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\FrameRateManager.obj
 Z:\DigiviceRefactor\src\core\Game.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\Game.obj
 Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager_keybind.obj
 Z:\DigiviceRefactor\src\core\InputManager_rebind.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\InputManager_rebind.obj
@@ -11,6 +13,7 @@ Z:\DigiviceRefactor\src\core\inputmanager.cpp;Z:\DigiviceRefactor\build\Digivice
 Z:\DigiviceRefactor\src\entities\DigimonDefinition.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\DigimonDefinition.obj
 Z:\DigiviceRefactor\src\entities\DigimonRegistry.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\DigimonRegistry.obj
 Z:\DigiviceRefactor\src\graphics\ManagedScrollingLayer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ManagedScrollingLayer.obj
+Z:\DigiviceRefactor\src\graphics\SeamlessBackgroundRenderer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\SeamlessBackgroundRenderer.obj
 Z:\DigiviceRefactor\src\graphics\animation.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animation.obj
 Z:\DigiviceRefactor\src\graphics\animator.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animator.obj
 Z:\DigiviceRefactor\src\menu.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\menu.obj

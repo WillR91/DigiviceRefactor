@@ -11,6 +11,9 @@
 #include "core/AssetManager.h"
 #include "ui/TextRenderer.h"
 #include "core/AnimationManager.h"
+#include "core/FrameRateManager.h"
+#include "core/ErrorManager.h"
+#include "graphics/SeamlessBackgroundRenderer.h"
 #include "utils/ConfigManager.h" // Add ConfigManager include
 #include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
 
@@ -260,15 +263,65 @@ bool Game::init(const std::string& title, int width, int height) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
         } else {
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager finished loading animation data.");
-        }
-
-    } catch (const std::exception& e) {
+        }    } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create or initialize AnimationManager: %s", e.what());
         textRenderer_.reset();
         assetManager.shutdown();
         display.close();
         SDL_Quit();
         return false;    }
+
+    // Initialize FrameRateManager
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing FrameRateManager...");
+    try {
+        frameRateManager_ = std::make_unique<FrameRateManager>(
+            FrameRateManager::TargetFrameRate::FPS_60,
+            vsync ? FrameRateManager::VSyncMode::ON : FrameRateManager::VSyncMode::OFF
+        );
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FrameRateManager initialized successfully.");
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create FrameRateManager: %s", e.what());
+        animationManager_.reset();
+        textRenderer_.reset();
+        assetManager.shutdown();
+        display.close();
+        SDL_Quit();
+        return false;
+    }
+
+    // Initialize ErrorManager
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing ErrorManager...");
+    try {
+        errorManager_ = std::make_unique<ErrorManager>(1000, true); // 1000 error history, recovery enabled
+        errorManager_->setLoggingEnabled(true);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ErrorManager initialized successfully.");
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create ErrorManager: %s", e.what());
+        frameRateManager_.reset();
+        animationManager_.reset();
+        textRenderer_.reset();
+        assetManager.shutdown();
+        display.close();
+        SDL_Quit();
+        return false;
+    }
+
+    // Initialize SeamlessBackgroundRenderer
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing SeamlessBackgroundRenderer...");
+    try {
+        backgroundRenderer_ = std::make_unique<SeamlessBackgroundRenderer>(&display, display.getRenderer());
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SeamlessBackgroundRenderer initialized successfully.");
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create SeamlessBackgroundRenderer: %s", e.what());
+        errorManager_.reset();
+        frameRateManager_.reset();
+        animationManager_.reset();
+        textRenderer_.reset();
+        assetManager.shutdown();
+        display.close();
+        SDL_Quit();
+        return false;
+    }
     
     // Initialize PlayerData with default node containing proper background data
     try {
@@ -345,14 +398,12 @@ void Game::run() {
         return;
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Entering main game loop.");
-    last_frame_time = SDL_GetTicks();
 
     while (is_running) {
-        // Calculate Delta Time
-        Uint32 current_time = SDL_GetTicks();
-        float delta_time = (current_time - last_frame_time) / 1000.0f;
-        if (delta_time > 0.1f) delta_time = 0.1f; // Clamp max delta time
-        last_frame_time = current_time;
+        // Begin frame timing with FrameRateManager
+        if (frameRateManager_) {
+            frameRateManager_->beginFrame();
+        }
 
         // Input Processing
         inputManager.prepareNewFrame();
@@ -362,7 +413,9 @@ void Game::run() {
                 quit_game();
             }
             inputManager.processEvent(event);
-        }        // Handle screen toggle action
+        }
+
+        // Handle screen toggle action
         if (inputManager.isActionJustPressed(GameAction::TOGGLE_SCREEN_SIZE)) {
             is_small_screen_ = !is_small_screen_;
             if (is_small_screen_) {
@@ -380,15 +433,37 @@ void Game::run() {
             }
         }
 
+        // Calculate delta time from FrameRateManager (fallback to old method if manager not available)
+        float delta_time;
+        if (frameRateManager_) {
+            delta_time = frameRateManager_->getLastFrameTime();
+            // Clamp max delta time for stability
+            if (delta_time > 0.1f) delta_time = 0.1f;
+        } else {
+            // Fallback to old timing method
+            Uint32 current_time = SDL_GetTicks();
+            delta_time = (current_time - last_frame_time) / 1000.0f;
+            if (delta_time > 0.1f) delta_time = 0.1f; // Clamp max delta time
+            last_frame_time = current_time;
+        }
+
+        // Skip frame if FrameRateManager suggests it for performance
+        bool shouldSkip = false;
+        if (frameRateManager_ && frameRateManager_->shouldSkipFrame()) {
+            shouldSkip = true;
+        }
+
         // State Logic
-        if (!states_.empty()) {
+        if (!states_.empty() && !shouldSkip) {
             // Apply any pending state changes
             applyStateChanges();
 
             // Handle input for the current state
             if (!states_.empty()) { // Check again, applyStateChanges might alter the stack
                 states_.back()->handle_input(inputManager, &playerData_);
-            }            // Update the current state
+            }
+
+            // Update the current state
             if (!states_.empty()) { // Check again
                 states_.back()->update(delta_time, &playerData_);
             }
@@ -411,8 +486,14 @@ void Game::run() {
             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Presenting frame.");
             display.present();
             
-        } else {
+        } else if (states_.empty()) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Game::run() - State stack is empty, nothing to update or render.");
+        }
+
+        // End frame timing and apply frame rate limiting
+        if (frameRateManager_) {
+            frameRateManager_->endFrame();
+            frameRateManager_->waitForTargetFrameTime();
         }
         
         // Add this debugging line somewhere in your update cycle
@@ -771,6 +852,9 @@ InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
 TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
 AnimationManager* Game::getAnimationManager() { return animationManager_.get(); }
+FrameRateManager* Game::getFrameRateManager() { return frameRateManager_.get(); }
+ErrorManager* Game::getErrorManager() { return errorManager_.get(); }
+SeamlessBackgroundRenderer* Game::getBackgroundRenderer() { return backgroundRenderer_.get(); }
 
 Digimon::DigimonRegistry* Game::getDigimonRegistry() {
     return &Digimon::DigimonRegistry::getInstance();
