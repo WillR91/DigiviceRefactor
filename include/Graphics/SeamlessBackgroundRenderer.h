@@ -39,8 +39,7 @@ private:
 public:
     SeamlessBackgroundRenderer(PCDisplay* display, SDL_Renderer* renderer);
     ~SeamlessBackgroundRenderer();
-    
-    void addLayer(SDL_Texture* texture, float scrollSpeed);
+      void addLayer(SDL_Texture* texture, float scrollSpeed);
     void updateScroll(float deltaTime);
     void render();
     void clearLayers();
@@ -48,6 +47,9 @@ public:
     // Configuration
     void setTargetResolution(int width, int height);
     void invalidateCache();
+    
+    // Synchronization
+    void setLayerScrollPosition(int layerIndex, float scrollPosition);
       // Debug and Performance
     size_t getLayerCount() const { return layers_.size(); }
     

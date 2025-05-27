@@ -47,19 +47,45 @@ void SeamlessBackgroundRenderer::addLayer(SDL_Texture* texture, float scrollSpee
 
 void SeamlessBackgroundRenderer::updateScroll(float deltaTime) {
     bool anyUpdated = false;
+    static bool firstFrame = true;
+    static int frameCount = 0;
+    frameCount++;
     
-    for (auto& layer : layers_) {
+    for (size_t i = 0; i < layers_.size(); ++i) {
+        auto& layer = layers_[i];
         float oldPosition = layer.scrollPosition;
         layer.scrollPosition += layer.scrollSpeed * deltaTime;
         
-        // Normalize to prevent floating point precision issues
+        float change = layer.scrollPosition - oldPosition;
+        
+        // Log ALL position changes for first 10 frames or when there are large jumps
+        bool shouldLog = firstFrame || frameCount <= 10 || std::abs(change) > 1.0f || 
+                        (frameCount % 60 == 0); // Also log every 60 frames
+        
+        if (shouldLog) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                       "ScrollUpdate[F%d,L%zu]: speed=%.3f, delta=%.4f, oldPos=%.2f, newPos=%.2f, change=%.2f", 
+                       frameCount, i, layer.scrollSpeed, deltaTime, oldPosition, layer.scrollPosition, change);
+        }
+        
+        // Flag if position jumped significantly (more than expected smooth movement)
+        if (std::abs(change) > 5.0f) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, 
+                       "LARGE POSITION JUMP detected: Layer %zu jumped %.2f units in one frame!", 
+                       i, change);
+        }
+          // Normalize to prevent floating point precision issues
         if (layer.scaledWidth > 0) {
-            // Use proper modulo to handle both positive and negative scroll directions
-            layer.scrollPosition = fmod(layer.scrollPosition, static_cast<float>(layer.scaledWidth));
+            // Use the same effective tile width as rendering for consistent wrapping
+            const float OVERLAP_RATIO = 1.0f / 3.0f;
+            float effectiveTileWidth = layer.scaledWidth * (1.0f - OVERLAP_RATIO);
             
-            // Ensure position is always positive (0 to width-1) regardless of scroll direction
+            // Use proper modulo to handle both positive and negative scroll directions
+            layer.scrollPosition = fmod(layer.scrollPosition, effectiveTileWidth);
+            
+            // Ensure position is always positive (0 to effectiveTileWidth-1) regardless of scroll direction
             if (layer.scrollPosition < 0) {
-                layer.scrollPosition += layer.scaledWidth;
+                layer.scrollPosition += effectiveTileWidth;
             }
         }
         
@@ -67,6 +93,8 @@ void SeamlessBackgroundRenderer::updateScroll(float deltaTime) {
             anyUpdated = true;
         }
     }
+    
+    firstFrame = false;
     
     if (anyUpdated) {
         stats_.lastFrameTime = deltaTime;
@@ -264,8 +292,18 @@ float SeamlessBackgroundRenderer::getLayerScrollSpeed(size_t index) const {
     if (index >= layers_.size()) {
         return 0.0f;
     }
-    
-    return layers_[index].scrollSpeed;
+      return layers_[index].scrollSpeed;
+}
+
+void SeamlessBackgroundRenderer::setLayerScrollPosition(int layerIndex, float scrollPosition) {
+    if (layerIndex >= 0 && layerIndex < static_cast<int>(layers_.size())) {
+        layers_[layerIndex].scrollPosition = scrollPosition;
+        std::cout << "SeamlessBackgroundRenderer::setLayerScrollPosition: Set layer " << layerIndex 
+                  << " scroll position to " << scrollPosition << std::endl;
+    } else {
+        std::cerr << "SeamlessBackgroundRenderer::setLayerScrollPosition: Invalid layer index " 
+                  << layerIndex << " (valid range: 0-" << (layers_.size() - 1) << ")" << std::endl;
+    }
 }
 
 const SeamlessBackgroundRenderer::PerformanceStats& SeamlessBackgroundRenderer::getPerformanceStats() const {

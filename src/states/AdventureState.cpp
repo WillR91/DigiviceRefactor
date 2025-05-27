@@ -179,11 +179,30 @@ void AdventureState::enter() {
         if (bgTexture1_) {
             backgroundRenderer_->addLayer(bgTexture1_, -SCROLL_SPEED_1);
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added middleground layer (speed: %f)", -SCROLL_SPEED_1);
-        }
-        if (bgTexture0_) {
+        }        if (bgTexture0_) {
             backgroundRenderer_->addLayer(bgTexture0_, -SCROLL_SPEED_0);
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: Added foreground layer (speed: %f)", -SCROLL_SPEED_0);
+        }          // Synchronize initial scroll positions to prevent first-frame jump
+        // Instead of starting at 0, use a small initial offset for seamless appearance
+        int screenWidth, screenHeight;
+        game_ptr->get_display()->getWindowSize(screenWidth, screenHeight);
+        float initialOffset = screenWidth * 0.1f; // Small offset to avoid edge artifacts
+        
+        // The layers are added in order: [0]=bgTexture2_, [1]=bgTexture1_, [2]=bgTexture0_
+        if (backgroundRenderer_->getLayerCount() >= 1) {
+            backgroundRenderer_->setLayerScrollPosition(0, initialOffset);
         }
+        if (backgroundRenderer_->getLayerCount() >= 2) {
+            backgroundRenderer_->setLayerScrollPosition(1, initialOffset);
+        }
+        if (backgroundRenderer_->getLayerCount() >= 3) {
+            backgroundRenderer_->setLayerScrollPosition(2, initialOffset);
+        }
+        
+        // Also update legacy scroll offsets to match
+        bg_scroll_offset_0_ = initialOffset;
+        bg_scroll_offset_1_ = initialOffset;
+        bg_scroll_offset_2_ = initialOffset;
         
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: SeamlessBackgroundRenderer initialized with %zu layers", 
                    backgroundRenderer_->getLayerCount());
@@ -401,29 +420,18 @@ void AdventureState::update(float delta_time, PlayerData* playerData) {
         // queued_steps_ = 0;
     }    // Scroll Background using SeamlessBackgroundRenderer (Only if walking and not fading to battle)
     if (current_state_ == STATE_WALKING && !is_fading_to_battle_ && backgroundRenderer_) {
-        // Apply smooth scrolling factor on the first frame of walking to prevent initial lurch
-        if (firstWalkUpdate_) {
-            smooth_scroll_factor_ = 0.1f; // Start very low to prevent sudden jump
-            firstWalkUpdate_ = false;
-        } else {
-            // Gradually increase smooth factor to normal speed over several frames
-            smooth_scroll_factor_ = std::min(1.0f, smooth_scroll_factor_ + delta_time * 8.0f);
-        }
-          // Update background scrolling using the new renderer
-        float adjustedDeltaTime = delta_time * smooth_scroll_factor_;
-        backgroundRenderer_->updateScroll(adjustedDeltaTime);
+        // Use consistent scroll speed from the first frame - no more smooth ramping
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "BackgroundUpdate: state=%d, deltaTime=%.6f, firstWalk=%s", 
+                     current_state_, delta_time, firstWalkUpdate_ ? "true" : "false");
+        backgroundRenderer_->updateScroll(delta_time);
         
-        // Store legacy scroll offsets for battle state compatibility (if needed)
-        // NOTE: Negative speeds make backgrounds scroll right (Digimon appears to move left)
-        // For legacy offsets, we use opposite sign since the legacy system works differently
-        bg_scroll_offset_0_ += SCROLL_SPEED_0 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
-        bg_scroll_offset_1_ += SCROLL_SPEED_1 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
-        bg_scroll_offset_2_ += SCROLL_SPEED_2 * adjustedDeltaTime; // Using += for negative speeds in backgroundRenderer
+        // Legacy scroll offsets are no longer updated since we use SeamlessBackgroundRenderer
+        // The SeamlessBackgroundRenderer handles all scroll positioning internally
         
-    } else {        // Reset smooth scrolling when not walking
+    } else {
+        // Reset first walk flag when not walking
         if (current_state_ == STATE_IDLE) {
             firstWalkUpdate_ = true;
-            smooth_scroll_factor_ = 0.0f; // Reset to 0 for next walking sequence
         }
     }
 
