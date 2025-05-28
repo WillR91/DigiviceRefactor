@@ -84,9 +84,7 @@ namespace ScalingUtils {
     float applyScaling(float value, ElementType type) {
         float scale = getScalingFactor(type);
         return value * scale;
-    }
-
-    SDL_Rect createScaledRect(int x, int y, int width, int height, ElementType type) {
+    }    SDL_Rect createScaledRect(int x, int y, int width, int height, ElementType type) {
         float scale = getScalingFactor(type);
         
         SDL_Rect destRect;
@@ -94,6 +92,24 @@ namespace ScalingUtils {
         destRect.y = y;
         destRect.w = static_cast<int>(static_cast<float>(width) * scale);
         destRect.h = static_cast<int>(static_cast<float>(height) * scale);
+        
+        return destRect;
+    }
+
+    SDL_Rect createCenteredScaledRect(int width, int height, ElementType type) {
+        float scale = getScalingFactor(type);
+        
+        // Calculate scaled dimensions
+        int scaledWidth = static_cast<int>(static_cast<float>(width) * scale);
+        int scaledHeight = static_cast<int>(static_cast<float>(height) * scale);
+        
+        // Center on logical screen (466x466)
+        const int LOGICAL_SIZE = 466;
+        SDL_Rect destRect;
+        destRect.x = (LOGICAL_SIZE / 2) - (scaledWidth / 2);
+        destRect.y = (LOGICAL_SIZE / 2) - (scaledHeight / 2);
+        destRect.w = scaledWidth;
+        destRect.h = scaledHeight;
         
         return destRect;
     }

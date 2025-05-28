@@ -489,23 +489,23 @@ void AdventureState::render(PCDisplay& display) {
             backgroundRenderer_->renderLayer(1);  // Middleground layer (middlegroundTexture_)
         }        // Render the partner Digimon sprite (middle depth - between middleground and foreground)
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-          if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-            // Use logical coordinates for positioning (466x466 coordinate system)
-            int drawX = (LOGICAL_WIDTH / 2) - (currentSourceRect.w / 2);
+        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            // Create centered destination rectangle using ScalingUtils for sprite scaling
+            SDL_Rect dstRect = ScalingUtils::createCenteredScaledRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
+            
+            // Apply vertical offset for Digimon positioning
             int verticalOffset = 7; // This might need to be a constant or configurable
-            int drawY = (LOGICAL_HEIGHT / 2) - (currentSourceRect.h / 2) - verticalOffset;
-              // Create destination rectangle using ScalingUtils for sprite scaling
-            SDL_Rect dstRect = ScalingUtils::createScaledRect(drawX, drawY, currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
+            dstRect.y -= verticalOffset;
 
             display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
-              // Debug: Log Digimon position occasionally
+            
+            // Debug: Log Digimon position occasionally
             static int digimonDebugCount = 0;
             digimonDebugCount++;
             if (digimonDebugCount % 300 == 0) { // Log every 300 frames (~5 seconds at 60fps)
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
-                           "Digimon position: logical (%d,%d), sprite size %dx%d",
-                           drawX, drawY, currentSourceRect.w, currentSourceRect.h);
+                           "Digimon position: logical (%d,%d), sprite size %dx%d, scaled size %dx%d",
+                           dstRect.x, dstRect.y, currentSourceRect.w, currentSourceRect.h, dstRect.w, dstRect.h);
             }
         }
         
@@ -543,13 +543,14 @@ void AdventureState::render(PCDisplay& display) {
         }// Render the partner Digimon sprite
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
         SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-        
-        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {            // Use logical coordinates for positioning (SDL logical scaling handles the rest)
-            int drawX = (LOGICAL_WIDTH / 2) - (currentSourceRect.w / 2);
-            int verticalOffset = 7;
-            int drawY = (LOGICAL_HEIGHT / 2) - (currentSourceRect.h / 2) - verticalOffset;
+          if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            // Create centered destination rectangle using ScalingUtils for sprite scaling
+            SDL_Rect dstRect = ScalingUtils::createCenteredScaledRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
             
-            SDL_Rect dstRect = ScalingUtils::createScaledRect(drawX, drawY, currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
+            // Apply vertical offset for Digimon positioning
+            int verticalOffset = 7;
+            dstRect.y -= verticalOffset;
+            
             display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
             
             // Debug: Log Digimon position in fallback path
@@ -557,8 +558,8 @@ void AdventureState::render(PCDisplay& display) {
             fallbackDebugCount++;
             if (fallbackDebugCount % 300 == 0) { // Log every 300 frames
                 SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
-                           "Digimon position (fallback): logical (%d,%d), sprite size %dx%d",
-                           drawX, drawY, currentSourceRect.w, currentSourceRect.h);
+                           "Digimon position (fallback): logical (%d,%d), sprite size %dx%d, scaled size %dx%d",
+                           dstRect.x, dstRect.y, currentSourceRect.w, currentSourceRect.h, dstRect.w, dstRect.h);
             }
         }
           // Render foreground layer
