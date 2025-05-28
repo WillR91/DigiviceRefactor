@@ -248,11 +248,14 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/palmon.json", "palmon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/tentomon.json", "tentomon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");
-        
-        // Load unlockable Digimon animations
+          // Load unlockable Digimon animations
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");        
-        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()    // Now register all enemy Digimon assets for lazy loading instead of loading them
+        
+        // Load all enemy Digimon animations
+        anims_ok &= loadAllEnemyDigimonAssets();
+        
+        // Now register all enemy Digimon assets for lazy loading instead of loading them
     registerAllEnemyDigimonAssets();
     
     // Register common UI and background assets for lazy loading
@@ -924,32 +927,84 @@ bool Game::loadAllEnemyDigimonAssets() {
     // This directory contains enemy Digimon assets
     const std::string enemyBaseDir = "assets/sprites/enemy_digimon";
     
-    // Load common enemy Digimon textures
-    assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
-    assets_ok &= assetManager.loadTexture("andromon", "assets/sprites/enemy_digimon/andromon.png");
-    assets_ok &= assetManager.loadTexture("devimon", "assets/sprites/enemy_digimon/devimon.png");
-    assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
-    assets_ok &= assetManager.loadTexture("kiwimon", "assets/sprites/enemy_digimon/kiwimon.png");
-    assets_ok &= assetManager.loadTexture("monochromon", "assets/sprites/enemy_digimon/monochromon.png");
-    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyranomon.png");
-    assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
-    assets_ok &= assetManager.loadTexture("shellmon", "assets/sprites/enemy_digimon/shellmon.png");
+    // Load ALL enemy Digimon textures dynamically
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Starting dynamic loading of all enemy textures...");
+    try {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Checking enemy texture directory: %s", enemyBaseDir.c_str());
+        if (std::filesystem::exists(enemyBaseDir) && std::filesystem::is_directory(enemyBaseDir)) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy texture directory found, iterating files...");
+            int loadedTextures = 0;
+            int totalPngFiles = 0;
+            
+            for (const auto& entry : std::filesystem::directory_iterator(enemyBaseDir)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".png") {
+                    totalPngFiles++;
+                    std::string filename = entry.path().filename().string();
+                    std::string digimonName = filename.substr(0, filename.find_last_of('.'));
+                    
+                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading enemy texture: %s from %s", digimonName.c_str(), filename.c_str());
+                    bool loadResult = assetManager.loadTexture(digimonName, entry.path().string());
+                    assets_ok &= loadResult;
+                    
+                    if (loadResult) {
+                        loadedTextures++;
+                        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded enemy texture: %s", digimonName.c_str());
+                    } else {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy texture: %s", filename.c_str());
+                    }
+                }
+            }
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Found %d PNG files, loaded %d enemy Digimon textures successfully", totalPngFiles, loadedTextures);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Enemy texture directory not found: %s", enemyBaseDir.c_str());
+            assets_ok = false;
+        }
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error loading enemy textures: %s", e.what());
+        assets_ok = false;
+    }
     
     // Load unlockable Digimon
     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
-    assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
-    
-    // Load enemy Digimon animations
+    assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");// Load ALL enemy Digimon animations dynamically
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Starting dynamic loading of all enemy animations...");
     bool anims_ok = true;
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/andromon.json", "andromon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/devimon.json", "devimon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kiwimon.json", "kiwimon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/monochromon.json", "monochromon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyranomon.json", "tyrannomon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/shellmon.json", "shellmon");
+    const std::string enemyAnimDir = "assets/sprites/enemy_digimon";
+    
+    try {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Checking enemy animation directory: %s", enemyAnimDir.c_str());
+        if (std::filesystem::exists(enemyAnimDir) && std::filesystem::is_directory(enemyAnimDir)) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy animation directory found, iterating files...");
+            int loadedAnimations = 0;
+            int totalJsonFiles = 0;
+            
+            for (const auto& entry : std::filesystem::directory_iterator(enemyAnimDir)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".json") {
+                    totalJsonFiles++;
+                    std::string filename = entry.path().filename().string();
+                    std::string digimonName = filename.substr(0, filename.find_last_of('.'));
+                    
+                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading enemy animation: %s from %s", digimonName.c_str(), filename.c_str());
+                    bool loadResult = animationManager_->loadAnimationDataFromFile(entry.path().string(), digimonName);
+                    anims_ok &= loadResult;
+                    
+                    if (loadResult) {
+                        loadedAnimations++;
+                        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded enemy animation: %s", digimonName.c_str());
+                    } else {
+                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy animation: %s", filename.c_str());
+                    }
+                }
+            }
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Found %d JSON files, loaded %d enemy Digimon animations successfully", totalJsonFiles, loadedAnimations);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Enemy animation directory not found: %s", enemyAnimDir.c_str());
+            anims_ok = false;
+        }
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error loading enemy animations: %s", e.what());
+        anims_ok = false;
+    }
     
     // Load unlockable Digimon animations
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");

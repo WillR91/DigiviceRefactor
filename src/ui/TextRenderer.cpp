@@ -10,7 +10,7 @@
 
 TextRenderer::TextRenderer(SDL_Texture* fontTexture) :
     fontTexture_(fontTexture),
-    defaultKerning_(-15), // Set default based on previous usage in MenuState
+    defaultKerning_(0), // Use reasonable default kerning for proper character spacing
     globalTextScale_(1.0f) // Default scale
 {
     if (!fontTexture_) {
@@ -54,9 +54,7 @@ bool TextRenderer::loadFontData(const std::string& jsonPath) {
         if (!data.contains("frames") || !data["frames"].is_object()) {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::loadFontData Error: JSON missing 'frames' object or it's not an object: %s", jsonPath.c_str());
             return false;
-        }
-
-        const auto& frames = data["frames"];
+        }        const auto& frames = data["frames"];
         int loadedCount = 0;
         for (auto& [key, value] : frames.items()) {
             if (!value.contains("frame") || !value["frame"].is_object()) { continue; } // Skip if frame object missing
@@ -64,24 +62,43 @@ bool TextRenderer::loadFontData(const std::string& jsonPath) {
             const auto& frameData = value["frame"];
             if (!(frameData.contains("x") && frameData.contains("y") && frameData.contains("w") && frameData.contains("h"))) { continue; } // Skip if rect data missing
 
+            // Strip .png extension if present
+            std::string cleanKey = key;
+            if (cleanKey.length() > 4 && cleanKey.substr(cleanKey.length() - 4) == ".png") {
+                cleanKey = cleanKey.substr(0, cleanKey.length() - 4);
+            }
+
             char character = '\0';
             // Handle single character keys and descriptive keys
-            if (key.length() == 1) {
-                 character = key[0];
+            if (cleanKey.length() == 1) {
+                 character = cleanKey[0];
             } else {
-                 // Map descriptive keys (add more as needed)
-                 if (key == "QUESTION") character = '?'; else if (key == "apostrophe") character = '\''; else if (key == "colon") character = ':'; else if (key == "comma") character = ','; else if (key == "dash") character = '-'; else if (key == "divide") character = '/'; else if (key == "equals") character = '='; else if (key == "exclamation") character = '!'; else if (key == "forwardslash") character = '/'; else if (key == "period") character = '.'; else if (key == "plus") character = '+'; else if (key == "roundbracketleft") character = '('; else if (key == "roundbracketright") character = ')'; else if (key == "speech") character = '"'; else if (key == "times") character = '*'; else if (key == "weirdbracketleft") character = '['; else if (key == "weirdbracketright") character = ']';
-                 else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::loadFontData WARN: Skipping unrecognized descriptive key: '%s'", key.c_str()); continue; }
+                 // Map descriptive keys (updated for new font format)
+                 if (cleanKey == "QUESTION" || cleanKey == "questionmark") character = '?'; 
+                 else if (cleanKey == "apostrophe") character = '\''; 
+                 else if (cleanKey == "colon") character = ':'; 
+                 else if (cleanKey == "comma") character = ','; 
+                 else if (cleanKey == "dash") character = '-'; 
+                 else if (cleanKey == "divide" || cleanKey == "forwardslash") character = '/'; 
+                 else if (cleanKey == "equals") character = '='; 
+                 else if (cleanKey == "exclamation") character = '!'; 
+                 else if (cleanKey == "period") character = '.'; 
+                 else if (cleanKey == "plus") character = '+'; 
+                 else if (cleanKey == "roundbracketleft") character = '('; 
+                 else if (cleanKey == "roundbracketright") character = ')'; 
+                 else if (cleanKey == "speech") character = '"'; 
+                 else if (cleanKey == "times" || cleanKey == "multiply") character = '*'; 
+                 else if (cleanKey == "weirdbracketleft") character = '['; 
+                 else if (cleanKey == "weirdbracketright") character = ']';
+                 else { SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::loadFontData WARN: Skipping unrecognized descriptive key: '%s' (original: '%s')", cleanKey.c_str(), key.c_str()); continue; }
             }
 
             if (character != '\0') {
                 int x = frameData.value("x", -1);
                 int y = frameData.value("y", -1);
                 int w = frameData.value("w", -1);
-                int h = frameData.value("h", -1);
-
-                if (x < 0 || y < 0 || w <= 0 || h <= 0) {
-                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::loadFontData WARN: Skipping char '%c' (key '%s'): Invalid rect data (x=%d, y=%d, w=%d, h=%d)", character, key.c_str(), x, y, w, h);
+                int h = frameData.value("h", -1);                if (x < 0 || y < 0 || w <= 0 || h <= 0) {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextRenderer::loadFontData WARN: Skipping char '%c' (key '%s'): Invalid rect data (x=%d, y=%d, w=%d, h=%d)", character, cleanKey.c_str(), x, y, w, h);
                     continue;
                 }
                 fontCharMap_[character] = SDL_Rect{ x, y, w, h };
@@ -244,12 +261,12 @@ void TextRenderer::drawText(SDL_Renderer* renderer, const std::string& text, int
             firstChar = false;
         }
 
-        int scaledW = static_cast<int>(static_cast<float>(charWidth) * scale);
+        int scaledW = static_cast<int>(static_cast<float>(charWidth) * finalScale);
 
         // Only attempt to draw if we found a source rect (i.e., not space or unknown)
         if (pSrcRect != nullptr) {
              int charHeight = pSrcRect->h;
-             int scaledH = static_cast<int>(static_cast<float>(charHeight) * scale);
+             int scaledH = static_cast<int>(static_cast<float>(charHeight) * finalScale);
 
              if (scaledW > 0 && scaledH > 0) {
                  SDL_Rect destRect = { currentX, y, scaledW, scaledH };

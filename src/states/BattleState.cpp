@@ -239,20 +239,26 @@ void BattleState::enter() {
     enemy_name_position_.y = enemy_sprite_position_.y + (sprite_frame_height / 2) + name_gap_pixels;
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Enemy setup complete. Enemy: %s, SpritePos: (%d,%d), NamePos: (%d,%d)", enemyNameStr.c_str(), enemy_sprite_position_.x, enemy_sprite_position_.y, enemy_name_position_.x, enemy_name_position_.y);
-    // --- END MOVED ENEMY_REVEAL_SETUP LOGIC ---
-
-    // --- BEGIN PLAYER DIGIMON SETUP LOGIC ---
-    std::string playerDigimonNameStr = getDigimonNameForBattle(player_digimon_type_);
+    // --- END MOVED ENEMY_REVEAL_SETUP LOGIC ---    // --- BEGIN PLAYER DIGIMON SETUP LOGIC ---
+    // Get player Digimon definition from registry using the legacy enum
+    const Digimon::DigimonDefinition* playerDefinition = registry->getDefinitionByLegacyType(player_digimon_type_);
+    if (!playerDefinition) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get player Digimon definition for type %d", static_cast<int>(player_digimon_type_));
+        return;
+    }
+    
+    std::string playerDigimonNameStr = playerDefinition->displayName;
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Setting up player Digimon: %s", playerDigimonNameStr.c_str());
 
-    std::string playerIdleAnimId = AnimationUtils::GetAnimationId(player_digimon_type_, "Idle");
+    // Use modern animation ID construction with spriteBaseId
+    std::string playerIdleAnimId = AnimationUtils::GetAnimationId(playerDefinition->spriteBaseId, "Idle");
     const AnimationData* playerIdleAnimData = animManager->getAnimationData(playerIdleAnimId);
     if (playerIdleAnimData) {
         player_animator_.setAnimation(playerIdleAnimData);
         player_animator_.update(0.0f); // Prime the animator
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Player idle animation '%s' loaded.", playerIdleAnimId.c_str());
     } else {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get idle animation '%s' for player type %d.", playerIdleAnimId.c_str(), static_cast<int>(player_digimon_type_));
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BattleState::enter - Failed to get idle animation '%s' for player Digimon: %s", playerIdleAnimId.c_str(), playerDefinition->displayName.c_str());
     }
 
     // Define Player Sprite Position

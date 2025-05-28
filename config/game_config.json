@@ -1,55 +1,58 @@
-{    "display": {
-        "width": 466,
-        "height": 466,
-        "smallScreenWidth": 172,
-        "smallScreenHeight": 172,
-        "title": "Digivice Sim",
+{
+    "audio": {
+        "musicVolume": 0.7,
+        "muted": false,
+        "sfxVolume": 1.0
+    },
+    "debug": {
+        "logLevel": "info",
+        "showColliders": false,
+        "showFps": false
+    },
+    "display": {
         "fullscreen": false,
-        "vsync": true,
+        "height": 466,
         "scaling": {
-            "sprites": 3.4,
-            "ui": 1.0,
-            "text": 0.5,
+            "effects": 1.0,
             "environments": 1.0,
-            "effects": 1.0
-        }
+            "sprites": 3.4,
+            "text": 1.5,
+            "ui": 1.0
+        },
+        "smallScreenHeight": 172,
+        "smallScreenWidth": 172,
+        "title": "Digivice Sim",
+        "vsync": true,
+        "width": 466
+    },
+    "game": {
+        "debugMode": false,
+        "defaultPartner": "agumon",
+        "difficultyLevel": "normal",
+        "stepGoal": 100,
+        "transitionSpeed": 0.3
     },
     "input": {
-        "moveKey": {
-            "up": "Up",
-            "down": "Down",
-            "left": "Left",
-            "right": "Right"
-        },
         "actionKey": "ENTER",
         "backKey": "BACKSPACE",
         "menuKey": "C",
+        "moveKey": {
+            "down": "Down",
+            "left": "Left",
+            "right": "Right",
+            "up": "Up"
+        },
         "toggleScreenKey": "F"
     },
-    "audio": {
-        "musicVolume": 0.7,
-        "sfxVolume": 1.0,
-        "muted": false
-    },    "game": {
-        "defaultPartner": "agumon",
-        "difficultyLevel": "normal",
-        "debugMode": false,
-        "transitionSpeed": 0.3,
-        "stepGoal": 100
-    },    "ui": {
-        "textScale": 0.5
-    },
     "paths": {
-        "sprites": "assets/sprites/",
         "backgrounds": "assets/backgrounds/",
-        "ui": "assets/ui/",
-        "fonts": "assets/ui/fonts/",
         "digimonDefinitions": "assets/config/digimon/",
-        "fallback": "assets/fallback/"
+        "fallback": "assets/fallback/",
+        "fonts": "assets/ui/fonts/",
+        "sprites": "assets/sprites/",
+        "ui": "assets/ui/"
     },
-    "debug": {
-        "showFps": false,
-        "logLevel": "info",
-        "showColliders": false
+    "ui": {
+        "textScale": 2.499999523162842
     }
 }

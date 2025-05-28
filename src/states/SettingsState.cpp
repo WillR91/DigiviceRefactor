@@ -102,10 +102,9 @@ void SettingsState::handle_input(InputManager& inputManager, PlayerData* playerD
             }
             
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text scale decreased to %.1f", textScaleValue_);
-        }
-        else if (inputManager.isActionJustPressed(GameAction::NAV_RIGHT)) {
-            // Increase text scale (maximum 2.0)
-            textScaleValue_ = std::min(2.0f, textScaleValue_ + 0.1f);
+        }        else if (inputManager.isActionJustPressed(GameAction::NAV_RIGHT)) {
+            // Increase text scale (maximum 5.0)
+            textScaleValue_ = std::min(5.0f, textScaleValue_ + 0.1f);
             
             // Update the config
             ConfigManager::setValue("ui.textScale", textScaleValue_);
