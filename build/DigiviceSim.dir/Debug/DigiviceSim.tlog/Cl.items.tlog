@@ -32,5 +32,6 @@ Z:\DigiviceRefactor\src\states\progressstate.cpp;Z:\DigiviceRefactor\build\Digiv
 Z:\DigiviceRefactor\src\states\transitionstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\transitionstate.obj
 Z:\DigiviceRefactor\src\ui\textrenderer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\textrenderer.obj
 Z:\DigiviceRefactor\src\utils\ConfigManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ConfigManager.obj
+Z:\DigiviceRefactor\src\utils\ScalingUtils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ScalingUtils.obj
 Z:\DigiviceRefactor\src\utils\animationutils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\animationutils.obj
 Z:\DigiviceRefactor\src\widget.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\widget.obj

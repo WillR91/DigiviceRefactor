@@ -17,6 +17,7 @@
 #include "core/GameConstants.h"     // Added for game constants
 #include "states/BattleState.h"       // Forward declare or include for BattleState later
 #include "Utils/RenderUtils.h"        // Added for sprite scaling utilities
+#include "utils/ScalingUtils.h"       // Added for unified scaling system
 #include "entities/DigimonRegistry.h" // <<< ADDED for DigimonRegistry access
 #include "Core/BackgroundVariantManager.h" // Added for new variant background system
 #include "graphics/SeamlessBackgroundRenderer.h" // Added for new background rendering
@@ -433,7 +434,10 @@ void AdventureState::render(PCDisplay& display) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Clear to black
     SDL_RenderClear(renderer);    // Get screen dimensions
     int windowW = 0, windowH = 0;
-    display.getWindowSize(windowW, windowH);
+    display.getWindowSize(windowW, windowH);    // With SDL logical scaling enabled, we use the game's native resolution (466x466)
+    // as the logical coordinate system. No coordinate conversion needed.
+    const int LOGICAL_WIDTH = 466;
+    const int LOGICAL_HEIGHT = 466;
 
     // REFACTOR: Always use the new SeamlessBackgroundRenderer
     // This eliminates the problematic overlap-based tiling system entirely
@@ -483,26 +487,26 @@ void AdventureState::render(PCDisplay& display) {
         // Render middleground layer
         if (backgroundRenderer_->getLayerCount() > 1) {
             backgroundRenderer_->renderLayer(1);  // Middleground layer (middlegroundTexture_)
-        }
-        
-        // Render the partner Digimon sprite (middle depth - between middleground and foreground)
+        }        // Render the partner Digimon sprite (middle depth - between middleground and foreground)
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
         SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-        
-        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-            // Calculate the position for the scaled sprite
-            // Note: We need to center the scaled sprite, not the original source size
-            int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
-            int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
-            
-            int drawX = (windowW / 2) - (scaledWidth / 2);
+          if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            // Use logical coordinates for positioning (466x466 coordinate system)
+            int drawX = (LOGICAL_WIDTH / 2) - (currentSourceRect.w / 2);
             int verticalOffset = 7; // This might need to be a constant or configurable
-            int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
-            
-            // Create scaled destination rectangle
-            SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
+            int drawY = (LOGICAL_HEIGHT / 2) - (currentSourceRect.h / 2) - verticalOffset;
+              // Create destination rectangle using ScalingUtils for sprite scaling
+            SDL_Rect dstRect = ScalingUtils::createScaledRect(drawX, drawY, currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
 
             display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+              // Debug: Log Digimon position occasionally
+            static int digimonDebugCount = 0;
+            digimonDebugCount++;
+            if (digimonDebugCount % 300 == 0) { // Log every 300 frames (~5 seconds at 60fps)
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                           "Digimon position: logical (%d,%d), sprite size %dx%d",
+                           drawX, drawY, currentSourceRect.w, currentSourceRect.h);
+            }
         }
         
         // Render foreground layer (closest to camera, appears in front of Digimon)
@@ -522,12 +526,11 @@ void AdventureState::render(PCDisplay& display) {
     } else {
         // Fallback: Render using simple texture drawing if SeamlessBackgroundRenderer is not available
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AdventureState: SeamlessBackgroundRenderer not available, using simple texture rendering");
-        
-        // Render background layer
+          // Render background layer
         if (backgroundTexture_) {
             int bgW, bgH;
             SDL_QueryTexture(backgroundTexture_, nullptr, nullptr, &bgW, &bgH);
-            SDL_Rect bgRect = {0, 0, windowW, windowH};
+            SDL_Rect bgRect = ScalingUtils::createScaledRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, ScalingUtils::ElementType::ENVIRONMENTS);
             display.drawTexture(backgroundTexture_, nullptr, &bgRect);
         }
         
@@ -535,40 +538,42 @@ void AdventureState::render(PCDisplay& display) {
         if (middlegroundTexture_) {
             int mgW, mgH;
             SDL_QueryTexture(middlegroundTexture_, nullptr, nullptr, &mgW, &mgH);
-            SDL_Rect mgRect = {0, 0, windowW, windowH};
+            SDL_Rect mgRect = ScalingUtils::createScaledRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, ScalingUtils::ElementType::ENVIRONMENTS);
             display.drawTexture(middlegroundTexture_, nullptr, &mgRect);
-        }
-        
-        // Render the partner Digimon sprite
+        }// Render the partner Digimon sprite
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
         SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
         
-        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-            int scaledWidth = static_cast<int>(currentSourceRect.w * Constants::SPRITE_SCALE_FACTOR);
-            int scaledHeight = static_cast<int>(currentSourceRect.h * Constants::SPRITE_SCALE_FACTOR);
-            
-            int drawX = (windowW / 2) - (scaledWidth / 2);
+        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {            // Use logical coordinates for positioning (SDL logical scaling handles the rest)
+            int drawX = (LOGICAL_WIDTH / 2) - (currentSourceRect.w / 2);
             int verticalOffset = 7;
-            int drawY = (windowH / 2) - (scaledHeight / 2) - verticalOffset;
+            int drawY = (LOGICAL_HEIGHT / 2) - (currentSourceRect.h / 2) - verticalOffset;
             
-            SDL_Rect dstRect = RenderUtils::ScaleDestRect(currentSourceRect, drawX, drawY);
+            SDL_Rect dstRect = ScalingUtils::createScaledRect(drawX, drawY, currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
             display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
+            
+            // Debug: Log Digimon position in fallback path
+            static int fallbackDebugCount = 0;
+            fallbackDebugCount++;
+            if (fallbackDebugCount % 300 == 0) { // Log every 300 frames
+                SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                           "Digimon position (fallback): logical (%d,%d), sprite size %dx%d",
+                           drawX, drawY, currentSourceRect.w, currentSourceRect.h);
+            }
         }
-        
-        // Render foreground layer
+          // Render foreground layer
         if (foregroundTexture_) {
             int fgW, fgH;
             SDL_QueryTexture(foregroundTexture_, nullptr, nullptr, &fgW, &fgH);
-            SDL_Rect fgRect = {0, 0, windowW, windowH};
+            SDL_Rect fgRect = ScalingUtils::createScaledRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, ScalingUtils::ElementType::ENVIRONMENTS);
             display.drawTexture(foregroundTexture_, nullptr, &fgRect);
         }
-    }
-
-    // Render fade_to_battle overlay if active
+    }    // Render fade_to_battle overlay if active
     if (is_fading_to_battle_ && battle_fade_alpha_ > 0.0f) {
+        SDL_Renderer* renderer = display.getRenderer();
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, static_cast<Uint8>(battle_fade_alpha_));
-        SDL_Rect fullscreen_rect = {0, 0, GameConstants::WINDOW_WIDTH, GameConstants::WINDOW_HEIGHT};
+        SDL_Rect fullscreen_rect = ScalingUtils::createScaledRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, ScalingUtils::ElementType::UI);
         SDL_RenderFillRect(renderer, &fullscreen_rect);
         SDL_LogVerbose(SDL_LOG_CATEGORY_RENDER, "AdventureState: Rendering fade overlay with alpha: %.2f", battle_fade_alpha_);
     }

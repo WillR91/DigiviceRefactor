@@ -15,6 +15,7 @@
 #include "core/ErrorManager.h"
 #include "graphics/SeamlessBackgroundRenderer.h"
 #include "utils/ConfigManager.h" // Add ConfigManager include
+#include "utils/ScalingUtils.h" // Add ScalingUtils include
 #include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
 
 #include <SDL_log.h>
@@ -58,15 +59,19 @@ bool Game::init(const std::string& title, int width, int height) {
     // Store the original received dimensions (from main)
     original_width_ = width;
     original_height_ = height;
-    is_small_screen_ = false; // Ensure it starts with normal size
-    
-    // Pass vsync setting from config
+    is_small_screen_ = false; // Ensure it starts with normal size    // Pass vsync setting from config
     if (!display.init(title.c_str(), width, height, vsync)) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); 
         SDL_Quit(); 
         return false; 
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
+
+    // Set up unified scaling system using the game's native resolution
+    // This allows all elements to render at their intended size and scale together
+    display.setLogicalSize(width, height);  // Use native game resolution as logical size
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Logical scaling enabled: Game renders at %dx%d, scaled to window size",
+                width, height);
 
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
@@ -376,11 +381,14 @@ bool Game::init(const std::string& title, int width, int height) {
         display.close();
         SDL_Quit();
         return false;
-    }
-
-    // Make sure fade step is reset
+    }    // Make sure fade step is reset
     fade_step_ = FadeSequenceStep::NONE;
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade step reset to NONE during initialization.");
+
+    // Initialize ScalingUtils with config values
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing ScalingUtils...");
+    ScalingUtils::initialize();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ScalingUtils initialized successfully.");
 
     is_running = true;
     last_frame_time = SDL_GetTicks();
@@ -885,6 +893,10 @@ void Game::updateFromConfig() {
         textRenderer_->updateGlobalTextScaleFromConfig();
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text renderer updated from config.");
     }
+    
+    // Update scaling utils from config
+    ScalingUtils::updateFromConfig();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ScalingUtils updated from config.");
     
     // Other configuration updates can be added here in the future
 }

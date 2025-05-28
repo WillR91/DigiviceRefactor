@@ -103,6 +103,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\utils\ScalingUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\animationutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

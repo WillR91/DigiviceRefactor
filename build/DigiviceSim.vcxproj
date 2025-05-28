@@ -500,6 +500,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\utils\ScalingUtils.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\animationutils.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\widget.cpp" />
   </ItemGroup>

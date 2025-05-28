@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <SDL_log.h>  // For SDL_LogInfo
 
 SeamlessBackgroundRenderer::SeamlessBackgroundRenderer(PCDisplay* display, SDL_Renderer* renderer)
     : display_(display)
@@ -14,7 +15,17 @@ SeamlessBackgroundRenderer::SeamlessBackgroundRenderer(PCDisplay* display, SDL_R
     , stats_{}
 {
     if (display_) {
-        display_->getWindowSize(targetWidth_, targetHeight_);
+        // Get the window size first
+        int windowWidth, windowHeight;
+        display_->getWindowSize(windowWidth, windowHeight);
+          // Use the game's native logical resolution (466x466)
+        // This matches the logical size set in Game::init() for unified scaling
+        targetWidth_ = 466;
+        targetHeight_ = 466;
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                   "SeamlessBackgroundRenderer: Using logical resolution %dx%d (window: %dx%d)",
+                   targetWidth_, targetHeight_, windowWidth, windowHeight);
     }
 }
 

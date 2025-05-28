@@ -1,50 +1,46 @@
 #pragma once
 
-#include "Utils/GameConstants.h"
 #include <SDL.h>
 
 namespace RenderUtils {
 
     /**
-     * Scales a destination rectangle by the global SPRITE_SCALE_FACTOR.
-     * Use this when rendering sprites that are stored at 1x scale.
+     * Creates a destination rectangle without any manual scaling.
+     * SDL logical scaling handles all scaling automatically.
      * 
      * @param srcRect The source rectangle from the sprite sheet (unmodified)
      * @param x The x-coordinate for rendering on screen
      * @param y The y-coordinate for rendering on screen
-     * @param optionalOverrideScale Optional parameter to override the global scale factor
-     * @return SDL_Rect The scaled destination rectangle
+     * @return SDL_Rect The destination rectangle (no manual scaling applied)
      */
     inline SDL_Rect ScaleDestRect(const SDL_Rect& srcRect, int x, int y, float optionalOverrideScale = 0.0f) {
-        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Constants::SPRITE_SCALE_FACTOR;
-        
+        // Note: optionalOverrideScale is ignored since SDL logical scaling handles all scaling
         SDL_Rect destRect;
         destRect.x = x;
         destRect.y = y;
-        destRect.w = static_cast<int>(srcRect.w * scale);
-        destRect.h = static_cast<int>(srcRect.h * scale);
+        destRect.w = srcRect.w;  // Use original dimensions, SDL will scale automatically
+        destRect.h = srcRect.h;
         
         return destRect;
     }
 
     /**
-     * Creates a scaled destination rectangle with specified position and dimensions.
+     * Creates a destination rectangle with specified position and dimensions.
+     * SDL logical scaling handles all scaling automatically.
      * 
      * @param x The x-coordinate for rendering on screen
      * @param y The y-coordinate for rendering on screen
-     * @param w The unscaled width
-     * @param h The unscaled height
-     * @param optionalOverrideScale Optional parameter to override the global scale factor
-     * @return SDL_Rect The scaled destination rectangle
+     * @param w The width
+     * @param h The height
+     * @return SDL_Rect The destination rectangle (no manual scaling applied)
      */
     inline SDL_Rect CreateScaledRect(int x, int y, int w, int h, float optionalOverrideScale = 0.0f) {
-        float scale = (optionalOverrideScale > 0.0f) ? optionalOverrideScale : Constants::SPRITE_SCALE_FACTOR;
-        
+        // Note: optionalOverrideScale is ignored since SDL logical scaling handles all scaling
         SDL_Rect destRect;
         destRect.x = x;
         destRect.y = y;
-        destRect.w = static_cast<int>(w * scale);
-        destRect.h = static_cast<int>(h * scale);
+        destRect.w = w;  // Use provided dimensions, SDL will scale automatically
+        destRect.h = h;
         
         return destRect;
     }

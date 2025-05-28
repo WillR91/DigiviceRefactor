@@ -13,6 +13,7 @@
 #include <cmath>     // For other math functions if needed
 #include "Core/AssetManager.h" // Corrected path
 #include "entities/DigimonRegistry.h" // <<< ADD THIS INCLUDE
+#include "utils/ScalingUtils.h"       // Added for unified scaling system
 
 // Static member definitions
 const float BattleState::BATTLE_STATE_FADE_DURATION_SECONDS = 0.5f;
