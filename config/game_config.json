@@ -7,9 +7,9 @@
         "fullscreen": false,
         "vsync": true,
         "scaling": {
-            "sprites": 3.2,
+            "sprites": 3.4,
             "ui": 1.0,
-            "text": 1.0,
+            "text": 0.5,
             "environments": 1.0,
             "effects": 1.0
         }

@@ -490,10 +490,11 @@ void AdventureState::render(PCDisplay& display) {
         }        // Render the partner Digimon sprite (middle depth - between middleground and foreground)
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
         SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-            // Create centered destination rectangle using ScalingUtils for sprite scaling
-            SDL_Rect dstRect = ScalingUtils::createCenteredScaledRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
+            // Create visually centered destination rectangle using ScalingUtils for sprite scaling
+            // This accounts for typical Digimon sprite padding at the top
+            SDL_Rect dstRect = ScalingUtils::createVisualCenteredRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
             
-            // Apply vertical offset for Digimon positioning
+            // Apply additional vertical offset if needed
             int verticalOffset = 7; // This might need to be a constant or configurable
             dstRect.y -= verticalOffset;
 
@@ -542,12 +543,12 @@ void AdventureState::render(PCDisplay& display) {
             display.drawTexture(middlegroundTexture_, nullptr, &mgRect);
         }// Render the partner Digimon sprite
         SDL_Texture* currentTexture = partnerAnimator_.getCurrentTexture();
-        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();
-          if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-            // Create centered destination rectangle using ScalingUtils for sprite scaling
-            SDL_Rect dstRect = ScalingUtils::createCenteredScaledRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
+        SDL_Rect currentSourceRect = partnerAnimator_.getCurrentFrameRect();        if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+            // Create visually centered destination rectangle using ScalingUtils for sprite scaling
+            // This accounts for typical Digimon sprite padding at the top
+            SDL_Rect dstRect = ScalingUtils::createVisualCenteredRect(currentSourceRect.w, currentSourceRect.h, ScalingUtils::ElementType::SPRITES);
             
-            // Apply vertical offset for Digimon positioning
+            // Apply additional vertical offset if needed
             int verticalOffset = 7;
             dstRect.y -= verticalOffset;
             

@@ -94,4 +94,14 @@ namespace ScalingUtils {
      */
     SDL_Rect createCenteredScaledRect(int width, int height, ElementType type = ElementType::SPRITES);
 
+    /**
+     * Create a scaled rectangle centered on screen with visual centering adjustments
+     * Applies element-specific visual centering offsets (e.g., for Digimon sprite padding)
+     * @param width The original width
+     * @param height The original height
+     * @param type The element type (defaults to SPRITES)
+     * @return SDL_Rect The destination rectangle scaled and visually centered on screen
+     */
+    SDL_Rect createVisualCenteredRect(int width, int height, ElementType type = ElementType::SPRITES);
+
 } // namespace ScalingUtils

@@ -114,4 +114,19 @@ namespace ScalingUtils {
         return destRect;
     }
 
+    SDL_Rect createVisualCenteredRect(int width, int height, ElementType type) {
+        // Start with normal centered positioning
+        SDL_Rect rect = createCenteredScaledRect(width, height, type);
+        
+        // Apply visual centering adjustments for specific element types
+        if (type == ElementType::SPRITES) {
+            // Digimon sprites typically have padding at top - adjust upward
+            float scaleFactor = getScalingFactor(type);
+            rect.y -= static_cast<int>(5 * scaleFactor); // Scales with sprite size
+        }
+        // Other element types (ENVIRONMENTS, UI, TEXT, etc.) use default centering
+        
+        return rect;
+    }
+
 } // namespace ScalingUtils
