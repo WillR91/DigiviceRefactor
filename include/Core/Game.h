@@ -119,12 +119,14 @@ private:
     int original_height_ = 0;
     SDL_Texture* ui_mask_texture_ = nullptr; // For the round UI mask
       // Helper function to load all enemy Digimon assets
-    bool loadAllEnemyDigimonAssets();
-      // Helper function to register all enemy Digimon assets for lazy loading
+    bool loadAllEnemyDigimonAssets();    // Helper function to register all enemy Digimon assets for lazy loading
     void registerAllEnemyDigimonAssets();
     
     // Helper function to register common UI and background assets for lazy loading
     void registerCommonAssets();
+    
+    // Helper function to register map assets for lazy loading
+    void registerMapAssets();
 
     // State Change Request Variables
     bool request_pop_ = false;

@@ -170,13 +170,11 @@ namespace Digivice {
     // --- Private Helper Methods --- 
 
     void MapSystemState::load_map_data() {
-        continents_.clear(); 
-
-        // --- Define File Island ---
+        continents_.clear();        // --- Define File Island ---
         ContinentData fileIsland;
         fileIsland.id = "01_file_island"; // Changed to match folder name
         fileIsland.name = "FILE ISLAND"; 
-        fileIsland.mapImagePath = "assets/backgrounds/environments/01_file_island/file_island_map.png"; // Adjusted path
+        fileIsland.mapImagePath = "assets/ui/maps/01_file_island_map.png"; // Updated to new path structure
         // --- Define Node: 01_tropical_jungle ---
         NodeData tropicalJungleNode;
         tropicalJungleNode.id = "01_fi_node_01_tropical_jungle"; // Adjusted ID prefix
@@ -244,13 +242,11 @@ namespace Digivice {
         infinityMountainNode.totalSteps = 20;        infinityMountainNode.isUnlocked = true; 
         infinityMountainNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("infinitymountain"));
         fileIsland.nodes.push_back(infinityMountainNode);
-        continents_.push_back(fileIsland);
-
-        // --- Define File Island Broken ---
+        continents_.push_back(fileIsland);        // --- Define File Island Broken ---
         ContinentData fileIslandBroken;
         fileIslandBroken.id = "02_file_island_broken";
         fileIslandBroken.name = "FILE ISLAND BROKEN";
-        fileIslandBroken.mapImagePath = "assets/backgrounds/environments/02_file_island_broken/file_island_broken_map.png";
+        fileIslandBroken.mapImagePath = "assets/ui/maps/02_file_island_broken_map.png";
 
         // Node: 01_freezeland
         NodeData freezelandNode;
@@ -330,13 +326,11 @@ namespace Digivice {
         openSeaNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("opensea"));
         fileIslandBroken.nodes.push_back(openSeaNode);
 
-        continents_.push_back(fileIslandBroken);
-
-        // --- Define Server Continent ---
+        continents_.push_back(fileIslandBroken);        // --- Define Server Continent ---
         ContinentData serverContinent;
         serverContinent.id = "03_server_continent";
         serverContinent.name = "SERVER CONTINENT";
-        serverContinent.mapImagePath = "assets/backgrounds/environments/03_server_continent/server_continent_map.png";
+        serverContinent.mapImagePath = "assets/ui/maps/03_server_continent_map.png";
         
         NodeData koromonsVillageNode;
         koromonsVillageNode.id = "03_sc_node_01_koromonsvillage";
@@ -464,7 +458,7 @@ namespace Digivice {
         ContinentData tokyo;
         tokyo.id = "04_tokyo";
         tokyo.name = "TOKYO";
-        tokyo.mapImagePath = "assets/backgrounds/environments/04_tokyo/tokyo_map.png";
+        tokyo.mapImagePath = "assets/ui/maps/04_tokyo_map.png";
 
         NodeData hikarigoakaNode;
         hikarigoakaNode.id = "04_tk_node_01_hikarigoaka";
@@ -544,7 +538,7 @@ namespace Digivice {
         ContinentData spiralMountain;
         spiralMountain.id = "05_spiral_mountain";
         spiralMountain.name = "SPIRAL MOUNTAIN";
-        spiralMountain.mapImagePath = "assets/backgrounds/environments/05_spiral_mountain/spiral_mountain_map.png";
+        spiralMountain.mapImagePath = "assets/ui/maps/05_spiral_mountain_map.png";
 
         NodeData smJungleNode; 
         smJungleNode.id = "05_sm_node_01_jungle";
@@ -624,7 +618,7 @@ namespace Digivice {
         ContinentData subspace;
         subspace.id = "06_subspace";
         subspace.name = "SUBSPACE";
-        subspace.mapImagePath = "assets/backgrounds/environments/06_subspace/subspace_map.png";
+        subspace.mapImagePath = "assets/ui/maps/06_subspace_map.png";
 
         NodeData subspaceNode;
         subspaceNode.id = "06_ss_node_01_subspace";
@@ -637,13 +631,11 @@ namespace Digivice {
         subspaceNode.totalSteps = 20;
         subspaceNode.isUnlocked = true;        subspaceNode.adventureBackgroundLayers.push_back(createEnvironmentBackground("subspace"));
         subspace.nodes.push_back(subspaceNode);
-        continents_.push_back(subspace);
-
-        // --- Define Network ---
+        continents_.push_back(subspace);        // --- Define Network ---
         ContinentData network;
         network.id = "07_network";
         network.name = "NETWORK";
-        network.mapImagePath = "assets/backgrounds/environments/07_network/network_map.png";
+        network.mapImagePath = "assets/ui/maps/07_network_map.png";
 
         NodeData networkNode;
         networkNode.id = "07_nw_node_01_network";

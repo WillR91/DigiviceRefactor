@@ -383,12 +383,15 @@ bool Game::init(const std::string& title, int width, int height) {
         return false;
     }    // Make sure fade step is reset
     fade_step_ = FadeSequenceStep::NONE;
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade step reset to NONE during initialization.");
-
-    // Initialize ScalingUtils with config values
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade step reset to NONE during initialization.");    // Initialize ScalingUtils with config values
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing ScalingUtils...");
     ScalingUtils::initialize();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ScalingUtils initialized successfully.");
+
+    // Register map assets for lazy loading
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering map assets...");
+    registerMapAssets();
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map assets registered successfully.");
 
     is_running = true;
     last_frame_time = SDL_GetTicks();
@@ -998,8 +1001,20 @@ void Game::registerCommonAssets() {
       
     // Register fallback/generic assets
     assetManager.registerAssetPath("generic_node_icon", "assets/ui/generic_node_icon.png");
+      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered common UI and background assets for lazy loading");
+}
+
+void Game::registerMapAssets() {
+    // Register all continent map images
+    assetManager.registerAssetPath("01_file_island_map_texture", "assets/ui/maps/01_file_island_map.png");
+    assetManager.registerAssetPath("02_file_island_broken_map_texture", "assets/ui/maps/02_file_island_broken_map.png");
+    assetManager.registerAssetPath("03_server_continent_map_texture", "assets/ui/maps/03_server_continent_map.png");
+    assetManager.registerAssetPath("04_tokyo_map_texture", "assets/ui/maps/04_tokyo_map.png");
+    assetManager.registerAssetPath("05_spiral_mountain_map_texture", "assets/ui/maps/05_spiral_mountain_map.png");
+    assetManager.registerAssetPath("06_subspace_map_texture", "assets/ui/maps/06_subspace_map.png");
+    assetManager.registerAssetPath("07_network_map_texture", "assets/ui/maps/07_network_map.png");
     
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered common UI and background assets for lazy loading");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered map assets for lazy loading");
 }
 
 // Implementation of the missing processPopUntil function
