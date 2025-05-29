@@ -7,6 +7,10 @@
 #include "platform/pc/pc_display.h" // Corrected path for PCDisplay.h
 #include "../../include/states/adventurestate.h" // Ensure AdventureState is included
 #include "core/BackgroundVariantManager.h" // Added for variant system
+#include "core/AnimationManager.h" // Added for enemy sprite animation
+#include "graphics/AnimationData.h" // Added for animation data
+#include "utils/AnimationUtils.h" // Added for animation ID construction
+#include "entities/DigimonRegistry.h" // Added for Digimon definitions
 #include <algorithm> // Added for std::min and std::max
 #include <iostream> // Added for std::cout debug logging
 #include <set> // Added for tracking failed texture attempts
@@ -135,12 +139,11 @@ namespace Digivice {
         switch (currentView_) {
             case MapView::CONTINENT_SELECTION:
                 // update_continent_selection(dt, playerData);
-                break;
-            case MapView::NODE_SELECTION:
+                break;            case MapView::NODE_SELECTION:
                 // update_node_selection(dt, playerData);
                 break;
             case MapView::NODE_DETAIL:
-                // update_node_detail(dt, playerData);
+                update_node_detail(dt);
                 break;
         }
     }
@@ -714,10 +717,11 @@ namespace Digivice {
         } else if (inputManager.isActionJustPressed(GameAction::NAV_RIGHT)) {
             currentNodeIndex_ = (currentNodeIndex_ + 1) % static_cast<int>(currentNodes.size());
             SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node NAV_RIGHT (acts as DOWN). New Index: %d (%s)", currentNodeIndex_, currentNodes[currentNodeIndex_].name.c_str());
-        } else if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {
-            if (currentNodeIndex_ >= 0 && currentNodeIndex_ < static_cast<int>(currentNodes.size())) {
+        } else if (inputManager.isActionJustPressed(GameAction::CONFIRM)) {            if (currentNodeIndex_ >= 0 && currentNodeIndex_ < static_cast<int>(currentNodes.size())) {
                 if (currentNodes[currentNodeIndex_].isUnlocked) {
                     currentView_ = MapView::NODE_DETAIL;
+                    // Load the enemy animation for the selected node
+                    loadEnemyAnimationForNode(currentNodes[currentNodeIndex_]);
                     SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node '%s' CONFIRMED. Transitioning to Node Detail.", currentNodes[currentNodeIndex_].name.c_str());
                 } else {
                     SDL_LogInfo(SDL_LOG_CATEGORY_INPUT, "Map: Node '%s' CONFIRMED, but it is locked.", currentNodes[currentNodeIndex_].name.c_str());
@@ -758,11 +762,12 @@ namespace Digivice {
             }
         }
     }
-}
-
-    void MapSystemState::update_continent_selection(float dt) {}
+}    void MapSystemState::update_continent_selection(float dt) {}
     void MapSystemState::update_node_selection(float dt) {}
-    void MapSystemState::update_node_detail(float dt) {}
+    void MapSystemState::update_node_detail(float dt) {
+        // Update enemy sprite animation
+        enemyAnimator_.update(dt);
+    }
 
     void MapSystemState::render_continent_selection(PCDisplay& display) {
         if (!game_ptr) { 
@@ -997,10 +1002,10 @@ namespace Digivice {
         };
         SDL_RenderFillRect(display.getRenderer(), &textBgRect);
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
-        
-        textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, nodeTextScale);
-    }    void MapSystemState::render_node_detail(PCDisplay& display) {
-        if (!game_ptr) return;
+          textRenderer->drawText(display.getRenderer(), selectedNodeText, nodeTextX, nodeTextY, nodeTextScale);
+    }
+
+    void MapSystemState::render_node_detail(PCDisplay& display) {
         AssetManager* assetManager = game_ptr->getAssetManager();
         TextRenderer* textRenderer = game_ptr->getTextRenderer();
 
@@ -1033,10 +1038,10 @@ namespace Digivice {
             
             // Define fullscreen destination rect
             SDL_Rect fullscreenRect = { 0, 0, screenWidth, screenHeight };
-              // Render Background Layer (BG) - furthest back
+            
+            // Render Background Layer (BG) - furthest back
             if (!layerData.backgroundPaths.empty()) {
-                std::string bgPath = BackgroundVariantManager::getSelectedPath(
-                    layerData.backgroundPaths, layerData.selectedBackgroundVariant);
+                std::string bgPath = BackgroundVariantManager::getSelectedPath(layerData.backgroundPaths, layerData.selectedBackgroundVariant);
                 std::string bgTextureId = node.id + "_nodedetail_bg";
                 
                 SDL_Texture* bgTexture = assetManager->requestTexture(bgTextureId, bgPath);
@@ -1044,10 +1049,10 @@ namespace Digivice {
                     display.drawTexture(bgTexture, nullptr, &fullscreenRect);
                 }
             }
-              // Render Middleground Layer (MG) - middle depth
+            
+            // Render Middleground Layer (MG) - middle depth
             if (!layerData.middlegroundPaths.empty()) {
-                std::string mgPath = BackgroundVariantManager::getSelectedPath(
-                    layerData.middlegroundPaths, layerData.selectedMiddlegroundVariant);
+                std::string mgPath = BackgroundVariantManager::getSelectedPath(layerData.middlegroundPaths, layerData.selectedMiddlegroundVariant);
                 std::string mgTextureId = node.id + "_nodedetail_mg";
                 
                 SDL_Texture* mgTexture = assetManager->requestTexture(mgTextureId, mgPath);
@@ -1055,10 +1060,10 @@ namespace Digivice {
                     display.drawTexture(mgTexture, nullptr, &fullscreenRect);
                 }
             }
-              // Render Foreground Layer (FG) - closest to camera
+            
+            // Render Foreground Layer (FG) - closest to camera
             if (!layerData.foregroundPaths.empty()) {
-                std::string fgPath = BackgroundVariantManager::getSelectedPath(
-                    layerData.foregroundPaths, layerData.selectedForegroundVariant);
+                std::string fgPath = BackgroundVariantManager::getSelectedPath(layerData.foregroundPaths, layerData.selectedForegroundVariant);
                 std::string fgTextureId = node.id + "_nodedetail_fg";
                 
                 SDL_Texture* fgTexture = assetManager->requestTexture(fgTextureId, fgPath);
@@ -1072,7 +1077,9 @@ namespace Digivice {
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(display.getRenderer(), 0, 20, 60, 180); // Semi-transparent dark blue
         SDL_RenderFillRect(display.getRenderer(), nullptr); // Fill entire screen
-        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);        // Display Node Name on top of overlay
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
+        
+        // Display Node Name on top of overlay
         float nodeNameScale_detail = 1.5f;
         SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name);
         // Account for both local scale and global text scale for proper centering
@@ -1089,27 +1096,47 @@ namespace Digivice {
         float finalStepsScale = stepsTextScale * globalTextScale;
         float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * finalStepsScale;
         int stepsX = (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2;
-        textRenderer->drawText(display.getRenderer(), stepsText, stepsX, screenHeight - 70, stepsTextScale);// Load and render the boss sprite using lazy loading
-        std::string bossTextureId = node.id + "_boss";
-        SDL_Texture* bossTexture = assetManager->requestTexture(bossTextureId, node.bossSpritePath);
-        
-        if (bossTexture) {
-            // Get the texture dimensions
-            int texWidth, texHeight;
-            SDL_QueryTexture(bossTexture, nullptr, nullptr, &texWidth, &texHeight);
+        textRenderer->drawText(display.getRenderer(), stepsText, stepsX, screenHeight - 70, stepsTextScale);
+
+        // Render the animated boss sprite
+        SDL_Texture* enemyTexture = enemyAnimator_.getCurrentTexture();
+        if (enemyTexture) {
+            SDL_Rect srcRect = enemyAnimator_.getCurrentFrameRect();
             
-            // Calculate a reasonable size for the boss sprite
-            int maxHeight = screenHeight / 4;
-            float scale = static_cast<float>(maxHeight) / static_cast<float>(texHeight);
-            int scaledWidth = static_cast<int>(texWidth * scale);
-            int scaledHeight = maxHeight;
+            // Calculate a reasonable size for the boss sprite (2x scale like other menus)
+            int spriteScale = 2;
+            int scaledWidth = srcRect.w * spriteScale;
+            int scaledHeight = srcRect.h * spriteScale;
             
             // Position to the right of center
             int bossX = (screenWidth / 2) + 50;
             int bossY = screenHeight / 2 - scaledHeight / 2;
             
             SDL_Rect dstRect = {bossX, bossY, scaledWidth, scaledHeight};
-            display.drawTexture(bossTexture, nullptr, &dstRect);
+            display.drawTexture(enemyTexture, &srcRect, &dstRect);
+        } else {
+            // Fallback: Load and render the boss sprite using legacy loading if animation fails
+            std::string bossTextureId = node.id + "_boss";
+            SDL_Texture* bossTexture = assetManager->requestTexture(bossTextureId, node.bossSpritePath);
+            
+            if (bossTexture) {
+                // Get the texture dimensions
+                int texWidth, texHeight;
+                SDL_QueryTexture(bossTexture, nullptr, nullptr, &texWidth, &texHeight);
+                
+                // Calculate a reasonable size for the boss sprite
+                int maxHeight = screenHeight / 4;
+                float scale = static_cast<float>(maxHeight) / static_cast<float>(texHeight);
+                int scaledWidth = static_cast<int>(texWidth * scale);
+                int scaledHeight = maxHeight;
+                
+                // Position to the right of center
+                int bossX = (screenWidth / 2) + 50;
+                int bossY = screenHeight / 2 - scaledHeight / 2;
+                
+                SDL_Rect dstRect = {bossX, bossY, scaledWidth, scaledHeight};
+                display.drawTexture(bossTexture, nullptr, &dstRect);
+            }
         }
         
         // Display additional information
@@ -1127,7 +1154,8 @@ namespace Digivice {
         
         // Display "Confirm to Start" prompt with a more prominent style
         std::string promptText = "CONFIRM TO START ADVENTURE";
-        float promptTextScale = 1.0f;        SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
+        float promptTextScale = 1.0f;
+        SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
         // Account for both local scale and global text scale for proper centering (reuse existing globalTextScale)
         float finalPromptScale = promptTextScale * globalTextScale;
         float scaled_prompt_text_width = static_cast<float>(unscaled_prompt_text_size.x) * finalPromptScale;
@@ -1156,6 +1184,75 @@ namespace Digivice {
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
         
         textRenderer->drawText(display.getRenderer(), promptText, promptX, promptY, promptTextScale);
+    }
+
+    void MapSystemState::loadEnemyAnimationForNode(const NodeData& node) {
+        if (!game_ptr) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MapSystemState::loadEnemyAnimationForNode - game_ptr is null!");
+            return;
+        }
+
+        // Extract enemy ID from the boss sprite path
+        // Example: "assets/sprites/enemy_digimon/gekomon.png" -> "gekomon"
+        std::string bossPath = node.bossSpritePath;
+        size_t lastSlash = bossPath.find_last_of("/\\");
+        size_t lastDot = bossPath.find_last_of(".");
+        
+        if (lastSlash == std::string::npos || lastDot == std::string::npos || lastDot <= lastSlash) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                        "MapSystemState::loadEnemyAnimationForNode - Invalid boss sprite path format: %s", 
+                        bossPath.c_str());
+            enemyAnimator_.stop();
+            return;
+        }
+
+        std::string enemyId = bossPath.substr(lastSlash + 1, lastDot - lastSlash - 1);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                   "MapSystemState::loadEnemyAnimationForNode - Extracted enemy ID '%s' from path '%s'", 
+                   enemyId.c_str(), bossPath.c_str());
+
+        // Get the Digimon registry and definition
+        Digimon::DigimonRegistry* registry = game_ptr->getDigimonRegistry();
+        if (!registry) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                        "MapSystemState::loadEnemyAnimationForNode - DigimonRegistry not available!");
+            enemyAnimator_.stop();
+            return;
+        }
+
+        const Digimon::DigimonDefinition* enemyDef = registry->getDefinitionById(enemyId);
+        if (!enemyDef) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                        "MapSystemState::loadEnemyAnimationForNode - No definition found for enemy ID: %s", 
+                        enemyId.c_str());
+            enemyAnimator_.stop();
+            return;
+        }
+
+        // Get the animation manager and load the idle animation
+        AnimationManager* animManager = game_ptr->getAnimationManager();
+        if (!animManager) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                        "MapSystemState::loadEnemyAnimationForNode - AnimationManager not available!");
+            enemyAnimator_.stop();
+            return;
+        }
+
+        // Construct animation ID using the sprite base ID
+        std::string animId = AnimationUtils::GetAnimationId(enemyDef->spriteBaseId, "Idle");
+        const AnimationData* animData = animManager->getAnimationData(animId);
+        
+        if (animData) {
+            enemyAnimator_.setAnimation(animData);
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, 
+                       "MapSystemState::loadEnemyAnimationForNode - Successfully loaded animation '%s' for node '%s'", 
+                       animId.c_str(), node.name.c_str());
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+                        "MapSystemState::loadEnemyAnimationForNode - Animation data not found for '%s'", 
+                        animId.c_str());
+            enemyAnimator_.stop();
+        }
     }
 
 } // namespace Digivice

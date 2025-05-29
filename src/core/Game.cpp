@@ -4,18 +4,13 @@
 #include "states/GameState.h"        // Include base class for enter/exit
 #include "states/AdventureState.h"   // Include concrete states used
 #include "states/TransitionState.h" // Include concrete states used
-#include "states/MapSystemState.h"   // Include for createEnvironmentBackground function
 #include "core/PlayerData.h"
 #include "core/InputManager.h"
 #include "platform/pc/pc_display.h" // Needed for PCDisplay type
 #include "core/AssetManager.h"
 #include "ui/TextRenderer.h"
 #include "core/AnimationManager.h"
-#include "core/FrameRateManager.h"
-#include "core/ErrorManager.h"
-#include "graphics/SeamlessBackgroundRenderer.h"
 #include "utils/ConfigManager.h" // Add ConfigManager include
-#include "utils/ScalingUtils.h" // Add ScalingUtils include
 #include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
 
 #include <SDL_log.h>
@@ -59,19 +54,15 @@ bool Game::init(const std::string& title, int width, int height) {
     // Store the original received dimensions (from main)
     original_width_ = width;
     original_height_ = height;
-    is_small_screen_ = false; // Ensure it starts with normal size    // Pass vsync setting from config
+    is_small_screen_ = false; // Ensure it starts with normal size
+    
+    // Pass vsync setting from config
     if (!display.init(title.c_str(), width, height, vsync)) { 
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Init Error"); 
         SDL_Quit(); 
         return false; 
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "PCDisplay Initialized.");
-
-    // Set up unified scaling system using the game's native resolution
-    // This allows all elements to render at their intended size and scale together
-    display.setLogicalSize(width, height);  // Use native game resolution as logical size
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Logical scaling enabled: Game renders at %dx%d, scaled to window size",
-                width, height);
 
     if (!assetManager.init(display.getRenderer())) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Init Error"); display.close(); SDL_Quit(); return false; }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager Initialized.");
@@ -193,12 +184,13 @@ bool Game::init(const std::string& title, int width, int height) {
 
     // Load Initial Assets
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Attempting to load initial assets...");
-     bool assets_ok = true;     assets_ok &= assetManager.loadTexture("ui_round_mask", "assets/ui/mask/round_mask.png"); // Use forward slashes for consistency
-     ui_mask_texture_ = assetManager.requestTexture("ui_round_mask"); // Load and store the mask texture
+     bool assets_ok = true;
+     assets_ok &= assetManager.loadTexture("ui_round_mask", "assets/ui/mask/round_mask.png"); // Use forward slashes for consistency
+     ui_mask_texture_ = assetManager.getTexture("ui_round_mask"); // Load and store the mask texture
      if (!ui_mask_texture_) {
          SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load UI mask texture: assets/ui/mask/round_mask.png");
          // Decide if this is a critical failure or if the game can run without it
-     }assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
+     }     assets_ok &= assetManager.loadTexture("round_mask", "assets/ui/mask/round_mask.png");
      
      // Load new player Digimon sprite sheets with their new textureIds
      assets_ok &= assetManager.loadTexture("agumon", "assets/sprites/player_digimon/agumon.png");
@@ -208,8 +200,14 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
      assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
-       // Load unlockable Digimon     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
+     
+     // Load unlockable Digimon
+     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
      assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
+     
+     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
+     assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
+     assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
      assets_ok &= assetManager.loadTexture("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
      assets_ok &= assetManager.loadTexture("transition_borders", "assets/ui/transition/transition_borders.png");
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading UI font...");
@@ -248,124 +246,42 @@ bool Game::init(const std::string& title, int width, int height) {
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/palmon.json", "palmon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/tentomon.json", "tentomon");
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/patamon.json", "patamon");
-          // Load unlockable Digimon animations
+        
+        // Load unlockable Digimon animations
         anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
-        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");        
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
         
-        // Load all enemy Digimon animations
-        anims_ok &= loadAllEnemyDigimonAssets();
+        // Enemy Digimon animation data is already loaded by loadAllEnemyDigimonAssets()
         
-        // Now register all enemy Digimon assets for lazy loading instead of loading them
-    registerAllEnemyDigimonAssets();
-    
-    // Register common UI and background assets for lazy loading
-    registerCommonAssets();
-    
-    // Set reasonable memory limits
-    assetManager.setMemoryLimit(150); // 150MB limit for textures
+        // Keep loading legacy animation data for backward compatibility
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/agumon_sheet.json", "agumon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gabumon_sheet.json", "gabumon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/biyomon_sheet.json", "biyomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gatomon_sheet.json", "gatomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/gomamon_sheet.json", "gomamon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/palmon_sheet.json", "palmon_sheet");        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/tentomon_sheet.json", "tentomon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/patamon_sheet.json", "patamon_sheet");
+        anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/digimon/kuwagamon/animation.json", "kuwagamon_sheet");
+
+        // Now load all enemy Digimon assets (textures and animations)
+        bool enemyAssetsOk = loadAllEnemyDigimonAssets();
+        if (!enemyAssetsOk) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Some enemy Digimon assets failed to load. EnemyTestState may not work properly.");
+        }
 
         if (!anims_ok) {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,"One or more animation files failed to load properly. See errors above. Game may continue with missing/default animations.");
         } else {
              SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AnimationManager finished loading animation data.");
-        }    } catch (const std::exception& e) {
+        }
+
+    } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create or initialize AnimationManager: %s", e.what());
         textRenderer_.reset();
         assetManager.shutdown();
         display.close();
         SDL_Quit();
-        return false;    }
-
-    // Initialize FrameRateManager
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing FrameRateManager...");
-    try {
-        frameRateManager_ = std::make_unique<FrameRateManager>(
-            FrameRateManager::TargetFrameRate::FPS_60,
-            vsync ? FrameRateManager::VSyncMode::ON : FrameRateManager::VSyncMode::OFF
-        );
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FrameRateManager initialized successfully.");
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create FrameRateManager: %s", e.what());
-        animationManager_.reset();
-        textRenderer_.reset();
-        assetManager.shutdown();
-        display.close();
-        SDL_Quit();
         return false;
-    }
-
-    // Initialize ErrorManager
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing ErrorManager...");
-    try {
-        errorManager_ = std::make_unique<ErrorManager>(1000, true); // 1000 error history, recovery enabled
-        errorManager_->setLoggingEnabled(true);
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ErrorManager initialized successfully.");
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create ErrorManager: %s", e.what());
-        frameRateManager_.reset();
-        animationManager_.reset();
-        textRenderer_.reset();
-        assetManager.shutdown();
-        display.close();
-        SDL_Quit();
-        return false;
-    }
-
-    // Initialize SeamlessBackgroundRenderer
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing SeamlessBackgroundRenderer...");
-    try {
-        backgroundRenderer_ = std::make_unique<SeamlessBackgroundRenderer>(&display, display.getRenderer());
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "SeamlessBackgroundRenderer initialized successfully.");
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to create SeamlessBackgroundRenderer: %s", e.what());
-        errorManager_.reset();
-        frameRateManager_.reset();
-        animationManager_.reset();
-        textRenderer_.reset();
-        assetManager.shutdown();
-        display.close();
-        SDL_Quit();
-        return false;
-    }
-    
-    // Initialize PlayerData with default node containing proper background data
-    try {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Setting up default node data for initial state...");
-        
-        // Create a default node with the tropical jungle background
-        Digivice::NodeData defaultNode;
-        defaultNode.id = "01_fi_node_01_tropical_jungle";
-        defaultNode.name = "TROPICAL JUNGLE";
-        defaultNode.continentId = "01_file_island";
-        defaultNode.totalSteps = 20;
-        defaultNode.isUnlocked = true;
-        
-        // Create a simple background layer for now - this ensures the node has background data
-        // which will prevent the legacy system fallback
-        Digivice::BackgroundLayerData layerData;
-        layerData.parallaxFactorX = 0.5f;
-        layerData.parallaxFactorY = 0.0f;
-        
-        // Add some placeholder paths to ensure the variant system has data to work with
-        // The actual variant initialization will happen when AdventureState loads the node
-        layerData.foregroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_fg_v1.png");
-        layerData.middlegroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_mg_v1.png");
-        layerData.backgroundPaths.push_back("assets/backgrounds/environmentsnew/01_file_island/01_tropicaljungle/tropicaljungle_bg_v1.png");
-        layerData.selectedForegroundVariant = 0;
-        layerData.selectedMiddlegroundVariant = 0;
-        layerData.selectedBackgroundVariant = 0;
-        
-        defaultNode.adventureBackgroundLayers.push_back(layerData);
-        
-        // Set this as the current node in PlayerData
-        playerData_.setCurrentMapNode(defaultNode);
-        
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Default node '%s' initialized with %zu background layers", 
-                   defaultNode.name.c_str(), defaultNode.adventureBackgroundLayers.size());
-                   
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize default node data: %s", e.what());
-        // Continue anyway with empty node data (fallback to legacy system)
     }
 
     // Push Initial State and Call Enter
@@ -384,17 +300,11 @@ bool Game::init(const std::string& title, int width, int height) {
         display.close();
         SDL_Quit();
         return false;
-    }    // Make sure fade step is reset
-    fade_step_ = FadeSequenceStep::NONE;
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade step reset to NONE during initialization.");    // Initialize ScalingUtils with config values
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Initializing ScalingUtils...");
-    ScalingUtils::initialize();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ScalingUtils initialized successfully.");
+    }
 
-    // Register map assets for lazy loading
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering map assets...");
-    registerMapAssets();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Map assets registered successfully.");
+    // Make sure fade step is reset
+    fade_step_ = FadeSequenceStep::NONE;
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Fade step reset to NONE during initialization.");
 
     is_running = true;
     last_frame_time = SDL_GetTicks();
@@ -409,12 +319,14 @@ void Game::run() {
         return;
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Entering main game loop.");
+    last_frame_time = SDL_GetTicks();
 
     while (is_running) {
-        // Begin frame timing with FrameRateManager
-        if (frameRateManager_) {
-            frameRateManager_->beginFrame();
-        }
+        // Calculate Delta Time
+        Uint32 current_time = SDL_GetTicks();
+        float delta_time = (current_time - last_frame_time) / 1000.0f;
+        if (delta_time > 0.1f) delta_time = 0.1f; // Clamp max delta time
+        last_frame_time = current_time;
 
         // Input Processing
         inputManager.prepareNewFrame();
@@ -424,9 +336,7 @@ void Game::run() {
                 quit_game();
             }
             inputManager.processEvent(event);
-        }
-
-        // Handle screen toggle action
+        }        // Handle screen toggle action
         if (inputManager.isActionJustPressed(GameAction::TOGGLE_SCREEN_SIZE)) {
             is_small_screen_ = !is_small_screen_;
             if (is_small_screen_) {
@@ -444,37 +354,15 @@ void Game::run() {
             }
         }
 
-        // Calculate delta time from FrameRateManager (fallback to old method if manager not available)
-        float delta_time;
-        if (frameRateManager_) {
-            delta_time = frameRateManager_->getLastFrameTime();
-            // Clamp max delta time for stability
-            if (delta_time > 0.1f) delta_time = 0.1f;
-        } else {
-            // Fallback to old timing method
-            Uint32 current_time = SDL_GetTicks();
-            delta_time = (current_time - last_frame_time) / 1000.0f;
-            if (delta_time > 0.1f) delta_time = 0.1f; // Clamp max delta time
-            last_frame_time = current_time;
-        }
-
-        // Skip frame if FrameRateManager suggests it for performance
-        bool shouldSkip = false;
-        if (frameRateManager_ && frameRateManager_->shouldSkipFrame()) {
-            shouldSkip = true;
-        }
-
         // State Logic
-        if (!states_.empty() && !shouldSkip) {
+        if (!states_.empty()) {
             // Apply any pending state changes
             applyStateChanges();
 
             // Handle input for the current state
             if (!states_.empty()) { // Check again, applyStateChanges might alter the stack
                 states_.back()->handle_input(inputManager, &playerData_);
-            }
-
-            // Update the current state
+            }            // Update the current state
             if (!states_.empty()) { // Check again
                 states_.back()->update(delta_time, &playerData_);
             }
@@ -497,14 +385,8 @@ void Game::run() {
             SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Presenting frame.");
             display.present();
             
-        } else if (states_.empty()) {
+        } else {
              SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Game::run() - State stack is empty, nothing to update or render.");
-        }
-
-        // End frame timing and apply frame rate limiting
-        if (frameRateManager_) {
-            frameRateManager_->endFrame();
-            frameRateManager_->waitForTargetFrameTime();
         }
         
         // Add this debugging line somewhere in your update cycle
@@ -863,9 +745,6 @@ InputManager* Game::getInputManager() { return &inputManager; }
 PlayerData* Game::getPlayerData() { return &playerData_; }
 TextRenderer* Game::getTextRenderer() { return textRenderer_.get(); }
 AnimationManager* Game::getAnimationManager() { return animationManager_.get(); }
-FrameRateManager* Game::getFrameRateManager() { return frameRateManager_.get(); }
-ErrorManager* Game::getErrorManager() { return errorManager_.get(); }
-SeamlessBackgroundRenderer* Game::getBackgroundRenderer() { return backgroundRenderer_.get(); }
 
 Digimon::DigimonRegistry* Game::getDigimonRegistry() {
     return &Digimon::DigimonRegistry::getInstance();
@@ -900,10 +779,6 @@ void Game::updateFromConfig() {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Text renderer updated from config.");
     }
     
-    // Update scaling utils from config
-    ScalingUtils::updateFromConfig();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ScalingUtils updated from config.");
-    
     // Other configuration updates can be added here in the future
 }
 
@@ -927,149 +802,39 @@ bool Game::loadAllEnemyDigimonAssets() {
     // This directory contains enemy Digimon assets
     const std::string enemyBaseDir = "assets/sprites/enemy_digimon";
     
-    // Load ALL enemy Digimon textures dynamically
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Starting dynamic loading of all enemy textures...");
-    try {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Checking enemy texture directory: %s", enemyBaseDir.c_str());
-        if (std::filesystem::exists(enemyBaseDir) && std::filesystem::is_directory(enemyBaseDir)) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy texture directory found, iterating files...");
-            int loadedTextures = 0;
-            int totalPngFiles = 0;
-            
-            for (const auto& entry : std::filesystem::directory_iterator(enemyBaseDir)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".png") {
-                    totalPngFiles++;
-                    std::string filename = entry.path().filename().string();
-                    std::string digimonName = filename.substr(0, filename.find_last_of('.'));
-                    
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading enemy texture: %s from %s", digimonName.c_str(), filename.c_str());
-                    bool loadResult = assetManager.loadTexture(digimonName, entry.path().string());
-                    assets_ok &= loadResult;
-                    
-                    if (loadResult) {
-                        loadedTextures++;
-                        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded enemy texture: %s", digimonName.c_str());
-                    } else {
-                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy texture: %s", filename.c_str());
-                    }
-                }
-            }
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Found %d PNG files, loaded %d enemy Digimon textures successfully", totalPngFiles, loadedTextures);
-        } else {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Enemy texture directory not found: %s", enemyBaseDir.c_str());
-            assets_ok = false;
-        }
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error loading enemy textures: %s", e.what());
-        assets_ok = false;
-    }
+    // Load common enemy Digimon textures
+    assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
+    assets_ok &= assetManager.loadTexture("andromon", "assets/sprites/enemy_digimon/andromon.png");
+    assets_ok &= assetManager.loadTexture("devimon", "assets/sprites/enemy_digimon/devimon.png");
+    assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
+    assets_ok &= assetManager.loadTexture("kiwimon", "assets/sprites/enemy_digimon/kiwimon.png");
+    assets_ok &= assetManager.loadTexture("monochromon", "assets/sprites/enemy_digimon/monochromon.png");
+    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyrannomon.png");
+    assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
+    assets_ok &= assetManager.loadTexture("shellmon", "assets/sprites/enemy_digimon/shellmon.png");
     
     // Load unlockable Digimon
     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
-    assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");// Load ALL enemy Digimon animations dynamically
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Starting dynamic loading of all enemy animations...");
-    bool anims_ok = true;
-    const std::string enemyAnimDir = "assets/sprites/enemy_digimon";
+    assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
     
-    try {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Checking enemy animation directory: %s", enemyAnimDir.c_str());
-        if (std::filesystem::exists(enemyAnimDir) && std::filesystem::is_directory(enemyAnimDir)) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy animation directory found, iterating files...");
-            int loadedAnimations = 0;
-            int totalJsonFiles = 0;
-            
-            for (const auto& entry : std::filesystem::directory_iterator(enemyAnimDir)) {
-                if (entry.is_regular_file() && entry.path().extension() == ".json") {
-                    totalJsonFiles++;
-                    std::string filename = entry.path().filename().string();
-                    std::string digimonName = filename.substr(0, filename.find_last_of('.'));
-                    
-                    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading enemy animation: %s from %s", digimonName.c_str(), filename.c_str());
-                    bool loadResult = animationManager_->loadAnimationDataFromFile(entry.path().string(), digimonName);
-                    anims_ok &= loadResult;
-                    
-                    if (loadResult) {
-                        loadedAnimations++;
-                        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded enemy animation: %s", digimonName.c_str());
-                    } else {
-                        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy animation: %s", filename.c_str());
-                    }
-                }
-            }
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Found %d JSON files, loaded %d enemy Digimon animations successfully", totalJsonFiles, loadedAnimations);
-        } else {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Enemy animation directory not found: %s", enemyAnimDir.c_str());
-            anims_ok = false;
-        }
-    } catch (const std::exception& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error loading enemy animations: %s", e.what());
-        anims_ok = false;
-    }
+    // Load enemy Digimon animations
+    bool anims_ok = true;
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/andromon.json", "andromon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/devimon.json", "devimon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kiwimon.json", "kiwimon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/monochromon.json", "monochromon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyrannomon.json", "tyrannomon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
+    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/shellmon.json", "shellmon");
     
     // Load unlockable Digimon animations
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
-      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
     return assets_ok && anims_ok;
-}
-
-// Register all enemy Digimon assets for lazy loading
-void Game::registerAllEnemyDigimonAssets() {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering all enemy Digimon assets for lazy loading...");
-    
-    // Get all enemy and boss Digimon from the registry
-    Digimon::DigimonRegistry& registry = Digimon::DigimonRegistry::getInstance();
-    auto enemyDefs = registry.getDefinitionsByClass(Digimon::DigimonClass::StandardEnemy);
-    auto bossDefs = registry.getDefinitionsByClass(Digimon::DigimonClass::Boss);
-    
-    int registeredCount = 0;
-    
-    // Register all enemy Digimon assets
-    for (const auto& def : enemyDefs) {
-        if (def && !def->spriteBaseId.empty()) {
-            std::string texturePath = "assets/sprites/enemy_digimon/" + def->spriteBaseId + ".png";
-            assetManager.registerAssetPath(def->spriteBaseId, texturePath);
-            registeredCount++;
-        }
-    }
-    
-    // Register all boss Digimon assets
-    for (const auto& def : bossDefs) {
-        if (def && !def->spriteBaseId.empty()) {
-            std::string texturePath = "assets/sprites/enemy_digimon/" + def->spriteBaseId + ".png";
-            assetManager.registerAssetPath(def->spriteBaseId, texturePath);
-            registeredCount++;
-        }
-    }
-      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered %d enemy Digimon assets for lazy loading", registeredCount);
-}
-
-void Game::registerCommonAssets() {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registering common UI and background assets for lazy loading...");
-    
-    // Register common UI textures
-    assetManager.registerAssetPath("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
-    assetManager.registerAssetPath("ui_font_atlas", "assets/ui/fonts/bluewhitefont.png");
-    assetManager.registerAssetPath("menu_cursor", "assets/ui/menu_cursor.png");
-    assetManager.registerAssetPath("transition_borders", "assets/ui/transition/transition_borders.png");
-    assetManager.registerAssetPath("ui_mask", "assets/ui/ui_mask.png");
-      
-    // Register fallback/generic assets
-    assetManager.registerAssetPath("generic_node_icon", "assets/ui/generic_node_icon.png");
-      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered common UI and background assets for lazy loading");
-}
-
-void Game::registerMapAssets() {
-    // Register all continent map images
-    assetManager.registerAssetPath("01_file_island_map_texture", "assets/ui/maps/01_file_island_map.png");
-    assetManager.registerAssetPath("02_file_island_broken_map_texture", "assets/ui/maps/02_file_island_broken_map.png");
-    assetManager.registerAssetPath("03_server_continent_map_texture", "assets/ui/maps/03_server_continent_map.png");
-    assetManager.registerAssetPath("04_tokyo_map_texture", "assets/ui/maps/04_tokyo_map.png");
-    assetManager.registerAssetPath("05_spiral_mountain_map_texture", "assets/ui/maps/05_spiral_mountain_map.png");
-    assetManager.registerAssetPath("06_subspace_map_texture", "assets/ui/maps/06_subspace_map.png");
-    assetManager.registerAssetPath("07_network_map_texture", "assets/ui/maps/07_network_map.png");
-    
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Registered map assets for lazy loading");
 }
 
 // Implementation of the missing processPopUntil function

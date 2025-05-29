@@ -3,6 +3,7 @@
 
 #include "states/GameState.h" // Corrected: Include GameState.h from states directory
 #include "core/MapData.h"
+#include "graphics/Animator.h" // Added for enemy sprite animation
 #include <vector>
 #include <string>
 
@@ -36,9 +37,7 @@ namespace Digivice {
         // Data for the map system
         std::vector<ContinentData> continents_;
         int currentContinentIndex_;
-        int currentNodeIndex_;
-
-        // Fade transition variables
+        int currentNodeIndex_;        // Fade transition variables
         bool isFading_;
         bool fadingOut_;
         float fadeAlpha_; // 0.0f (transparent) to 255.0f (opaque)
@@ -46,21 +45,25 @@ namespace Digivice {
         float fadeTimer_;
         int targetContinentIndex_;
 
+        // Enemy sprite animation for node detail view
+        Animator enemyAnimator_;
+
         // Helper methods for each view
         // Corrected signatures to take InputManager&
         void handle_input_continent_selection(InputManager& inputManager);
         void handle_input_node_selection(InputManager& inputManager);
-        void handle_input_node_detail(InputManager& inputManager);
-
-        void update_continent_selection(float dt);
+        void handle_input_node_detail(InputManager& inputManager);        void update_continent_selection(float dt);
         void update_node_selection(float dt);
         void update_node_detail(float dt);
-
+        
         void render_continent_selection(PCDisplay& display); // Added PCDisplay& display
         void render_node_selection(PCDisplay& display);   // Added PCDisplay& display (proactively)
         void render_node_detail(PCDisplay& display);    // Added PCDisplay& display (proactively)
 
         void load_map_data(); // For initial hardcoded data loading
+        
+        // Helper method to load enemy animation for node detail view
+        void loadEnemyAnimationForNode(const NodeData& node);
     };
 
     // Helper function to create BackgroundLayerData using the new variant system
