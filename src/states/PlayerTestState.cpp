@@ -152,12 +152,14 @@ void PlayerTestState::render(PCDisplay& display) {
     // Draw the Digimon at the center of the screen
     SDL_Texture* currentTexture = playerAnimator_.getCurrentTexture();
     SDL_Rect currentSourceRect = playerAnimator_.getCurrentFrameRect();
-    
-    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+      if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+        // Scale sprites 2x bigger
+        int scaledWidth = currentSourceRect.w * 2;
+        int scaledHeight = currentSourceRect.h * 2;
         // Center the Digimon on screen
-        int drawX = (windowW / 2) - (currentSourceRect.w / 2);
-        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 30;
-        SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
+        int drawX = (windowW / 2) - (scaledWidth / 2);
+        int drawY = (windowH / 2) - (scaledHeight / 2) - 30;
+        SDL_Rect dstRect = { drawX, drawY, scaledWidth, scaledHeight };
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     }
     

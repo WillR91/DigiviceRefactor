@@ -72,9 +72,9 @@ private:    // Animator
 
     // Constants
     const int MAX_QUEUED_STEPS = 2;
-    const float SCROLL_SPEED_0 = 1.2f * 60.0f;  // Foreground - fastest layer
+    const float SCROLL_SPEED_0 = 1.9f * 60.0f;  // Foreground - fastest layer
     const float SCROLL_SPEED_1 = 0.8f * 60.0f;  // Middleground - medium speed
-    const float SCROLL_SPEED_2 = 0.4f * 60.0f;  // Background - slowest layer    const int WINDOW_WIDTH = 466;
+    const float SCROLL_SPEED_2 = 0.2f * 60.0f;  // Background - slowest layer    const int WINDOW_WIDTH = 466;
     const int WINDOW_HEIGHT = 466;
     
     // Private Helpers

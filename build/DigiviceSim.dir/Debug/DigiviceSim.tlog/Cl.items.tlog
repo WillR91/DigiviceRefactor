@@ -30,6 +30,7 @@ Z:\DigiviceRefactor\src\states\SettingsState.cpp;Z:\DigiviceRefactor\build\Digiv
 Z:\DigiviceRefactor\src\states\partnerselectstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\partnerselectstate.obj
 Z:\DigiviceRefactor\src\states\progressstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\progressstate.obj
 Z:\DigiviceRefactor\src\states\transitionstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\transitionstate.obj
+Z:\DigiviceRefactor\src\ui\TextLayoutUtils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\TextLayoutUtils.obj
 Z:\DigiviceRefactor\src\ui\textrenderer.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\textrenderer.obj
 Z:\DigiviceRefactor\src\utils\ConfigManager.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ConfigManager.obj
 Z:\DigiviceRefactor\src\utils\ScalingUtils.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\ScalingUtils.obj

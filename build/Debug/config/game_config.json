@@ -15,7 +15,7 @@
         "scaling": {
             "effects": 1.0,
             "environments": 1.0,
-            "sprites": 3.4,
+            "sprites": 3,
             "text": 1.5,
             "ui": 1.0
         },
@@ -53,6 +53,6 @@
         "ui": "assets/ui/"
     },
     "ui": {
-        "textScale": 2.0
+        "textScale": 2.499999523162842
     }
 }

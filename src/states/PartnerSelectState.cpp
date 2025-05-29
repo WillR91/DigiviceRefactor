@@ -143,21 +143,26 @@ void PartnerSelectState::render(PCDisplay& display) {
     TextRenderer* textRenderer = game_ptr ? game_ptr->getTextRenderer() : nullptr;
     if (textRenderer && !availablePartnerIds_.empty()) {
         std::string partnerId = availablePartnerIds_[currentSelectionIndex_];
-        std::string name = getDigimonName(partnerId);
-
-        if (!name.empty()) {
+        std::string name = getDigimonName(partnerId);        if (!name.empty()) {
             const float nameScale = 0.9f;
-            const int nameKerning = -15;
+            const int nameKerning = 0; // Use proper kerning for character spacing
             SDL_Point baseDimensions = textRenderer->getTextDimensions(name, nameKerning);
             if (baseDimensions.x > 0 && baseDimensions.y > 0) {
-                int scaledW = static_cast<int>(static_cast<float>(baseDimensions.x) * nameScale);
-                int scaledH = static_cast<int>(static_cast<float>(baseDimensions.y) * nameScale);
+                // Account for both local scale and global text scale for proper centering
+                float globalTextScale = textRenderer->getGlobalTextScale();
+                float finalScale = nameScale * globalTextScale;
+                int scaledW = static_cast<int>(static_cast<float>(baseDimensions.x) * finalScale);
+                int scaledH = static_cast<int>(static_cast<float>(baseDimensions.y) * finalScale);
                 int nameX = (windowW / 2) - (scaledW / 2);
                 int nameY = (windowH * 2 / 3) - (scaledH / 2);
                 textRenderer->drawText(renderer, name, nameX, nameY, nameScale, nameKerning);
-            } else { /* Warn */ }
+            } else { 
+                SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState: Invalid text dimensions for name: %s", name.c_str());
+            }
         }
-    } else { /* Warn */ }
+    } else { 
+        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "PartnerSelectState: TextRenderer not available or no partners available");
+    }
 }
 
 void PartnerSelectState::drawDigimon(PCDisplay& display) {
@@ -169,12 +174,13 @@ void PartnerSelectState::drawDigimon(PCDisplay& display) {
     if (windowW <= 0 || windowH <= 0) { windowW = 466; windowH = 466; }
 
     SDL_Texture* currentTexture = digimonAnimator_.getCurrentTexture();
-    SDL_Rect currentSourceRect = digimonAnimator_.getCurrentFrameRect();
-
-    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
-        int drawX = (windowW / 2) - (currentSourceRect.w / 2);
-        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 65;
-        SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
+    SDL_Rect currentSourceRect = digimonAnimator_.getCurrentFrameRect();    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+        // Scale sprites 2x bigger
+        int scaledWidth = currentSourceRect.w * 2;
+        int scaledHeight = currentSourceRect.h * 2;
+        int drawX = (windowW / 2) - (scaledWidth / 2);
+        int drawY = (windowH / 2) - (scaledHeight / 2) - 65;
+        SDL_Rect dstRect = { drawX, drawY, scaledWidth, scaledHeight };
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     } else {
         SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);

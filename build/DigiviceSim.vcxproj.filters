@@ -97,6 +97,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\TextLayoutUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

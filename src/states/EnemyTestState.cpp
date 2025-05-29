@@ -146,12 +146,14 @@ void EnemyTestState::render(PCDisplay& display) {
     // Render enemy Digimon
     SDL_Texture* currentTexture = enemyAnimator_.getCurrentTexture();
     SDL_Rect currentSourceRect = enemyAnimator_.getCurrentFrameRect();
-    
-    if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+      if (currentTexture && currentSourceRect.w > 0 && currentSourceRect.h > 0) {
+        // Scale sprites 2x bigger
+        int scaledWidth = currentSourceRect.w * 2;
+        int scaledHeight = currentSourceRect.h * 2;
         // Center the Digimon on screen
-        int drawX = (windowW / 2) - (currentSourceRect.w / 2);
-        int drawY = (windowH / 2) - (currentSourceRect.h / 2) - 30;
-        SDL_Rect dstRect = { drawX, drawY, currentSourceRect.w, currentSourceRect.h };
+        int drawX = (windowW / 2) - (scaledWidth / 2);
+        int drawY = (windowH / 2) - (scaledHeight / 2) - 30;
+        SDL_Rect dstRect = { drawX, drawY, scaledWidth, scaledHeight };
         display.drawTexture(currentTexture, &currentSourceRect, &dstRect);
     } else {
         // Draw placeholder if texture not available

@@ -15,7 +15,7 @@
         "scaling": {
             "effects": 1.0,
             "environments": 1.0,
-            "sprites": 3.4,
+            "sprites": 3,
             "text": 1.5,
             "ui": 1.0
         },

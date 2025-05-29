@@ -807,23 +807,28 @@ namespace Digivice {
             // Corrected: drawTexture arguments. PCDisplay::drawTexture takes (texture, srcRect, dstRect, flip)
             // Assuming we want to draw the whole texture, srcRect can be nullptr.
             display.drawTexture(continentMapTexture, nullptr, &dstRect); 
-        } else {
-            if (textRenderer) {
+        } else {            if (textRenderer) {
                 // Corrected: renderText to drawText
                 std::string errMsg = "ERROR: MAP MISSING FOR " + continent.name; // Changed to uppercase
                 // Corrected: getTextWidth to getTextDimensions().x
                 SDL_Point errTextSize = textRenderer->getTextDimensions(errMsg); // getTextDimensions returns SDL_Point {w, h}
-                textRenderer->drawText(display.getRenderer(), errMsg, screenWidth / 2 - errTextSize.x / 2, screenHeight / 2, 1.0f);
+                // Account for global text scale in positioning
+                float globalTextScale = textRenderer->getGlobalTextScale();
+                float finalScale = 1.0f * globalTextScale;
+                int scaledTextW = static_cast<int>(static_cast<float>(errTextSize.x) * finalScale);
+                int textX = (screenWidth / 2) - (scaledTextW / 2);
+                textRenderer->drawText(display.getRenderer(), errMsg, textX, screenHeight / 2, 1.0f);
             } else {
                 SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MapSystemState::render_continent_selection - TextRenderer is null, cannot display 'ERROR: MAP MISSING'.");
             }
-        }
-
-        if (textRenderer) {
+        }        if (textRenderer) {
             float scale = 0.65f; // Define the scale factor
             SDL_Point unscaled_text_size = textRenderer->getTextDimensions(continent.name);
-            float scaled_text_width = static_cast<float>(unscaled_text_size.x) * scale;
-            float scaled_text_height = static_cast<float>(unscaled_text_size.y) * scale;
+            // Account for both local scale and global text scale for proper centering
+            float globalTextScale = textRenderer->getGlobalTextScale();
+            float finalScale = scale * globalTextScale;
+            float scaled_text_width = static_cast<float>(unscaled_text_size.x) * finalScale;
+            float scaled_text_height = static_cast<float>(unscaled_text_size.y) * finalScale;
 
             int textX = (screenWidth - static_cast<int>(scaled_text_width)) / 2;
             int textY = static_cast<int>(static_cast<float>(screenHeight) * 0.75f - scaled_text_height / 2.0f);
@@ -873,9 +878,15 @@ namespace Digivice {
 
         if (continentMapTexture) {
             SDL_Rect dstRect = {0, 0, screenWidth, screenHeight};
-            display.drawTexture(continentMapTexture, nullptr, &dstRect);
-        } else {
-            textRenderer->drawText(display.getRenderer(), "ERROR: CONTINENT MAP MISSING", screenWidth / 2 - 100, screenHeight / 2, 1.0f); // Changed to uppercase
+            display.drawTexture(continentMapTexture, nullptr, &dstRect);        } else {
+            // Fix text centering for error message
+            std::string errMsg = "ERROR: CONTINENT MAP MISSING";
+            SDL_Point errDimensions = textRenderer->getTextDimensions(errMsg);
+            float globalTextScale = textRenderer->getGlobalTextScale();
+            float finalScale = 1.0f * globalTextScale;
+            int scaledW = static_cast<int>(static_cast<float>(errDimensions.x) * finalScale);
+            int errX = (screenWidth / 2) - (scaledW / 2);
+            textRenderer->drawText(display.getRenderer(), errMsg, errX, screenHeight / 2, 1.0f);
         }
 
         
@@ -961,14 +972,16 @@ namespace Digivice {
                 }
             }
         }
-        
-        // Display the name of the selected node at the bottom of the screen
+          // Display the name of the selected node at the bottom of the screen
         const auto& selectedNode = continent.nodes[currentNodeIndex_];
         std::string selectedNodeText = selectedNode.name; // Node name is already uppercase
         float nodeTextScale = 0.8f; // Increased size for better readability
         SDL_Point unscaled_node_text_size = textRenderer->getTextDimensions(selectedNodeText);
-        float scaled_node_text_width = static_cast<float>(unscaled_node_text_size.x) * nodeTextScale;
-        float scaled_node_text_height = static_cast<float>(unscaled_node_text_size.y) * nodeTextScale;
+        // Account for both local scale and global text scale for proper centering
+        float globalTextScale = textRenderer->getGlobalTextScale();
+        float finalScale = nodeTextScale * globalTextScale;
+        float scaled_node_text_width = static_cast<float>(unscaled_node_text_size.x) * finalScale;
+        float scaled_node_text_height = static_cast<float>(unscaled_node_text_size.y) * finalScale;
 
         int nodeTextX = (screenWidth - static_cast<int>(scaled_node_text_width)) / 2;
         int nodeTextY = screenHeight - static_cast<int>(scaled_node_text_height) - 20; // Position at bottom with padding
@@ -1059,20 +1072,24 @@ namespace Digivice {
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(display.getRenderer(), 0, 20, 60, 180); // Semi-transparent dark blue
         SDL_RenderFillRect(display.getRenderer(), nullptr); // Fill entire screen
-        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
-
-        // Display Node Name on top of overlay
+        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);        // Display Node Name on top of overlay
         float nodeNameScale_detail = 1.5f;
         SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name);
-        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * nodeNameScale_detail;
-        textRenderer->drawText(display.getRenderer(), node.name, (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2, 30, nodeNameScale_detail);
+        // Account for both local scale and global text scale for proper centering
+        float globalTextScale = textRenderer->getGlobalTextScale();
+        float finalNodeNameScale = nodeNameScale_detail * globalTextScale;
+        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * finalNodeNameScale;
+        int nodeNameX = (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2;
+        textRenderer->drawText(display.getRenderer(), node.name, nodeNameX, 30, nodeNameScale_detail);
 
         // Display Step Count
         std::string stepsText = "STEPS: " + std::to_string(node.totalSteps);
         float stepsTextScale = 1.0f;
         SDL_Point unscaled_steps_text_size = textRenderer->getTextDimensions(stepsText);
-        float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * stepsTextScale;
-        textRenderer->drawText(display.getRenderer(), stepsText, (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2, screenHeight - 70, stepsTextScale);          // Load and render the boss sprite using lazy loading
+        float finalStepsScale = stepsTextScale * globalTextScale;
+        float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * finalStepsScale;
+        int stepsX = (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2;
+        textRenderer->drawText(display.getRenderer(), stepsText, stepsX, screenHeight - 70, stepsTextScale);// Load and render the boss sprite using lazy loading
         std::string bossTextureId = node.id + "_boss";
         SDL_Texture* bossTexture = assetManager->requestTexture(bossTextureId, node.bossSpritePath);
         
@@ -1110,10 +1127,11 @@ namespace Digivice {
         
         // Display "Confirm to Start" prompt with a more prominent style
         std::string promptText = "CONFIRM TO START ADVENTURE";
-        float promptTextScale = 1.0f;
-        SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
-        float scaled_prompt_text_width = static_cast<float>(unscaled_prompt_text_size.x) * promptTextScale;
-        float scaled_prompt_text_height = static_cast<float>(unscaled_prompt_text_size.y) * promptTextScale;
+        float promptTextScale = 1.0f;        SDL_Point unscaled_prompt_text_size = textRenderer->getTextDimensions(promptText);
+        // Account for both local scale and global text scale for proper centering (reuse existing globalTextScale)
+        float finalPromptScale = promptTextScale * globalTextScale;
+        float scaled_prompt_text_width = static_cast<float>(unscaled_prompt_text_size.x) * finalPromptScale;
+        float scaled_prompt_text_height = static_cast<float>(unscaled_prompt_text_size.y) * finalPromptScale;
         
         int promptX = (screenWidth - static_cast<int>(scaled_prompt_text_width)) / 2;
         int promptY = screenHeight - 60;
