@@ -10,6 +10,7 @@
 #include "core/AnimationManager.h" // Added for enemy sprite animation
 #include "graphics/AnimationData.h" // Added for animation data
 #include "utils/AnimationUtils.h" // Added for animation ID construction
+#include "utils/ScalingUtils.h" // Added for centered sprite positioning
 #include "entities/DigimonRegistry.h" // Added for Digimon definitions
 #include <algorithm> // Added for std::min and std::max
 #include <iostream> // Added for std::cout debug logging
@@ -1076,18 +1077,10 @@ namespace Digivice {
         // Render semi-transparent UI overlay panel
         SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(display.getRenderer(), 0, 20, 60, 180); // Semi-transparent dark blue
-        SDL_RenderFillRect(display.getRenderer(), nullptr); // Fill entire screen
-        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
+        SDL_RenderFillRect(display.getRenderer(), nullptr); // Fill entire screen        SDL_SetRenderDrawBlendMode(display.getRenderer(), SDL_BLENDMODE_NONE);
         
-        // Display Node Name on top of overlay
-        float nodeNameScale_detail = 1.5f;
-        SDL_Point unscaled_node_name_size_detail = textRenderer->getTextDimensions(node.name);
-        // Account for both local scale and global text scale for proper centering
+        // Get global text scale for text rendering calculations
         float globalTextScale = textRenderer->getGlobalTextScale();
-        float finalNodeNameScale = nodeNameScale_detail * globalTextScale;
-        float scaled_node_name_width_detail = static_cast<float>(unscaled_node_name_size_detail.x) * finalNodeNameScale;
-        int nodeNameX = (screenWidth - static_cast<int>(scaled_node_name_width_detail)) / 2;
-        textRenderer->drawText(display.getRenderer(), node.name, nodeNameX, 30, nodeNameScale_detail);
 
         // Display Step Count
         std::string stepsText = "STEPS: " + std::to_string(node.totalSteps);
@@ -1096,23 +1089,18 @@ namespace Digivice {
         float finalStepsScale = stepsTextScale * globalTextScale;
         float scaled_steps_text_width = static_cast<float>(unscaled_steps_text_size.x) * finalStepsScale;
         int stepsX = (screenWidth - static_cast<int>(scaled_steps_text_width)) / 2;
-        textRenderer->drawText(display.getRenderer(), stepsText, stepsX, screenHeight - 70, stepsTextScale);
-
-        // Render the animated boss sprite
+        textRenderer->drawText(display.getRenderer(), stepsText, stepsX, screenHeight - 70, stepsTextScale);        // Render the animated boss sprite
         SDL_Texture* enemyTexture = enemyAnimator_.getCurrentTexture();
         if (enemyTexture) {
             SDL_Rect srcRect = enemyAnimator_.getCurrentFrameRect();
+              // Create visually centered destination rectangle using ScalingUtils for sprite scaling
+            // This matches the approach used for partner Digimon on the adventure screen
+            SDL_Rect dstRect = ScalingUtils::createVisualCenteredRect(srcRect.w, srcRect.h, ScalingUtils::ElementType::SPRITES);
             
-            // Calculate a reasonable size for the boss sprite (2x scale like other menus)
-            int spriteScale = 2;
-            int scaledWidth = srcRect.w * spriteScale;
-            int scaledHeight = srcRect.h * spriteScale;
+            // Apply additional vertical offset to match adventure screen positioning
+            int verticalOffset = 12; // Move up to match adventure screen + 5 additional pixels
+            dstRect.y -= verticalOffset;
             
-            // Position to the right of center
-            int bossX = (screenWidth / 2) + 50;
-            int bossY = screenHeight / 2 - scaledHeight / 2;
-            
-            SDL_Rect dstRect = {bossX, bossY, scaledWidth, scaledHeight};
             display.drawTexture(enemyTexture, &srcRect, &dstRect);
         } else {
             // Fallback: Load and render the boss sprite using legacy loading if animation fails
@@ -1123,34 +1111,20 @@ namespace Digivice {
                 // Get the texture dimensions
                 int texWidth, texHeight;
                 SDL_QueryTexture(bossTexture, nullptr, nullptr, &texWidth, &texHeight);
+                  // Create visually centered destination rectangle using ScalingUtils for sprite scaling
+                // This matches the approach used for partner Digimon on the adventure screen
+                SDL_Rect dstRect = ScalingUtils::createVisualCenteredRect(texWidth, texHeight, ScalingUtils::ElementType::SPRITES);
                 
-                // Calculate a reasonable size for the boss sprite
-                int maxHeight = screenHeight / 4;
-                float scale = static_cast<float>(maxHeight) / static_cast<float>(texHeight);
-                int scaledWidth = static_cast<int>(texWidth * scale);
-                int scaledHeight = maxHeight;
+                // Apply additional vertical offset to match adventure screen positioning
+                int verticalOffset = 12; // Move up to match adventure screen + 5 additional pixels
+                dstRect.y -= verticalOffset;
                 
-                // Position to the right of center
-                int bossX = (screenWidth / 2) + 50;
-                int bossY = screenHeight / 2 - scaledHeight / 2;
-                
-                SDL_Rect dstRect = {bossX, bossY, scaledWidth, scaledHeight};
                 display.drawTexture(bossTexture, nullptr, &dstRect);
             }
-        }
-        
-        // Display additional information
+        }// Display additional information
         int infoY = screenHeight / 2 + 20;
         int infoX = screenWidth / 4;
         int lineSpacing = 30;
-        
-        // Display steps required
-        std::string stepsInfo = "STEPS TO COMPLETE: " + std::to_string(node.totalSteps);
-        textRenderer->drawText(display.getRenderer(), stepsInfo, infoX, infoY, 0.8f);
-        
-        // Display location info
-        std::string locationInfo = "LOCATION: " + continents_[currentContinentIndex_].name;
-        textRenderer->drawText(display.getRenderer(), locationInfo, infoX, infoY + lineSpacing, 0.8f);
         
         // Display "Confirm to Start" prompt with a more prominent style
         std::string promptText = "CONFIRM TO START ADVENTURE";
