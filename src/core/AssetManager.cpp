@@ -1,6 +1,7 @@
 // File: src/core/AssetManager.cpp
 
 #include "core/AssetManager.h"
+#include "core/FallbackTextureGenerator.h"
 #include <SDL_image.h>
 #include <SDL_render.h>
 #include <SDL_surface.h>
@@ -8,6 +9,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <filesystem>
 
 AssetManager::~AssetManager() {
     shutdown();
@@ -26,8 +28,16 @@ bool AssetManager::init(SDL_Renderer* renderer) {
         return false;
     }
     
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager initialized with memory limit: %.2f MB", 
-                memoryLimit_ / (1024.0f * 1024.0f));
+    // Initialize fallback texture generator
+    fallbackGenerator_ = std::make_unique<FallbackTextureGenerator>();
+    if (!fallbackGenerator_->init(renderer)) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize fallback texture generator");
+        fallbackGenerator_.reset();
+        fallbackEnabled_ = false;
+    }
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager initialized with memory limit: %.2f MB, fallback: %s", 
+                memoryLimit_ / (1024.0f * 1024.0f), fallbackEnabled_ ? "enabled" : "disabled");
     return true;
 }
 
@@ -347,10 +357,299 @@ void AssetManager::shutdown() {
     
     assets_.clear();
     assetPaths_.clear();
+    fallbackPaths_.clear();
     currentMemoryUsage_ = 0;
+    
+    // Clean up fallback generator
+    if (fallbackGenerator_) {
+        fallbackGenerator_->cleanup();
+        fallbackGenerator_.reset();
+    }
+    
     IMG_Quit();
     renderer_ptr = nullptr;
     
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager shutdown complete. Freed %.2f MB.", 
                totalFreed / (1024.0f * 1024.0f));
+}
+
+// Enhanced asset loading with detailed result reporting
+AssetManager::LoadResult AssetManager::loadTextureWithResult(const std::string& textureId, const std::string& filePath) {
+    return loadTextureInternalWithResult(textureId, filePath);
+}
+
+AssetManager::LoadResult AssetManager::loadTextureInternalWithResult(const std::string& textureId, const std::string& filePath) {
+    if (!renderer_ptr) {
+        return LoadResult(false, false, "AssetManager not initialized", "");
+    }
+    
+    // Check if already loaded
+    auto it = assets_.find(textureId);
+    if (it != assets_.end() && it->second.texture) {
+        return LoadResult(true, it->second.isFallback, "Already loaded", it->second.filePath);
+    }
+
+    // Try to find a valid path
+    std::vector<std::string> pathsToTry;
+    if (!filePath.empty()) {
+        pathsToTry.push_back(filePath);
+    }
+    
+    // Add registered fallback paths
+    auto fallbackIt = fallbackPaths_.find(textureId);
+    if (fallbackIt != fallbackPaths_.end()) {
+        pathsToTry.insert(pathsToTry.end(), fallbackIt->second.begin(), fallbackIt->second.end());
+    }
+    
+    // Add single registered path
+    auto pathIt = assetPaths_.find(textureId);
+    if (pathIt != assetPaths_.end()) {
+        pathsToTry.push_back(pathIt->second);
+    }
+
+    std::string validPath = findValidAssetPath(textureId, pathsToTry);
+    
+    if (!validPath.empty()) {
+        // Try to load the actual asset
+        if (loadTextureInternal(textureId, validPath)) {
+            auto& asset = assets_[textureId];
+            asset.isFallback = false;
+            asset.lastLoadResult = LoadResult(true, false, "Successfully loaded", validPath);
+            return asset.lastLoadResult;
+        }
+    }
+    
+    // If we can't load the asset, try fallback
+    if (fallbackEnabled_ && fallbackGenerator_) {
+        SDL_Texture* fallbackTexture = createFallbackTexture(textureId);
+        if (fallbackTexture) {
+            AssetInfo& asset = assets_[textureId];
+            asset.texture = fallbackTexture;
+            asset.filePath = "fallback:" + textureId;
+            asset.lastUsed = std::chrono::steady_clock::now();
+            asset.estimatedSize = estimateTextureSize(fallbackTexture);
+            asset.isFallback = true;
+            asset.referenceCount = 0;
+            
+            currentMemoryUsage_ += asset.estimatedSize;
+            
+            LoadResult result(true, true, "Using fallback texture", asset.filePath);
+            asset.lastLoadResult = result;
+            
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Created fallback texture for '%s'", textureId.c_str());
+            return result;
+        }
+    }
+    
+    LoadResult result(false, false, "Failed to load asset and no fallback available", validPath);
+    if (it != assets_.end()) {
+        it->second.lastLoadResult = result;
+    }
+    return result;
+}
+
+// Fallback system methods
+void AssetManager::enableFallbackTextures(bool enabled) {
+    fallbackEnabled_ = enabled;
+    if (enabled && !fallbackGenerator_ && renderer_ptr) {
+        fallbackGenerator_ = std::make_unique<FallbackTextureGenerator>();
+        fallbackGenerator_->init(renderer_ptr);
+    }
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetManager fallback textures %s", 
+               enabled ? "enabled" : "disabled");
+}
+
+void AssetManager::setFallbackTextureSize(int width, int height) {
+    fallbackWidth_ = width;
+    fallbackHeight_ = height;
+}
+
+bool AssetManager::isUsingFallback(const std::string& textureId) const {
+    auto it = assets_.find(textureId);
+    return it != assets_.end() && it->second.isFallback;
+}
+
+SDL_Texture* AssetManager::createFallbackTexture(const std::string& textureId) {
+    if (!fallbackGenerator_) return nullptr;
+    
+    return fallbackGenerator_->generateFallbackForAsset(textureId, fallbackWidth_, fallbackHeight_);
+}
+
+// Enhanced path registration
+void AssetManager::registerAssetPaths(const std::vector<std::string>& fallbackPaths, const std::string& textureId) {
+    fallbackPaths_[textureId] = fallbackPaths;
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Registered %zu fallback paths for '%s'", 
+                fallbackPaths.size(), textureId.c_str());
+}
+
+std::string AssetManager::findValidAssetPath(const std::string& textureId, const std::vector<std::string>& paths) {
+    for (const std::string& path : paths) {
+        if (validateAssetFile(path)) {
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Found valid path for '%s': %s", 
+                        textureId.c_str(), path.c_str());
+            return path;
+        }
+    }
+    return "";
+}
+
+bool AssetManager::validateAssetFile(const std::string& filePath) {
+    try {
+        if (!std::filesystem::exists(filePath)) {
+            return false;
+        }
+        
+        if (!std::filesystem::is_regular_file(filePath)) {
+            return false;
+        }
+        
+        // Check file size (reject files larger than 50MB)
+        auto fileSize = std::filesystem::file_size(filePath);
+        if (fileSize > 50 * 1024 * 1024) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Asset file too large: %s (%.2f MB)", 
+                       filePath.c_str(), fileSize / (1024.0f * 1024.0f));
+            return false;
+        }
+        
+        // Try to open the file
+        std::ifstream testFile(filePath, std::ios::binary);
+        if (!testFile.is_open()) {
+            return false;
+        }
+        
+        // Check file header for common image formats
+        char header[8] = {0};
+        testFile.read(header, 8);
+        testFile.close();
+        
+        // PNG signature
+        if (header[0] == '\x89' && header[1] == 'P' && header[2] == 'N' && header[3] == 'G') {
+            return true;
+        }
+        
+        // JPEG signatures
+        if (header[0] == '\xFF' && header[1] == '\xD8') {
+            return true;
+        }
+        
+        // BMP signature
+        if (header[0] == 'B' && header[1] == 'M') {
+            return true;
+        }
+        
+        // GIF signatures
+        if ((header[0] == 'G' && header[1] == 'I' && header[2] == 'F' && header[3] == '8') &&
+            (header[4] == '7' || header[4] == '9') && header[5] == 'a') {
+            return true;
+        }
+        
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unknown image format: %s", filePath.c_str());
+        return false;
+        
+    } catch (const std::filesystem::filesystem_error& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Filesystem error validating %s: %s", 
+                    filePath.c_str(), e.what());
+        return false;
+    }
+}
+
+// Asset validation methods
+AssetManager::AssetValidationResult AssetManager::validateRegisteredAssets() {
+    AssetValidationResult result;
+    result.totalAssetsChecked = 0;
+    
+    // Validate single paths
+    for (const auto& [textureId, path] : assetPaths_) {
+        result.totalAssetsChecked++;
+        if (!validateAssetFile(path)) {
+            if (!std::filesystem::exists(path)) {
+                result.missingAssets.push_back(textureId + " (" + path + ")");
+            } else {
+                result.corruptAssets.push_back(textureId + " (" + path + ")");
+            }
+        }
+    }
+    
+    // Validate fallback paths
+    for (const auto& [textureId, paths] : fallbackPaths_) {
+        bool hasValidPath = false;
+        for (const std::string& path : paths) {
+            result.totalAssetsChecked++;
+            if (validateAssetFile(path)) {
+                hasValidPath = true;
+                break;
+            }
+        }
+        
+        if (!hasValidPath) {
+            result.missingAssets.push_back(textureId + " (all fallback paths invalid)");
+        }
+    }
+    
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Asset validation complete: %zu total, %zu missing, %zu corrupt", 
+               result.totalAssetsChecked, result.missingAssets.size(), result.corruptAssets.size());
+    
+    if (validationCallback_ && result.hasIssues()) {
+        validationCallback_(result);
+    }
+    
+    return result;
+}
+
+AssetManager::AssetValidationResult AssetManager::validateAssetPath(const std::string& textureId) {
+    AssetValidationResult result;
+    result.totalAssetsChecked = 1;
+    
+    std::vector<std::string> pathsToCheck;
+    
+    auto pathIt = assetPaths_.find(textureId);
+    if (pathIt != assetPaths_.end()) {
+        pathsToCheck.push_back(pathIt->second);
+    }
+    
+    auto fallbackIt = fallbackPaths_.find(textureId);
+    if (fallbackIt != fallbackPaths_.end()) {
+        pathsToCheck.insert(pathsToCheck.end(), fallbackIt->second.begin(), fallbackIt->second.end());
+    }
+    
+    bool hasValidPath = false;
+    for (const std::string& path : pathsToCheck) {
+        if (validateAssetFile(path)) {
+            hasValidPath = true;
+            break;
+        }
+    }
+    
+    if (!hasValidPath) {
+        result.missingAssets.push_back(textureId);
+    }
+    
+    return result;
+}
+
+std::vector<std::string> AssetManager::findAlternativePaths(const std::string& textureId) {
+    std::vector<std::string> alternatives;
+    
+    // Look for similar asset IDs
+    std::string lowerTextureId = textureId;
+    std::transform(lowerTextureId.begin(), lowerTextureId.end(), lowerTextureId.begin(), ::tolower);
+    
+    for (const auto& [id, path] : assetPaths_) {
+        if (id != textureId) {
+            std::string lowerAssetId = id;
+            std::transform(lowerAssetId.begin(), lowerAssetId.end(), lowerAssetId.begin(), ::tolower);
+            
+            // Check for partial matches
+            if (lowerAssetId.find(lowerTextureId.substr(0, lowerTextureId.find('_'))) != std::string::npos ||
+                lowerTextureId.find(lowerAssetId.substr(0, lowerAssetId.find('_'))) != std::string::npos) {
+                alternatives.push_back(id + " -> " + path);
+            }
+        }
+    }
+    
+    return alternatives;
+}
+
+void AssetManager::setAssetValidationCallback(std::function<void(const AssetValidationResult&)> callback) {
+    validationCallback_ = callback;
 }

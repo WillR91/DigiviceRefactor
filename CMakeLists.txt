@@ -27,13 +27,25 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/*/*/*.cpp" # Handles src/platform/pc/*.cpp
 )
 
+# Exclude tool files from main executable
+list(FILTER SOURCE_FILES EXCLUDE REGEX "src/tools/.*_main\\.cpp$")
+
 message(STATUS "Collected source files: ${SOURCE_FILES}") # Added for debugging
 
-# --- Add Your Source Files ---
+# --- Add Your Main Executable ---
 add_executable(${PROJECT_NAME}
     main.cpp
     ${SOURCE_FILES}
     src/states/PlayerTestState.cpp
+)
+
+# --- Add Asset Validator Tool ---
+add_executable(asset_validator
+    src/tools/asset_validator_main.cpp
+    # Include only the necessary source files for the validator
+    src/core/AssetManager.cpp
+    src/core/FallbackTextureGenerator.cpp
+    src/tools/AssetValidator.cpp
 )
 
 # --- Include Directories --- 
@@ -44,10 +56,23 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     "Z:/Libraries/SDL2_image-2.8.6/include" # Manual SDL_image include path
 )
 
+# Include directories for asset validator
+target_include_directories(asset_validator PUBLIC
+    "${CMAKE_SOURCE_DIR}/include"
+    ${SDL2_INCLUDE_DIRS}
+    "Z:/Libraries/SDL2_image-2.8.6/include"
+)
+
 # --- Link Libraries ---
 target_link_libraries(${PROJECT_NAME} PUBLIC
     ${SDL2_LIBRARIES}                                       # Link SDL2 found by find_package
     "Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.lib"  # Manual link to SDL2_image
+)
+
+# Link libraries for asset validator
+target_link_libraries(asset_validator PUBLIC
+    ${SDL2_LIBRARIES}
+    "Z:/Libraries/SDL2_image-2.8.6/lib/x64/SDL2_image.lib"
 )
 
 # --- Copy Assets to Output Directory Post-Build ---

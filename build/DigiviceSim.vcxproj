@@ -432,6 +432,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\core\AssetManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\BackgroundVariantManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\ErrorManager.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\core\FallbackTextureGenerator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\FrameRateManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\Game.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\core\InputManager_keybind.cpp" />
@@ -458,6 +459,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\partnerselectstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\tools\AssetValidator.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\TextLayoutUtils.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp" />

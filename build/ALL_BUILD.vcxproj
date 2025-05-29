@@ -178,6 +178,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{F8A30873-94C8-3D9D-9A2C-08285DEF08E0}</Project>
       <Name>DigiviceSim</Name>
     </ProjectReference>
+    <ProjectReference Include="Z:\DigiviceRefactor\build\asset_validator.vcxproj">
+      <Project>{4F81790B-08D0-3336-B584-0E16DFFD9506}</Project>
+      <Name>asset_validator</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
