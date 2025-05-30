@@ -8,6 +8,9 @@
       <FullPath>Z:\DigiviceRefactor\build\Debug\DigiviceSim.exe</FullPath>
     </ProjectOutput>
     <ProjectOutput>
+      <FullPath>Z:\DigiviceRefactor\build\Debug\asset_validator.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
       <FullPath>Z:\DigiviceRefactor\build\x64\Debug\ALL_BUILD</FullPath>
     </ProjectOutput>
   </ProjectOutputs>

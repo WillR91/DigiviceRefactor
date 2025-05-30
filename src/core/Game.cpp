@@ -10,8 +10,12 @@
 #include "core/AssetManager.h"
 #include "ui/TextRenderer.h"
 #include "core/AnimationManager.h"
+#include "core/FrameRateManager.h" // Required for std::unique_ptr destructor
 #include "utils/ConfigManager.h" // Add ConfigManager include
 #include "entities/DigimonRegistry.h" // <<< ADDED for Digimon definitions
+#include "graphics/SeamlessBackgroundRenderer.h" // Required for std::unique_ptr destructor
+#include "core/ErrorManager.h" // Required for std::unique_ptr destructor
+#include "core/BackgroundVariantManager.h" // Required for default node initialization
 
 #include <SDL_log.h>
 #include <stdexcept>
@@ -200,14 +204,11 @@ bool Game::init(const std::string& title, int width, int height) {
      assets_ok &= assetManager.loadTexture("gomamon", "assets/sprites/player_digimon/gomamon.png");
      assets_ok &= assetManager.loadTexture("palmon", "assets/sprites/player_digimon/palmon.png");     assets_ok &= assetManager.loadTexture("tentomon", "assets/sprites/player_digimon/tentomon.png");
      assets_ok &= assetManager.loadTexture("patamon", "assets/sprites/player_digimon/patamon.png");
-     
-     // Load unlockable Digimon
+       // Load unlockable Digimon
      assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
      assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
      
-     assets_ok &= assetManager.loadTexture("castle_bg_0", "assets/backgrounds/castlebackground0.png");
-     assets_ok &= assetManager.loadTexture("castle_bg_1", "assets/backgrounds/castlebackground1.png");
-     assets_ok &= assetManager.loadTexture("castle_bg_2", "assets/backgrounds/castlebackground2.png");
+     // Note: Legacy castle_bg assets removed - using new environment backgrounds instead
      assets_ok &= assetManager.loadTexture("menu_bg_blue", "assets/ui/backgrounds/menu_base_blue.png");
      assets_ok &= assetManager.loadTexture("transition_borders", "assets/ui/transition/transition_borders.png");
      SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading UI font...");
@@ -281,7 +282,39 @@ bool Game::init(const std::string& title, int width, int height) {
         assetManager.shutdown();
         display.close();
         SDL_Quit();
-        return false;
+        return false;    }
+
+    // Initialize PlayerData with default node containing proper background data
+    try {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Setting up default node data for initial state...");
+        
+        // Create a default node with the tropical jungle background using the variant system
+        Digivice::NodeData defaultNode;
+        defaultNode.id = "01_fi_node_01_tropical_jungle";
+        defaultNode.name = "TROPICAL JUNGLE";
+        defaultNode.continentId = "01_file_island";
+        defaultNode.totalSteps = 20;
+        defaultNode.isUnlocked = true;
+        
+        // Create background data using the variant system directly
+        Digivice::BackgroundLayerData layerData;
+        layerData.parallaxFactorX = 0.5f;
+        layerData.parallaxFactorY = 0.0f;
+        
+        // Initialize variants using the BackgroundVariantManager
+        Digivice::BackgroundVariantManager::initializeVariantsForNode(layerData, "tropicaljungle");
+        
+        defaultNode.adventureBackgroundLayers.push_back(layerData);
+        
+        // Set this as the current node in PlayerData
+        playerData_.setCurrentMapNode(defaultNode);
+        
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Default node '%s' initialized with %zu background layers", 
+                   defaultNode.name.c_str(), defaultNode.adventureBackgroundLayers.size());
+                   
+    } catch (const std::exception& e) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to initialize default node data: %s", e.what());
+        // Continue anyway with empty node data (fallback to legacy system)
     }
 
     // Push Initial State and Call Enter
@@ -798,42 +831,87 @@ bool Game::reloadConfig() {
 bool Game::loadAllEnemyDigimonAssets() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Loading all enemy Digimon assets...");
     bool assets_ok = true;
+    bool anims_ok = true;
     
     // This directory contains enemy Digimon assets
     const std::string enemyBaseDir = "assets/sprites/enemy_digimon";
     
-    // Load common enemy Digimon textures
-    assets_ok &= assetManager.loadTexture("kuwagamon", "assets/sprites/enemy_digimon/kuwagamon.png");
-    assets_ok &= assetManager.loadTexture("andromon", "assets/sprites/enemy_digimon/andromon.png");
-    assets_ok &= assetManager.loadTexture("devimon", "assets/sprites/enemy_digimon/devimon.png");
-    assets_ok &= assetManager.loadTexture("etemon", "assets/sprites/enemy_digimon/etemon.png");
-    assets_ok &= assetManager.loadTexture("kiwimon", "assets/sprites/enemy_digimon/kiwimon.png");
-    assets_ok &= assetManager.loadTexture("monochromon", "assets/sprites/enemy_digimon/monochromon.png");
-    assets_ok &= assetManager.loadTexture("tyrannomon", "assets/sprites/enemy_digimon/tyrannomon.png");
-    assets_ok &= assetManager.loadTexture("seadramon", "assets/sprites/enemy_digimon/seadramon.png");
-    assets_ok &= assetManager.loadTexture("shellmon", "assets/sprites/enemy_digimon/shellmon.png");
+    // Define all enemy Digimon with their correct file names
+    std::vector<std::pair<std::string, std::string>> enemyDigimon = {
+        // First batch
+        {"kuwagamon", "kuwagamon"}, {"andromon", "andromon"}, {"apocalymon", "apocalymon"},
+        {"bakemon", "bakemon"}, {"blossomon", "blossomon"}, {"centaurmon", "centaurmon"},
+        {"cherrymon", "cherrymon"}, {"cockatrimon", "cockatrimon"}, {"colosseumgreymon", "colosseumgreymon"},
+        {"darktyranomon", "darktyranomon"}, {"demidevimon", "demidevimon"}, {"deramon", "deramon"},
+        {"devidramon", "devidramon"}, {"devimon", "devimon"}, {"deviwomon", "deviwomon"},
+        
+        // Second batch
+        {"diablomon", "diablomon"}, {"digitamamon", "digitamamon"}, {"divermon", "divermon"},
+        {"dokugumon", "dokugumon"}, {"drimogemon", "drimogemon"}, {"elecmon", "elecmon"},
+        {"etemon", "etemon"}, {"evilmon", "evilmon"}, {"floramon", "floramon"},
+        {"flymon", "flymon"}, {"frigimon", "frigimon"}, {"garbagemon", "garbagemon"},
+        {"gazimon", "gazimon"}, {"gekomon", "gekomon"}, {"gesomon", "gesomon"},
+        
+        // Third batch
+        {"gigadramon", "gigadramon"}, {"gizamon", "gizamon"}, {"gotsumon", "gotsumon"},
+        {"hagurumon", "hagurumon"}, {"infermon", "infermon"}, {"keramon", "keramon"},
+        {"kiwimon", "kiwimon"}, {"leomon", "leomon"}, {"machinedramon", "machinedramon"},
+        {"mammothmon", "mammothmon"}, {"megadramon", "megadramon"}, {"megaseadramon", "megaseadramon"},
+        {"mekanorimon", "mekanorimon"}, {"meramon", "meramon"}, {"metaletemon", "metaletemon"},
+        
+        // Fourth batch
+        {"metalseadramon", "metalseadramon"}, {"mojyamon", "mojyamon"}, {"monochromon", "monochromon"},
+        {"monzaemon", "monzaemon"}, {"mushmon", "mushmon"}, {"myotismon", "myotismon"},
+        {"nanimon", "nanimon"}, {"nanomon", "nanomon"}, {"numemon", "numemon"},
+        {"ogremon", "ogremon"}, {"otamamon", "otamamon"}, {"parrotmon", "parrotmon"},
+        {"phantomon", "phantomon"}, {"piemon", "piedmon"}, {"piximon", "piximon"}, // Note: piemon -> piedmon file mapping
+        
+        // Fifth batch
+        {"pumpmon", "pumpmon"}, {"puppetmon", "puppetmon"}, {"raremon", "raremon"},
+        {"redvegimon", "redvegimon"}, {"sabreleomon", "sabreleomon"}, {"scorpiomon", "scorpiomon"},
+        {"seadramon", "seadramon"}, {"shellmon", "shellmon"}, {"shogungekomon", "shogungekomon"},
+        {"skullmeramon", "skullmeramon"}, {"snimon", "snimon"}, {"sukamon", "sukamon"},
+        {"tankmon", "tankmon"}, {"tuskmon", "tuskmon"}, {"tyranomon", "tyranomon"}, // Note: corrected spelling
+        
+        // Final batch
+        {"unimon", "unimon"}, {"vademon", "vademon"}, {"vegimon", "vegimon"},
+        {"venommyotismon", "venommyotismon"}, {"warumonzaemon", "warumonzaemon"}, {"whamon", "whamon"}
+    };
     
-    // Load unlockable Digimon
+    // Load all enemy Digimon textures
+    for (const auto& pair : enemyDigimon) {
+        const std::string& textureId = pair.first;
+        const std::string& fileName = pair.second;
+        std::string texturePath = enemyBaseDir + "/" + fileName + ".png";
+        
+        if (!assetManager.loadTexture(textureId, texturePath)) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy Digimon texture: %s from %s", 
+                       textureId.c_str(), texturePath.c_str());
+            assets_ok = false;
+        }
+    }
+    
+    // Load all enemy Digimon animations
+    for (const auto& pair : enemyDigimon) {
+        const std::string& animationId = pair.first;
+        const std::string& fileName = pair.second;
+        std::string animationPath = enemyBaseDir + "/" + fileName + ".json";
+        
+        if (!animationManager_->loadAnimationDataFromFile(animationPath, animationId)) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Failed to load enemy Digimon animation: %s from %s", 
+                       animationId.c_str(), animationPath.c_str());
+            anims_ok = false;
+        }
+    }
+    
+    // Load unlockable player Digimon (keeping existing functionality)
     assets_ok &= assetManager.loadTexture("veedramon", "assets/sprites/player_digimon/veedramon.png");
     assets_ok &= assetManager.loadTexture("wizardmon", "assets/sprites/player_digimon/wizardmon.png");
-    
-    // Load enemy Digimon animations
-    bool anims_ok = true;
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kuwagamon.json", "kuwagamon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/andromon.json", "andromon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/devimon.json", "devimon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/etemon.json", "etemon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/kiwimon.json", "kiwimon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/monochromon.json", "monochromon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/tyrannomon.json", "tyrannomon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/seadramon.json", "seadramon");
-    anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/enemy_digimon/shellmon.json", "shellmon");
-    
-    // Load unlockable Digimon animations
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/veedramon.json", "veedramon");
     anims_ok &= animationManager_->loadAnimationDataFromFile("assets/sprites/player_digimon/wizardmon.json", "wizardmon");
     
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading %s", assets_ok && anims_ok ? "successful" : "failed");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Enemy Digimon asset loading completed. Textures: %s, Animations: %s", 
+               assets_ok ? "successful" : "failed", anims_ok ? "successful" : "failed");
     return assets_ok && anims_ok;
 }
 

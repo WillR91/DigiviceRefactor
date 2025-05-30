@@ -157,7 +157,12 @@
 				36,
 				37,
 				38,
-				39
+				39,
+				40,
+				41,
+				42,
+				43,
+				44
 			]
 		}
 	],
@@ -263,7 +268,12 @@
 				36,
 				37,
 				38,
-				39
+				39,
+				40,
+				41,
+				42,
+				43,
+				44
 			]
 		}
 	],
@@ -428,6 +438,12 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "src/states/EnhancedMenuState.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "src/states/MapSystemState.cpp",
 			"sourceGroupIndex" : 0
 		},
@@ -476,7 +492,31 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "src/ui/DigiviceScreen.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/ui/MenuList.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/ui/MenuSystemComparison.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "src/ui/TextLayoutUtils.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/ui/UIElement.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

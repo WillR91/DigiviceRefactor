@@ -174,32 +174,23 @@ void MenuState::render(PCDisplay& display) {
     SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- Menu Render Step 2 START ---");
     // Use textRenderer if available, otherwise skip text drawing or draw placeholder
     if (textRenderer && !menuOptions_.empty()) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Assets OK (TextRenderer: %p, Options size: %zu)", (void*)textRenderer, menuOptions_.size());
-
-        const float textScale = 0.9f;
-        const int kerning = -15; // This kerning might need to be a property of TextRenderer or passed differently
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Assets OK (TextRenderer: %p, Options size: %zu)", (void*)textRenderer, menuOptions_.size());        const float textScale = 0.9f;
+        const int kerning = 0; // Use proper kerning for character spacing - was -15 causing overlapping text
         const std::string& selectedText = menuOptions_[currentSelection_];
-        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Selected Text: '%s'", selectedText.c_str());
-
-        // Assuming TextRenderer::getTextDimensions(text, scale, kerning)
-        // and TextRenderer::drawText(renderer, text, x, y, scale, kerning)
-        SDL_Point baseDimensions = textRenderer->getTextDimensions(selectedText, kerning);
-                SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Base Dimensions calculated by TextRenderer: w=%d, h=%d", baseDimensions.x, baseDimensions.y);
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Selected Text: '%s'", selectedText.c_str());        SDL_Point baseDimensions = textRenderer->getTextDimensions(selectedText, kerning);
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Base Dimensions calculated by TextRenderer: w=%d, h=%d", baseDimensions.x, baseDimensions.y);
 
         if (baseDimensions.x > 0 && baseDimensions.y > 0) {
-            // Position calculation remains similar, scaling is handled by TextRenderer or here
-            // If TextRenderer's getTextDimensions already accounts for scale, scaledTextWidth = baseDimensions.x
-            // If not, scaledTextWidth = static_cast<int>(static_cast<float>(baseDimensions.x) * textScale);
-            // For this example, assuming getTextDimensions gives unscaled, and drawText applies scale.
-            // Or, if TextRenderer::getTextDimensions takes scale, it gives scaled dimensions.
-            // Let's assume TextRenderer's methods handle scale internally or as a parameter.
+            // Account for both local scale and global text scale for proper centering
+            float globalTextScale = textRenderer->getGlobalTextScale();
+            float finalScale = textScale * globalTextScale;
+            int scaledTextWidth = static_cast<int>(static_cast<float>(baseDimensions.x) * finalScale);
+            int scaledTextHeight = static_cast<int>(static_cast<float>(baseDimensions.y) * finalScale);
 
-            int scaledTextWidth = baseDimensions.x;  // Assuming getTextDimensions returns scaled if scale is passed
-            int scaledTextHeight = baseDimensions.y; // Same assumption
-
+            // Center the text properly by using the actual scaled dimensions
             int startX = (windowW / 2) - (scaledTextWidth / 2);
             int startY = (windowH / 2) - (scaledTextHeight / 2);
-            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Calculated Position & Scale for TextRenderer: scale=%.2f, scaledW=%d, scaledH=%d, startX=%d, startY=%d", textScale, scaledTextWidth, scaledTextHeight, startX, startY);
+            SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Calculated Position & Scale for TextRenderer: finalScale=%.2f (local=%.2f * global=%.2f), scaledW=%d, scaledH=%d, startX=%d, startY=%d", finalScale, textScale, globalTextScale, scaledTextWidth, scaledTextHeight, startX, startY);
 
             SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "--- Calling TextRenderer::drawText ---");
             textRenderer->drawText(renderer, selectedText, startX, startY, textScale, kerning);

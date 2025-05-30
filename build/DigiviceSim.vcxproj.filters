@@ -79,6 +79,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\states\EnemyTestState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\EnhancedMenuState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,7 +106,19 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\tools\AssetValidator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\DigiviceScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuSystemComparison.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\TextLayoutUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\UIElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp">

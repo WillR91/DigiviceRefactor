@@ -452,6 +452,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\AdventureState_new.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\BattleState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\EnemyTestState.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\states\EnhancedMenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MapSystemState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\MenuState.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\PlayerTestState.cpp" />
@@ -460,7 +461,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\tools\AssetValidator.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\DigiviceScreen.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuList.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuSystemComparison.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\TextLayoutUtils.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\UIElement.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\textrenderer.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\ConfigManager.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\utils\ScalingUtils.cpp" />
