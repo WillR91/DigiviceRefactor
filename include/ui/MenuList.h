@@ -100,12 +100,20 @@ public:
     void setTextColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
     void setSelectedTextColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
     void setBackgroundColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
-    void setSelectedBackgroundColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
-
-    // Cursor management
+    void setSelectedBackgroundColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);    // Cursor management
     void setCursorTexture(SDL_Texture* texture, int width, int height);
     void setCursorOffset(int x, int y);
     void setShowCursor(bool show) { showCursor_ = show; }
+      // Menu bar background texture
+    void setMenuBarTexture(SDL_Texture* texture, int width, int height);
+    void setUseMenuBar(bool use) { useMenuBar_ = use; }
+
+    // Getter for TextKerning and TextScale
+    int getTextKerning() const { return textKerning_; }
+    float getTextScale() const { return textScale_; }
+    
+    // Public access to item bounds for external components
+    SDL_Rect getItemBounds(int index) const;
 
 protected:
     // Menu data
@@ -134,6 +142,12 @@ protected:
     int cursorOffsetY_;
     bool showCursor_;
     
+    // Menu bar background
+    SDL_Texture* menuBarTexture_;
+    int menuBarWidth_;
+    int menuBarHeight_;
+    bool useMenuBar_;
+    
     // Animation
     bool animating_;           // Whether an animation is currently in progress
     int previousIndex_;        // The previous selected index for animations
@@ -141,7 +155,6 @@ protected:
     float animationDuration_;  // Total duration of animation in seconds
     int animationDirection_;   // 1 = down, -1 = up    // Helper methods
     void calculateItemPositions();
-    SDL_Rect getItemBounds(int index) const;
     SDL_Point getItemPosition(int index) const;
     SDL_Point getAnimatedItemPosition(int index, float progress) const;
     void renderItem(SDL_Renderer* renderer, int index);

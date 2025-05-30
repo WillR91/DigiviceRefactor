@@ -21,10 +21,13 @@ MenuList::MenuList(int x, int y, int width, int height, TextRenderer* textRender
       selectedBackgroundColor_{0, 0, 80, 128}, // Semi-transparent blue
       cursorTexture_(nullptr),
       cursorWidth_(16),
-      cursorHeight_(16),
-      cursorOffsetX_(-20),
+      cursorHeight_(16),      cursorOffsetX_(-20),
       cursorOffsetY_(0),
       showCursor_(true),
+      menuBarTexture_(nullptr),
+      menuBarWidth_(0),
+      menuBarHeight_(0),
+      useMenuBar_(false),
       animating_(false),
       previousIndex_(0),
       animationProgress_(0.0f),
@@ -288,6 +291,13 @@ void MenuList::setCursorOffset(int x, int y) {
     cursorOffsetY_ = y;
 }
 
+void MenuList::setMenuBarTexture(SDL_Texture* texture, int width, int height) {
+    menuBarTexture_ = texture;
+    menuBarWidth_ = width;
+    menuBarHeight_ = height;
+    useMenuBar_ = (texture != nullptr);
+}
+
 void MenuList::renderItem(SDL_Renderer* renderer, int index) {
     if (index < 0 || index >= static_cast<int>(items_.size()) || !textRenderer_) {
         return;
@@ -295,12 +305,31 @@ void MenuList::renderItem(SDL_Renderer* renderer, int index) {
 
     const std::string& text = items_[index];
     bool isSelected = (index == selectedIndex_);
-    
-    // Get item bounds
+      // Get item bounds
     SDL_Rect itemRect = getItemBounds(index);
-    
-    // Render background for selected item
-    if (isSelected && selectedBackgroundColor_.a > 0) {
+      // Render menu bar texture for selected item if available
+    if (isSelected && useMenuBar_ && menuBarTexture_) {
+        // Get text dimensions for better scaling
+        SDL_Point textDimensions = textRenderer_->getTextDimensions(text, textKerning_);
+        int textWidth = static_cast<int>(textDimensions.x * textScale_ * textRenderer_->getGlobalTextScale());
+        
+        // Make the bar wider and a bit taller than the text
+        SDL_Rect barRect;
+        barRect.w = std::min(width_, std::max(textWidth + 24, menuBarWidth_));  // Add padding, but use menuBarWidth_ if larger
+        barRect.h = std::min(itemRect.h + 4, static_cast<int>(menuBarHeight_ * 0.8f)); // Slightly taller than text
+        
+        // Center horizontally, align with text vertically
+        barRect.x = itemRect.x + (itemRect.w - barRect.w) / 2;
+        barRect.y = itemRect.y + (itemRect.h - barRect.h) / 2;
+        
+        SDL_RenderCopy(renderer, menuBarTexture_, nullptr, &barRect);
+        
+        // Debug output to verify rendering
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Rendering menu bar at (%d, %d) with size %dx%d",
+                    barRect.x, barRect.y, barRect.w, barRect.h);
+    }
+    // Otherwise, render colored background if needed
+    else if (isSelected && selectedBackgroundColor_.a > 0) {
         SDL_SetRenderDrawColor(renderer, selectedBackgroundColor_.r, selectedBackgroundColor_.g, 
                               selectedBackgroundColor_.b, selectedBackgroundColor_.a);
         SDL_RenderFillRect(renderer, &itemRect);
@@ -311,15 +340,22 @@ void MenuList::renderItem(SDL_Renderer* renderer, int index) {
     }    // Calculate text position based on alignment
     SDL_Point textPos = getItemPosition(index);
     
-    // Set the appropriate text color using SDL_SetTextureColorMod before drawing
+    // Set the appropriate text color
     SDL_Color color = isSelected ? selectedTextColor_ : textColor_;
-    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), color.r, color.g, color.b);
+    
+    // Set the color modulation on the font texture if it's available
+    SDL_Texture* fontTexture = textRenderer_->getFontTexture();
+    if (fontTexture) {
+        SDL_SetTextureColorMod(fontTexture, color.r, color.g, color.b);
+    }
     
     // Render text
     textRenderer_->drawText(renderer, text, textPos.x, textPos.y, textScale_, textKerning_);
     
     // Reset color back to default (white) after drawing
-    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), 255, 255, 255);
+    if (fontTexture) {
+        SDL_SetTextureColorMod(fontTexture, 255, 255, 255);
+    }
 }
 
 void MenuList::renderCursor(SDL_Renderer* renderer) {
@@ -348,15 +384,44 @@ void MenuList::renderAnimatedItem(SDL_Renderer* renderer, int index) {
     
     // Get animated position for this item
     SDL_Point textPos = getAnimatedItemPosition(index, animationProgress_);
+      // Render menu bar texture for selected item if available
+    if (isSelected && useMenuBar_ && menuBarTexture_) {
+        // Get text dimensions for better scaling
+        SDL_Point textDimensions = textRenderer_->getTextDimensions(text, textKerning_);
+        int textWidth = static_cast<int>(textDimensions.x * textScale_ * textRenderer_->getGlobalTextScale());
+        int textHeight = getItemHeight();
+        
+        // Make the bar wider and a bit taller than the text
+        SDL_Rect barRect;
+        barRect.w = std::min(width_, std::max(textWidth + 24, menuBarWidth_));  // Add padding, but use menuBarWidth_ if larger
+        barRect.h = std::min(textHeight + 4, static_cast<int>(menuBarHeight_ * 0.8f)); // Slightly taller than text
+        
+        // Center the bar on the animated text position
+        barRect.x = textPos.x - (barRect.w - textWidth) / 2;
+        barRect.y = textPos.y - (barRect.h - textHeight) / 2;
+        
+        SDL_RenderCopy(renderer, menuBarTexture_, nullptr, &barRect);
+        
+        // Debug output to verify rendering during animation
+        SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "Rendering animated menu bar at (%d, %d) with size %dx%d",
+                    barRect.x, barRect.y, barRect.w, barRect.h);
+    }
       // Use the appropriate color based on selection state
-    // TextRenderer doesn't have a setTextColor method, so we set the color directly on SDL_Texture during rendering
     SDL_Color textColor = isSelected ? selectedTextColor_ : textColor_;
-    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), textColor.r, textColor.g, textColor.b);
-      // Render text at the animated position
+    
+    // Set the color modulation on the font texture if it's available
+    SDL_Texture* fontTexture = textRenderer_->getFontTexture();
+    if (fontTexture) {
+        SDL_SetTextureColorMod(fontTexture, textColor.r, textColor.g, textColor.b);
+    }
+      
+    // Render text at the animated position
     textRenderer_->drawText(renderer, text, textPos.x, textPos.y, textScale_, textKerning_);
     
     // Reset color back to default (white) after drawing
-    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), 255, 255, 255);
+    if (fontTexture) {
+        SDL_SetTextureColorMod(fontTexture, 255, 255, 255);
+    }
 }
 
 SDL_Rect MenuList::getItemBounds(int index) const {

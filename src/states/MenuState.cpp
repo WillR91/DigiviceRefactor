@@ -5,6 +5,7 @@
 #include "core/Game.h"
 #include "ui/DigiviceScreen.h"
 #include "ui/MenuList.h"
+#include "ui/MenuBar.h"
 #include "ui/TextRenderer.h"
 #include "core/AssetManager.h"
 #include "platform/pc/pc_display.h"
@@ -28,23 +29,32 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
     menuOptions_(options),
     currentSelection_(0),
     backgroundTexture_(nullptr),
-    cursorTexture_(nullptr)
-{
-    if (!game_ptr) {
+    cursorTexture_(nullptr),
+    menuBarTexture_(nullptr),
+    menuBar_(nullptr)
+{    if (!game_ptr) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Game pointer is null!");
         return;
-    }
-
-    // Load original assets for compatibility
+    }    // Load original assets for compatibility
     if (AssetManager* assets = game_ptr->getAssetManager()) {
         backgroundTexture_ = assets->getTexture("menu_bg_blue");
         cursorTexture_ = assets->getTexture("menu_cursor");
+          // Load the menu bar texture with consistent ID
+        if (!assets->loadTexture("ui_bluemenubar", "assets/ui/elements/bluemenubar.png")) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load menu bar texture");
+        } else {
+            menuBarTexture_ = assets->getTexture("ui_bluemenubar");
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Successfully loaded menu bar texture");
+        }
         
         if (!backgroundTexture_) { 
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Background texture 'menu_bg_blue' not found."); 
         }
         if (!cursorTexture_) { 
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Cursor texture 'menu_cursor' not found."); 
+        }
+        if (!menuBarTexture_) { 
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Menu bar texture not found."); 
         }
     }
 
@@ -70,15 +80,37 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
         menuList_->setAlignment(MenuList::Alignment::Center);
         menuList_->setTextScale(0.9f);    // Same scale as original
         menuList_->setTextKerning(0);     // Fixed kerning (was -15 causing overlap)        menuList_->setItemSpacing(20);
-        menuList_->setAnimationDuration(0.15f);  // Set animation duration (150ms - twice as fast)
-          // Set colors to match original menu style
+        menuList_->setAnimationDuration(0.15f);  // Set animation duration (150ms - twice as fast)        // Set colors to match original menu style
         menuList_->setTextColor(255, 255, 255, 255);        // White text
         menuList_->setSelectedTextColor(255, 255, 255, 255);  // White text for selected item too
         
+        // Make the background transparent as we'll use the menu bar texture        menuList_->setBackgroundColor(0, 0, 0, 0);
+        menuList_->setSelectedBackgroundColor(0, 0, 0, 0);
+        
+        // Don't use the menuBarTexture directly in MenuList anymore
+        // Instead we'll create a dedicated MenuBar component
+        menuList_->setUseMenuBar(false);
+          
         // Setup cursor if available
         if (cursorTexture_) {
             menuList_->setCursorTexture(cursorTexture_, 16, 16);
             menuList_->setCursorOffset(-25, 0);
+        }
+        
+        // Create the MenuBar component if texture is available
+        if (menuBarTexture_) {
+            // Get texture dimensions
+            int width, height;
+            SDL_QueryTexture(menuBarTexture_, nullptr, nullptr, &width, &height);
+            
+            // Create MenuBar with initial position (will be updated in update())
+            menuBar_ = std::make_shared<MenuBar>(0, 0, width, height, menuBarTexture_);
+            
+            // The MenuBar needs to be added to the screen BEFORE the MenuList
+            // so it appears behind the text
+            screen_->addChild(menuBar_);
+            
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Created MenuBar with size %dx%d", width, height);
         }
         
         // Set selection callback
@@ -88,8 +120,7 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
         
         // Add menu to screen
         screen_->addChild(menuList_);
-        
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState created with %zu options", options.size());
+          SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState created with %zu options", options.size());
 
     } catch (const std::exception& e) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Exception during initialization: %s", e.what());
@@ -132,6 +163,38 @@ void MenuState::update(float delta_time, PlayerData* playerData) {
     // Update the screen and all its children
     if (screen_) {
         screen_->update(delta_time);
+    }
+    
+    // Update the position of the menu bar to follow the selected item
+    if (menuBar_ && menuList_) {
+        const std::string& selectedText = menuList_->getSelectedItem();
+        
+        // Get text dimensions to properly size and position the menu bar
+        SDL_Point textDimensions = game_ptr->getTextRenderer()->getTextDimensions(
+            selectedText, menuList_->getTextKerning());
+            
+        // Apply the same scaling as MenuList uses
+        float globalScale = game_ptr->getTextRenderer()->getGlobalTextScale();
+        float itemScale = menuList_->getTextScale();
+        float finalScale = globalScale * itemScale;
+        
+        int textWidth = static_cast<int>(textDimensions.x * finalScale);
+        int textHeight = static_cast<int>(textDimensions.y * finalScale);
+        
+        // Get the position of the selected item
+        SDL_Rect itemBounds = menuList_->getItemBounds(menuList_->getSelectedIndex());
+        
+        // Make the bar slightly wider and taller than the text
+        int barWidth = textWidth + 24;  // Add padding
+        int barHeight = textHeight + 4;  // Add padding
+        
+        // Position the bar to be centered behind the text
+        int barX = itemBounds.x + (itemBounds.w - barWidth) / 2;
+        int barY = itemBounds.y + (itemBounds.h - barHeight) / 2;
+        
+        // Update the menu bar position and size
+        menuBar_->setPosition(barX, barY);
+        menuBar_->setSize(barWidth, barHeight);
     }
 }
 

@@ -4,6 +4,7 @@
 #include "states/GameState.h"
 #include "ui/DigiviceScreen.h"
 #include "ui/MenuList.h"
+#include "ui/MenuBar.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -37,16 +38,16 @@ public:
     void render(PCDisplay& display) override;
     StateType getType() const override;
 
-private:
-    // Enhanced UI Components
+private:    // Enhanced UI Components
     std::unique_ptr<DigiviceScreen> screen_;
     std::shared_ptr<MenuList> menuList_;
-    
-    // Original data members for compatibility
+    std::shared_ptr<MenuBar> menuBar_;
+      // Original data members for compatibility
     std::vector<std::string> menuOptions_;
     size_t currentSelection_;
     SDL_Texture* backgroundTexture_;
     SDL_Texture* cursorTexture_;
+    SDL_Texture* menuBarTexture_; // The blue menu bar texture
 
     // Enhanced functionality
     void onMenuItemSelected(int selectedIndex, const std::string& selectedText);

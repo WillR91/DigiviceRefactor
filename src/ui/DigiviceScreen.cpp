@@ -63,6 +63,9 @@ void DigiviceScreen::render(SDL_Renderer* renderer) {
     
     // Render all child elements
     renderChildren(renderer);
+    
+    // Debug info
+    SDL_LogDebug(SDL_LOG_CATEGORY_RENDER, "DigiviceScreen: Rendered background and %zu children", children_.size());
 }
 
 bool DigiviceScreen::handleInput(InputManager& inputManager) {

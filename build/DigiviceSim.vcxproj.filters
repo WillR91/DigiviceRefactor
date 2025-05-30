@@ -109,6 +109,9 @@
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\DigiviceScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
