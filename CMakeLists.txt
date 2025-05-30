@@ -30,6 +30,9 @@ file(GLOB_RECURSE SOURCE_FILES
 # Exclude tool files from main executable
 list(FILTER SOURCE_FILES EXCLUDE REGEX "src/tools/.*_main\\.cpp$")
 
+# Exclude legacy state files to avoid duplicate symbols
+list(FILTER SOURCE_FILES EXCLUDE REGEX ".*LegacyMenuState\\.cpp$")
+
 message(STATUS "Collected source files: ${SOURCE_FILES}") # Added for debugging
 
 # --- Add Your Main Executable ---

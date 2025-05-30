@@ -23,14 +23,20 @@ public:
      * @param selectedIndex The index of the selected menu item
      * @param selectedText The text of the selected menu item
      */
-    using SelectionCallback = std::function<void(int selectedIndex, const std::string& selectedText)>;
-
-    /**
+    using SelectionCallback = std::function<void(int selectedIndex, const std::string& selectedText)>;    /**
      * @brief Layout direction for menu items
      */
     enum class Layout {
         Vertical,   ///< Stack items vertically (typical for menus)
         Horizontal  ///< Arrange items horizontally
+    };
+
+    /**
+     * @brief Display mode for menu items
+     */
+    enum class DisplayMode {
+        AllItems,   ///< Show all items in list/grid format
+        Carousel    ///< Show only selected item (carousel style)
     };
 
     /**
@@ -81,14 +87,14 @@ public:
     void selectLast();
 
     // Callbacks
-    void setSelectionCallback(SelectionCallback callback) { selectionCallback_ = callback; }
-
-    // Visual configuration
+    void setSelectionCallback(SelectionCallback callback) { selectionCallback_ = callback; }    // Visual configuration
     void setLayout(Layout layout) { layout_ = layout; }
+    void setDisplayMode(DisplayMode mode) { displayMode_ = mode; layoutDirty_ = true; }
     void setAlignment(Alignment alignment) { alignment_ = alignment; }
     void setItemSpacing(int spacing) { itemSpacing_ = spacing; }
     void setTextScale(float scale) { textScale_ = scale; }
     void setTextKerning(int kerning) { textKerning_ = kerning; }
+    void setAnimationDuration(float seconds) { animationDuration_ = seconds; }
     
     // Colors
     void setTextColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a = 255);
@@ -108,10 +114,9 @@ protected:
     SelectionCallback selectionCallback_;
 
     // Rendering components
-    TextRenderer* textRenderer_;
-
-    // Layout configuration
+    TextRenderer* textRenderer_;    // Layout configuration
     Layout layout_;
+    DisplayMode displayMode_;
     Alignment alignment_;
     int itemSpacing_;
     float textScale_;
@@ -121,21 +126,26 @@ protected:
     SDL_Color textColor_;
     SDL_Color selectedTextColor_;
     SDL_Color backgroundColor_;
-    SDL_Color selectedBackgroundColor_;
-
-    // Cursor
+    SDL_Color selectedBackgroundColor_;    // Cursor
     SDL_Texture* cursorTexture_;
     int cursorWidth_;
     int cursorHeight_;
     int cursorOffsetX_;
     int cursorOffsetY_;
     bool showCursor_;
-
-    // Helper methods
+    
+    // Animation
+    bool animating_;           // Whether an animation is currently in progress
+    int previousIndex_;        // The previous selected index for animations
+    float animationProgress_;  // 0.0 to 1.0 progress of current animation
+    float animationDuration_;  // Total duration of animation in seconds
+    int animationDirection_;   // 1 = down, -1 = up    // Helper methods
     void calculateItemPositions();
     SDL_Rect getItemBounds(int index) const;
     SDL_Point getItemPosition(int index) const;
+    SDL_Point getAnimatedItemPosition(int index, float progress) const;
     void renderItem(SDL_Renderer* renderer, int index);
+    void renderAnimatedItem(SDL_Renderer* renderer, int index);
     void renderCursor(SDL_Renderer* renderer);
     
     // Layout calculations

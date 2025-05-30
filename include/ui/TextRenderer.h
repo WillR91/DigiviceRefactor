@@ -28,11 +28,12 @@ public:
     SDL_Texture* renderTextToTexture(SDL_Renderer* renderer, const std::string& text, SDL_Color color, float scale = 1.0f, int kerning = -1);
 
     // Draws the text using the loaded font data
-    void drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale = 1.0f, int kerning = -1) const; // Default kerning?
-
-    // Get and set the global text scale factor
+    void drawText(SDL_Renderer* renderer, const std::string& text, int x, int y, float scale = 1.0f, int kerning = -1) const; // Default kerning?    // Get and set the global text scale factor
     float getGlobalTextScale() const { return globalTextScale_; }
     void setGlobalTextScale(float scale) { globalTextScale_ = scale; }
+
+    // Get the font texture (used for color modulation)
+    SDL_Texture* getFontTexture() const { return fontTexture_; }
 
     // Update global text scale from configuration
     void updateGlobalTextScaleFromConfig();

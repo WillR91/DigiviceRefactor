@@ -10,6 +10,7 @@ MenuList::MenuList(int x, int y, int width, int height, TextRenderer* textRender
       selectedIndex_(0),
       textRenderer_(textRenderer),
       layout_(Layout::Vertical),
+      displayMode_(DisplayMode::AllItems),
       alignment_(Alignment::Center),
       itemSpacing_(10),
       textScale_(1.0f),
@@ -24,6 +25,11 @@ MenuList::MenuList(int x, int y, int width, int height, TextRenderer* textRender
       cursorOffsetX_(-20),
       cursorOffsetY_(0),
       showCursor_(true),
+      animating_(false),
+      previousIndex_(0),
+      animationProgress_(0.0f),
+      animationDuration_(0.2f),  // Default: 200ms animation
+      animationDirection_(0),
       layoutDirty_(true) {
     
     if (!textRenderer_) {
@@ -35,6 +41,18 @@ void MenuList::update(float deltaTime) {
     // Update layout if dirty
     if (layoutDirty_) {
         updateLayout();
+    }
+    
+    // Update animation if active
+    if (animating_) {
+        animationProgress_ += deltaTime / animationDuration_;
+        
+        // Animation complete?
+        if (animationProgress_ >= 1.0f) {
+            animating_ = false;
+            animationProgress_ = 0.0f;
+            animationDirection_ = 0;
+        }
     }
     
     // Update children
@@ -51,9 +69,24 @@ void MenuList::render(SDL_Renderer* renderer) {
         updateLayout();
     }
 
-    // Render all menu items
-    for (size_t i = 0; i < items_.size(); ++i) {
-        renderItem(renderer, static_cast<int>(i));
+    // Render menu items based on display mode
+    if (displayMode_ == DisplayMode::Carousel) {
+        // Carousel mode: only render the selected item
+        if (selectedIndex_ >= 0 && selectedIndex_ < static_cast<int>(items_.size())) {
+            // If animating, render both previous and current items
+            if (animating_ && previousIndex_ >= 0 && previousIndex_ < static_cast<int>(items_.size())) {
+                renderAnimatedItem(renderer, previousIndex_);
+                renderAnimatedItem(renderer, selectedIndex_);
+            } else {
+                // Not animating, just render the selected item
+                renderItem(renderer, selectedIndex_);
+            }
+        }
+    } else {
+        // AllItems mode: render all items (original behavior)
+        for (size_t i = 0; i < items_.size(); ++i) {
+            renderItem(renderer, static_cast<int>(i));
+        }
     }
 
     // Render cursor if enabled
@@ -155,9 +188,33 @@ void MenuList::clearItems() {
 }
 
 void MenuList::setSelectedIndex(int index) {
-    if (index < 0 || index >= static_cast<int>(items_.size())) {
+    if (index < 0 || index >= static_cast<int>(items_.size()) || index == selectedIndex_) {
         return;
     }
+    
+    // Start animation if in carousel mode and animation duration > 0
+    if (displayMode_ == DisplayMode::Carousel && animationDuration_ > 0.0f) {
+        previousIndex_ = selectedIndex_;
+        animating_ = true;
+        animationProgress_ = 0.0f;
+        
+        // Determine animation direction (1 = down, -1 = up)
+        int newIdx = index;
+        int oldIdx = selectedIndex_;
+        
+        // If wrapping from bottom to top
+        if (newIdx == 0 && oldIdx == static_cast<int>(items_.size()) - 1) {
+            animationDirection_ = -1; // Up animation
+        }
+        // If wrapping from top to bottom
+        else if (newIdx == static_cast<int>(items_.size()) - 1 && oldIdx == 0) {
+            animationDirection_ = 1;  // Down animation
+        }
+        else {
+            animationDirection_ = (newIdx > oldIdx) ? 1 : -1;
+        }
+    }
+    
     selectedIndex_ = index;
 }
 
@@ -169,22 +226,24 @@ std::string MenuList::getSelectedItem() const {
 }
 
 void MenuList::selectNext() {
-    if (items_.empty()) {
+    if (items_.empty() || animating_) {
         return;
     }
     
-    selectedIndex_ = (selectedIndex_ + 1) % static_cast<int>(items_.size());
+    int nextIndex = (selectedIndex_ + 1) % static_cast<int>(items_.size());
+    setSelectedIndex(nextIndex);
 }
 
 void MenuList::selectPrevious() {
-    if (items_.empty()) {
+    if (items_.empty() || animating_) {
         return;
     }
     
-    selectedIndex_--;
-    if (selectedIndex_ < 0) {
-        selectedIndex_ = static_cast<int>(items_.size()) - 1;
+    int prevIndex = selectedIndex_ - 1;
+    if (prevIndex < 0) {
+        prevIndex = static_cast<int>(items_.size()) - 1;
     }
+    setSelectedIndex(prevIndex);
 }
 
 void MenuList::selectFirst() {
@@ -246,13 +305,18 @@ void MenuList::renderItem(SDL_Renderer* renderer, int index) {
         SDL_SetRenderDrawColor(renderer, backgroundColor_.r, backgroundColor_.g, 
                               backgroundColor_.b, backgroundColor_.a);
         SDL_RenderFillRect(renderer, &itemRect);
-    }
-
-    // Calculate text position based on alignment
+    }    // Calculate text position based on alignment
     SDL_Point textPos = getItemPosition(index);
+    
+    // Set the appropriate text color using SDL_SetTextureColorMod before drawing
+    SDL_Color color = isSelected ? selectedTextColor_ : textColor_;
+    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), color.r, color.g, color.b);
     
     // Render text
     textRenderer_->drawText(renderer, text, textPos.x, textPos.y, textScale_, textKerning_);
+    
+    // Reset color back to default (white) after drawing
+    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), 255, 255, 255);
 }
 
 void MenuList::renderCursor(SDL_Renderer* renderer) {
@@ -269,6 +333,27 @@ void MenuList::renderCursor(SDL_Renderer* renderer) {
     cursorRect.h = cursorHeight_;
 
     SDL_RenderCopy(renderer, cursorTexture_, nullptr, &cursorRect);
+}
+
+void MenuList::renderAnimatedItem(SDL_Renderer* renderer, int index) {
+    if (index < 0 || index >= static_cast<int>(items_.size()) || !textRenderer_) {
+        return;
+    }
+
+    const std::string& text = items_[index];
+    bool isSelected = (index == selectedIndex_);
+    
+    // Get animated position for this item
+    SDL_Point textPos = getAnimatedItemPosition(index, animationProgress_);
+      // Use the appropriate color based on selection state
+    // TextRenderer doesn't have a setTextColor method, so we set the color directly on SDL_Texture during rendering
+    SDL_Color textColor = isSelected ? selectedTextColor_ : textColor_;
+    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), textColor.r, textColor.g, textColor.b);
+      // Render text at the animated position
+    textRenderer_->drawText(renderer, text, textPos.x, textPos.y, textScale_, textKerning_);
+    
+    // Reset color back to default (white) after drawing
+    SDL_SetTextureColorMod(textRenderer_->getFontTexture(), 255, 255, 255);
 }
 
 SDL_Rect MenuList::getItemBounds(int index) const {
@@ -291,21 +376,25 @@ SDL_Rect MenuList::getItemBounds(int index) const {
 SDL_Point MenuList::getItemPosition(int index) const {
     if (!textRenderer_ || index < 0 || index >= static_cast<int>(items_.size())) {
         return {0, 0};
-    }
-
-    SDL_Rect itemRect = getItemBounds(index);
+    }    SDL_Rect itemRect = getItemBounds(index);
     SDL_Point textDimensions = textRenderer_->getTextDimensions(items_[index], textKerning_);
     
-    int textX = itemRect.x;
-    int textY = itemRect.y + (itemRect.h - textDimensions.y) / 2;
+    // Account for both local scale and global text scale for proper centering (like original MenuState)
+    float globalTextScale = textRenderer_->getGlobalTextScale();
+    float finalScale = textScale_ * globalTextScale;
+    int scaledTextWidth = static_cast<int>(static_cast<float>(textDimensions.x) * finalScale);
+    int scaledTextHeight = static_cast<int>(static_cast<float>(textDimensions.y) * finalScale);
     
-    // Apply alignment
+    int textX = itemRect.x;
+    int textY = itemRect.y + (itemRect.h - scaledTextHeight) / 2; // Use scaled height for vertical centering
+    
+    // Apply alignment with scaled width
     switch (alignment_) {
         case Alignment::Center:
-            textX = itemRect.x + (itemRect.w - textDimensions.x) / 2;
+            textX = itemRect.x + (itemRect.w - scaledTextWidth) / 2; // Use scaled width for horizontal centering
             break;
         case Alignment::Right:
-            textX = itemRect.x + itemRect.w - textDimensions.x;
+            textX = itemRect.x + itemRect.w - scaledTextWidth; // Use scaled width for right alignment
             break;
         case Alignment::Left:
         default:
@@ -314,6 +403,60 @@ SDL_Point MenuList::getItemPosition(int index) const {
     }
     
     return {textX, textY};
+}
+
+SDL_Point MenuList::getAnimatedItemPosition(int index, float progress) const {
+    if (!textRenderer_ || index < 0 || index >= static_cast<int>(items_.size())) {
+        return {0, 0};
+    }
+
+    // Get the base position without animation
+    SDL_Point basePos = getItemPosition(index);
+    
+    // If not animating, just return the base position
+    if (!animating_ || animationDirection_ == 0) {
+        return basePos;
+    }
+    
+    // Calculate screen height and item height for animation
+    SDL_Point screenSize = {width_, height_};
+    int itemHeight = getItemHeight();
+    
+    // Calculate vertical offset for animation
+    int offset = 0;
+    float easedProgress = 0.0f;
+      // Apply easing function (ease-out cubic)
+    // Smoother easing function: cubic ease in/out
+    if (progress < 0.5f) {
+        easedProgress = 4.0f * progress * progress * progress;
+    } else {
+        float f = (progress - 1);
+        easedProgress = 1.0f + 4.0f * f * f * f;
+    }
+      // Calculate offset based on direction and progress
+    if (index == selectedIndex_) {
+        // Current item is sliding in
+        if (animationDirection_ > 0) {
+            // Sliding in from top
+            offset = -static_cast<int>((1.0f - easedProgress) * (itemHeight * 2));
+        } else {
+            // Sliding in from bottom
+            offset = static_cast<int>((1.0f - easedProgress) * (itemHeight * 2));
+        }
+    } else if (index == previousIndex_) {
+        // Previous item is sliding out
+        if (animationDirection_ > 0) {
+            // Sliding out to bottom
+            offset = static_cast<int>(easedProgress * (itemHeight * 2));
+        } else {
+            // Sliding out to top
+            offset = -static_cast<int>(easedProgress * (itemHeight * 2));
+        }
+    }
+    
+    // Apply offset to base position
+    SDL_Point animatedPos = {basePos.x, basePos.y + offset};
+    return animatedPos;
 }
 
 void MenuList::updateLayout() const {
@@ -327,8 +470,19 @@ void MenuList::updateLayout() const {
 
     int itemHeight = getItemHeight();
     
-    if (layout_ == Layout::Vertical) {
-        // Vertical layout
+    if (displayMode_ == DisplayMode::Carousel) {
+        // Carousel mode: center only the selected item in the entire area
+        for (size_t i = 0; i < items_.size(); ++i) {
+            SDL_Rect itemRect;
+            itemRect.x = 0;
+            itemRect.y = (height_ - itemHeight) / 2;  // Center vertically in entire area
+            itemRect.w = width_;
+            itemRect.h = itemHeight;
+            
+            itemBounds_.push_back(itemRect);
+        }
+    } else if (layout_ == Layout::Vertical) {
+        // Vertical layout for AllItems mode
         int totalHeight = calculateTotalContentHeight();
         int startY = (height_ - totalHeight) / 2;  // Center vertically
         
@@ -342,7 +496,7 @@ void MenuList::updateLayout() const {
             itemBounds_.push_back(itemRect);
         }
     } else {
-        // Horizontal layout
+        // Horizontal layout for AllItems mode
         int totalWidth = calculateTotalContentWidth();
         int startX = (width_ - totalWidth) / 2;  // Center horizontally
         
@@ -408,5 +562,10 @@ int MenuList::getItemHeight() const {
         maxHeight = std::max(maxHeight, textDim.y);
     }
     
-    return maxHeight + 4; // Add some padding
+    // Apply the same scale calculation as in getItemPosition for consistency
+    float globalTextScale = textRenderer_->getGlobalTextScale();
+    float finalScale = textScale_ * globalTextScale;
+    int scaledMaxHeight = static_cast<int>(static_cast<float>(maxHeight) * finalScale);
+    
+    return scaledMaxHeight + 4; // Add some padding
 }
