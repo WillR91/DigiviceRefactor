@@ -202,13 +202,16 @@ void MenuList::setSelectedIndex(int index) {
         int newIdx = index;
         int oldIdx = selectedIndex_;
         
-        // If wrapping from bottom to top
+        // For wrapping, maintain the natural direction of movement
+        // This makes the menu feel like a continuous loop
+        
+        // If wrapping from bottom to top (pressing down at the end of the list)
         if (newIdx == 0 && oldIdx == static_cast<int>(items_.size()) - 1) {
-            animationDirection_ = -1; // Up animation
+            animationDirection_ = 1; // Continue moving down, new item comes from top
         }
-        // If wrapping from top to bottom
+        // If wrapping from top to bottom (pressing up at the beginning of the list)
         else if (newIdx == static_cast<int>(items_.size()) - 1 && oldIdx == 0) {
-            animationDirection_ = 1;  // Down animation
+            animationDirection_ = -1; // Continue moving up, new item comes from bottom
         }
         else {
             animationDirection_ = (newIdx > oldIdx) ? 1 : -1;
@@ -417,15 +420,14 @@ SDL_Point MenuList::getAnimatedItemPosition(int index, float progress) const {
     if (!animating_ || animationDirection_ == 0) {
         return basePos;
     }
-    
-    // Calculate screen height and item height for animation
+      // Calculate screen height and item height for animation
     SDL_Point screenSize = {width_, height_};
     int itemHeight = getItemHeight();
     
     // Calculate vertical offset for animation
     int offset = 0;
     float easedProgress = 0.0f;
-      // Apply easing function (ease-out cubic)
+    
     // Smoother easing function: cubic ease in/out
     if (progress < 0.5f) {
         easedProgress = 4.0f * progress * progress * progress;
@@ -437,20 +439,20 @@ SDL_Point MenuList::getAnimatedItemPosition(int index, float progress) const {
     if (index == selectedIndex_) {
         // Current item is sliding in
         if (animationDirection_ > 0) {
-            // Sliding in from top
-            offset = -static_cast<int>((1.0f - easedProgress) * (itemHeight * 2));
+            // Sliding in from top - start completely off-screen
+            offset = -static_cast<int>((1.0f - easedProgress) * height_);
         } else {
-            // Sliding in from bottom
-            offset = static_cast<int>((1.0f - easedProgress) * (itemHeight * 2));
+            // Sliding in from bottom - start completely off-screen
+            offset = static_cast<int>((1.0f - easedProgress) * height_);
         }
     } else if (index == previousIndex_) {
         // Previous item is sliding out
         if (animationDirection_ > 0) {
-            // Sliding out to bottom
-            offset = static_cast<int>(easedProgress * (itemHeight * 2));
+            // Sliding out to bottom - go completely off-screen
+            offset = static_cast<int>(easedProgress * height_);
         } else {
-            // Sliding out to top
-            offset = -static_cast<int>(easedProgress * (itemHeight * 2));
+            // Sliding out to top - go completely off-screen
+            offset = -static_cast<int>(easedProgress * height_);
         }
     }
     

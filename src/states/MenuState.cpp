@@ -69,13 +69,11 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
         menuList_->setItems(menuOptions_);        menuList_->setDisplayMode(MenuList::DisplayMode::Carousel);  // Use carousel mode like original
         menuList_->setAlignment(MenuList::Alignment::Center);
         menuList_->setTextScale(0.9f);    // Same scale as original
-        menuList_->setTextKerning(0);     // Fixed kerning (was -15 causing overlap)
-        menuList_->setItemSpacing(20);
-        menuList_->setAnimationDuration(0.3f);  // Set animation duration (300ms)
-        
-        // Set colors to match original menu style
+        menuList_->setTextKerning(0);     // Fixed kerning (was -15 causing overlap)        menuList_->setItemSpacing(20);
+        menuList_->setAnimationDuration(0.15f);  // Set animation duration (150ms - twice as fast)
+          // Set colors to match original menu style
         menuList_->setTextColor(255, 255, 255, 255);        // White text
-        menuList_->setSelectedTextColor(255, 255, 0, 255);  // Yellow selected text
+        menuList_->setSelectedTextColor(255, 255, 255, 255);  // White text for selected item too
         
         // Setup cursor if available
         if (cursorTexture_) {
