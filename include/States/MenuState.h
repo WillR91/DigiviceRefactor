@@ -5,6 +5,7 @@
 #include "ui/DigiviceScreen.h"
 #include "ui/MenuList.h"
 #include "ui/MenuBar.h"
+#include "ui/BorderTransition.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -26,10 +27,8 @@ class PCDisplay;
 class MenuState : public GameState {
 public:
     MenuState(Game* game, const std::vector<std::string>& options);
-    ~MenuState() override;
-
-    // Lifecycle methods - same interface as original
-    void enter() override {};
+    ~MenuState() override;    // Lifecycle methods - same interface as original
+    void enter() override;
     void exit() override {};
 
     // Core state functions - same interface as original
@@ -42,6 +41,7 @@ private:    // Enhanced UI Components
     std::unique_ptr<DigiviceScreen> screen_;
     std::shared_ptr<MenuList> menuList_;
     std::shared_ptr<MenuBar> menuBar_;
+    std::unique_ptr<BorderTransition> borderTransition_;
       // Original data members for compatibility
     std::vector<std::string> menuOptions_;
     size_t currentSelection_;

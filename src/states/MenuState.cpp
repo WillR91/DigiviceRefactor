@@ -6,6 +6,7 @@
 #include "ui/DigiviceScreen.h"
 #include "ui/MenuList.h"
 #include "ui/MenuBar.h"
+#include "ui/BorderTransition.h"
 #include "ui/TextRenderer.h"
 #include "core/AssetManager.h"
 #include "platform/pc/pc_display.h"
@@ -25,13 +26,13 @@
 #include "states/PlayerTestState.h"
 
 MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
-    GameState(game),
-    menuOptions_(options),
+    GameState(game),    menuOptions_(options),
     currentSelection_(0),
     backgroundTexture_(nullptr),
     cursorTexture_(nullptr),
     menuBarTexture_(nullptr),
-    menuBar_(nullptr)
+    menuBar_(nullptr),
+    borderTransition_(nullptr)
 {    if (!game_ptr) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Game pointer is null!");
         return;
@@ -117,9 +118,13 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
         menuList_->setSelectionCallback([this](int index, const std::string& text) {
             this->onMenuItemSelected(index, text);
         });
-        
-        // Add menu to screen
+          // Add menu to screen
         screen_->addChild(menuList_);
+          // Create border transition system with inward distance for central square framing
+        borderTransition_ = std::make_unique<BorderTransition>(game_ptr, 0.8f, 93);
+        if (borderTransition_) {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Created border transition system");
+        }
           SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState created with %zu options", options.size());
 
     } catch (const std::exception& e) {
@@ -129,6 +134,17 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
 
 MenuState::~MenuState() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState destroyed.");
+}
+
+void MenuState::enter() {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Entering with border transition animation");
+    
+    // Start the border transition animation
+    if (borderTransition_) {
+        borderTransition_->startAnimation();
+    } else {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: BorderTransition not initialized!");
+    }
 }
 
 void MenuState::setupMenuLayout() {
@@ -142,6 +158,16 @@ void MenuState::setupMenuLayout() {
 }
 
 void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData) {
+    // Check if border animation is still in progress
+    bool borderAnimationActive = borderTransition_ && 
+                                !borderTransition_->isAnimationComplete();
+    
+    if (borderAnimationActive) {
+        // Don't process menu inputs while borders are animating
+        // This creates a nice pause for the transition effect
+        return;
+    }
+    
     // Handle CANCEL - same as original
     if (inputManager.isActionJustPressed(GameAction::CANCEL)) {
         game_ptr->requestPopState();
@@ -160,6 +186,11 @@ void MenuState::handle_input(InputManager& inputManager, PlayerData* playerData)
 }
 
 void MenuState::update(float delta_time, PlayerData* playerData) {
+    // Update border transition animation
+    if (borderTransition_) {
+        borderTransition_->update(delta_time);
+    }
+    
     // Update the screen and all its children
     if (screen_) {
         screen_->update(delta_time);
@@ -217,6 +248,11 @@ void MenuState::render(PCDisplay& display) {
             SDL_RenderClear(renderer);
         }
     }
+    
+    // Render border transition on top of everything
+    if (borderTransition_) {
+        borderTransition_->render(display);
+    }
 }
 
 StateType MenuState::getType() const {
@@ -227,54 +263,30 @@ void MenuState::onMenuItemSelected(int selectedIndex, const std::string& selecte
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Selected '%s' at index %d", 
                 selectedText.c_str(), selectedIndex);
 
-    // Update currentSelection_ for compatibility
-    currentSelection_ = selectedIndex;
-
     // Handle menu selections based on text content
     if (selectedText == "MAP") {
         handleMapSelection();
     } else if (selectedText == "DIGIMON") {
         handleDigimonSelection();
-    } else if (selectedText == "SAVE") {
-        handleSaveSelection();
-    } else if (selectedText == "SETTINGS") {
-        handleSettingsSelection();
     } else if (selectedText == "DEBUG") {
         handleDebugSelection();
-    } else if (selectedText == "EXIT") {
-        handleExitSelection();
     } else if (selectedText == "TEST DIGIMON") {
         handleTestDigimonSelection();
     } else if (selectedText == "ENEMY DIGIMON") {
         handleEnemyDigimonSelection();
     } else if (selectedText == "PLAYER DIGIMON") {
         handlePlayerDigimonSelection();
+    } else if (selectedText == "SETTINGS") {
+        handleSettingsSelection();
+    } else if (selectedText == "SAVE") {
+        handleSaveSelection();
+    } else if (selectedText == "EXIT") {
+        handleExitSelection();
     } else if (selectedText == "BACK") {
         handleBackSelection();
     } else {
-        // Fallback to legacy handling
-        handleMenuSelection(selectedText);
-    }
-}
-
-void MenuState::handleMenuSelection(const std::string& selectedItem) {
-    // Legacy menu selection handler for compatibility
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Legacy handler for '%s'", selectedItem.c_str());
-    
-    if (selectedItem == "MAP") {
-        handleMapSelection();
-    } else if (selectedItem == "DIGIMON") {
-        handleDigimonSelection();
-    } else if (selectedItem == "SAVE") {
-        handleSaveSelection();
-    } else if (selectedItem == "SETTINGS") {
-        handleSettingsSelection();
-    } else if (selectedItem == "DEBUG") {
-        handleDebugSelection();
-    } else if (selectedItem == "EXIT") {
-        handleExitSelection();
-    } else {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Unhandled menu option '%s'", selectedItem.c_str());
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Unhandled menu option '%s'", 
+                    selectedText.c_str());
     }
 }
 

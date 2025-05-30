@@ -461,6 +461,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="Z:\DigiviceRefactor\src\states\progressstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\states\transitionstate.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\tools\AssetValidator.cpp" />
+    <ClCompile Include="Z:\DigiviceRefactor\src\ui\BorderTransition.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\DigiviceScreen.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuBar.cpp" />
     <ClCompile Include="Z:\DigiviceRefactor\src\ui\MenuList.cpp" />

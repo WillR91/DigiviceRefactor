@@ -33,6 +33,7 @@ Z:\DigiviceRefactor\src\states\partnerselectstate.cpp;Z:\DigiviceRefactor\build\
 Z:\DigiviceRefactor\src\states\progressstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\progressstate.obj
 Z:\DigiviceRefactor\src\states\transitionstate.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\transitionstate.obj
 Z:\DigiviceRefactor\src\tools\AssetValidator.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\AssetValidator.obj
+Z:\DigiviceRefactor\src\ui\BorderTransition.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\BorderTransition.obj
 Z:\DigiviceRefactor\src\ui\DigiviceScreen.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\DigiviceScreen.obj
 Z:\DigiviceRefactor\src\ui\MenuBar.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MenuBar.obj
 Z:\DigiviceRefactor\src\ui\MenuList.cpp;Z:\DigiviceRefactor\build\DigiviceSim.dir\Debug\MenuList.obj
