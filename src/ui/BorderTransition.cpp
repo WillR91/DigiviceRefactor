@@ -5,6 +5,7 @@
 #include "core/AssetManager.h"
 #include "platform/pc/pc_display.h"
 #include "core/GameConstants.h"
+#include "utils/ScalingUtils.h"
 #include <SDL_log.h>
 #include <algorithm>
 
@@ -13,7 +14,7 @@ BorderTransition::BorderTransition(Game* game, float animationDuration, int inwa
     animationDuration_(animationDuration),
     animationTimer_(0.0f),
     currentState_(AnimationState::BORDERS_OUT),
-    inwardDistance_(inwardDistance),
+    inwardDistance_(ScalingUtils::applyScaling(inwardDistance, ScalingUtils::ElementType::UI)),
     borderTop_(nullptr),
     borderBottom_(nullptr),
     borderLeft_(nullptr),
@@ -25,9 +26,11 @@ BorderTransition::BorderTransition(Game* game, float animationDuration, int inwa
 {
     if (!game_) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "BorderTransition: Game pointer is null!");
-        return;
-    }    loadBorderTextures();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BorderTransition: Created with duration %.2f seconds, inward distance %d pixels", animationDuration_, inwardDistance_);
+        return;    }    loadBorderTextures();
+    
+    float uiScalingFactor = ScalingUtils::getScalingFactor(ScalingUtils::ElementType::UI);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BorderTransition: Created with duration %.2f seconds, original inward distance %d pixels, scaled inward distance %d pixels (UI scaling %.2f)", 
+                animationDuration_, inwardDistance, inwardDistance_, uiScalingFactor);
 }
 
 BorderTransition::~BorderTransition() {
@@ -73,24 +76,31 @@ void BorderTransition::loadBorderTextures() {
         else if (i == 2) borderBottom_ = texture;
         else if (i == 4) borderLeft_ = texture;
         else if (i == 6) borderRight_ = texture;
-    }
-
-    // Query texture dimensions
+    }    // Query texture dimensions for logging (original dimensions)
     if (borderTop_) {
-        SDL_QueryTexture(borderTop_, nullptr, nullptr, nullptr, &topHeight_);
+        int originalHeight;
+        SDL_QueryTexture(borderTop_, nullptr, nullptr, nullptr, &originalHeight);
+        topHeight_ = originalHeight;
     }
     if (borderBottom_) {
-        SDL_QueryTexture(borderBottom_, nullptr, nullptr, nullptr, &bottomHeight_);
+        int originalHeight;
+        SDL_QueryTexture(borderBottom_, nullptr, nullptr, nullptr, &originalHeight);
+        bottomHeight_ = originalHeight;
     }
     if (borderLeft_) {
-        SDL_QueryTexture(borderLeft_, nullptr, nullptr, &leftWidth_, nullptr);
+        int originalWidth;
+        SDL_QueryTexture(borderLeft_, nullptr, nullptr, &originalWidth, nullptr);
+        leftWidth_ = originalWidth;
     }
     if (borderRight_) {
-        SDL_QueryTexture(borderRight_, nullptr, nullptr, &rightWidth_, nullptr);
+        int originalWidth;
+        SDL_QueryTexture(borderRight_, nullptr, nullptr, &originalWidth, nullptr);
+        rightWidth_ = originalWidth;
     }
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BorderTransition: Border dimensions - Top: %d, Bottom: %d, Left: %d, Right: %d", 
-                topHeight_, bottomHeight_, leftWidth_, rightWidth_);
+    float uiScalingFactor = ScalingUtils::getScalingFactor(ScalingUtils::ElementType::UI);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "BorderTransition: Border original dimensions - Top: %d, Bottom: %d, Left: %d, Right: %d (UI scaling: %.2f)", 
+                topHeight_, bottomHeight_, leftWidth_, rightWidth_, uiScalingFactor);
 }
 
 void BorderTransition::startAnimation() {
@@ -120,67 +130,97 @@ void BorderTransition::render(PCDisplay& display) {
         return; // No rendering when borders are off-screen
     }
 
-    int windowW = 0, windowH = 0;
-    if (game_ && game_->get_display()) {
-        game_->get_display()->getWindowSize(windowW, windowH);
-    }
-    if (windowW <= 0) windowW = GameConstants::WINDOW_WIDTH;
-    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;
+    // Use logical screen dimensions (SDL logical scaling handles window-to-logical conversion automatically)
+    const int LOGICAL_WIDTH = 466;
+    const int LOGICAL_HEIGHT = 466;
 
     // Calculate animation progress with easing
     float progress = (animationDuration_ > 0.0f) ? (animationTimer_ / animationDuration_) : 1.0f;
     progress = std::min(progress, 1.0f);
     float easedProgress = easeInOutCubic(progress);
 
-    // Calculate the central porthole dimensions (square viewport in center of screen)
-    int portholeSize = std::min(windowW, windowH) - (2 * inwardDistance_);
-    int portholeX = (windowW - portholeSize) / 2;
-    int portholeY = (windowH - portholeSize) / 2;
+    // Calculate the central porthole dimensions (square viewport in center of logical screen)
+    int portholeSize = std::min(LOGICAL_WIDTH, LOGICAL_HEIGHT) - (2 * inwardDistance_);
+    int portholeX = (LOGICAL_WIDTH - portholeSize) / 2;
+    int portholeY = (LOGICAL_HEIGHT - portholeSize) / 2;
 
-    // Use actual texture dimensions for proper aspect ratio preservation
-    int topBorderHeight = (topHeight_ > 0) ? topHeight_ : inwardDistance_;
-    int bottomBorderHeight = (bottomHeight_ > 0) ? bottomHeight_ : inwardDistance_;
-    int leftBorderWidth = (leftWidth_ > 0) ? leftWidth_ : inwardDistance_;
-    int rightBorderWidth = (rightWidth_ > 0) ? rightWidth_ : inwardDistance_;
-    
+    // Apply ScalingUtils scaling for UI elements (this scales textures within the logical coordinate system)
+    float uiScale = ScalingUtils::getScalingFactor(ScalingUtils::ElementType::UI);
+
     // TOP BORDER: Slides down from off-screen to porthole top
     if (borderTop_) {
-        int topStartY = -topBorderHeight;  // Start completely off-screen
-        int topEndY = portholeY - topBorderHeight;  // End just above porthole
+        // Get original texture dimensions and apply UI scaling
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderTop_, nullptr, nullptr, &originalWidth, &originalHeight);
+        
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        
+        // Calculate movement positions (in logical coordinates)
+        int topStartY = -scaledHeight;  // Start completely off-screen
+        int topEndY = portholeY - scaledHeight;  // End just above porthole
         int currentTopY = static_cast<int>(topStartY + (topEndY - topStartY) * easedProgress);
         
-        SDL_Rect topRect = { 0, currentTopY, windowW, topBorderHeight };
-        display.drawTexture(borderTop_, nullptr, &topRect);
+        // Center horizontally and span full logical width for complete coverage
+        SDL_Rect destRect = { 0, currentTopY, LOGICAL_WIDTH, scaledHeight };
+        display.drawTexture(borderTop_, nullptr, &destRect);
     }
 
     // BOTTOM BORDER: Slides up from off-screen to porthole bottom
     if (borderBottom_) {
-        int bottomStartY = windowH;  // Start completely off-screen
+        // Get original texture dimensions and apply UI scaling
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderBottom_, nullptr, nullptr, &originalWidth, &originalHeight);
+        
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        
+        // Calculate movement positions (in logical coordinates)
+        int bottomStartY = LOGICAL_HEIGHT;  // Start completely off-screen
         int bottomEndY = portholeY + portholeSize;  // End just below porthole
         int currentBottomY = static_cast<int>(bottomStartY + (bottomEndY - bottomStartY) * easedProgress);
         
-        SDL_Rect bottomRect = { 0, currentBottomY, windowW, bottomBorderHeight };
-        display.drawTexture(borderBottom_, nullptr, &bottomRect);
+        // Span full logical width for complete coverage
+        SDL_Rect destRect = { 0, currentBottomY, LOGICAL_WIDTH, scaledHeight };
+        display.drawTexture(borderBottom_, nullptr, &destRect);
     }
 
     // LEFT BORDER: Slides right from off-screen to porthole left
     if (borderLeft_) {
-        int leftStartX = -leftBorderWidth;  // Start completely off-screen
-        int leftEndX = portholeX - leftBorderWidth;  // End just left of porthole
+        // Get original texture dimensions and apply UI scaling
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderLeft_, nullptr, nullptr, &originalWidth, &originalHeight);
+        
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        
+        // Calculate movement positions (in logical coordinates)
+        int leftStartX = -scaledWidth;  // Start completely off-screen
+        int leftEndX = portholeX - scaledWidth;  // End just left of porthole
         int currentLeftX = static_cast<int>(leftStartX + (leftEndX - leftStartX) * easedProgress);
         
-        SDL_Rect leftRect = { currentLeftX, 0, leftBorderWidth, windowH };
-        display.drawTexture(borderLeft_, nullptr, &leftRect);
+        // Span full logical height for complete coverage
+        SDL_Rect destRect = { currentLeftX, 0, scaledWidth, LOGICAL_HEIGHT };
+        display.drawTexture(borderLeft_, nullptr, &destRect);
     }
 
     // RIGHT BORDER: Slides left from off-screen to porthole right
     if (borderRight_) {
-        int rightStartX = windowW;  // Start completely off-screen
+        // Get original texture dimensions and apply UI scaling
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderRight_, nullptr, nullptr, &originalWidth, &originalHeight);
+        
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        
+        // Calculate movement positions (in logical coordinates)
+        int rightStartX = LOGICAL_WIDTH;  // Start completely off-screen
         int rightEndX = portholeX + portholeSize;  // End just right of porthole
         int currentRightX = static_cast<int>(rightStartX + (rightEndX - rightStartX) * easedProgress);
         
-        SDL_Rect rightRect = { currentRightX, 0, rightBorderWidth, windowH };
-        display.drawTexture(borderRight_, nullptr, &rightRect);
+        // Span full logical height for complete coverage
+        SDL_Rect destRect = { currentRightX, 0, scaledWidth, LOGICAL_HEIGHT };
+        display.drawTexture(borderRight_, nullptr, &destRect);
     }
 }
 
@@ -209,34 +249,49 @@ float BorderTransition::easeInOutCubic(float t) const {
 
 void BorderTransition::calculateBorderPositions(SDL_Rect& topRect, SDL_Rect& bottomRect,
                                                 SDL_Rect& leftRect, SDL_Rect& rightRect) const {
-    int windowW = 0, windowH = 0;
-    if (game_ && game_->get_display()) {
-        game_->get_display()->getWindowSize(windowW, windowH);
-    }
-    if (windowW <= 0) windowW = GameConstants::WINDOW_WIDTH;
-    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;
+    // Use logical screen dimensions (SDL logical scaling handles window-to-logical conversion automatically)
+    const int LOGICAL_WIDTH = 466;
+    const int LOGICAL_HEIGHT = 466;
 
-    // Calculate the central porthole dimensions (square viewport in center of screen)
-    int portholeSize = std::min(windowW, windowH) - (2 * inwardDistance_);
-    int portholeX = (windowW - portholeSize) / 2;
-    int portholeY = (windowH - portholeSize) / 2;
+    // Calculate the central porthole dimensions (square viewport in center of logical screen)
+    int portholeSize = std::min(LOGICAL_WIDTH, LOGICAL_HEIGHT) - (2 * inwardDistance_);
+    int portholeX = (LOGICAL_WIDTH - portholeSize) / 2;
+    int portholeY = (LOGICAL_HEIGHT - portholeSize) / 2;
 
-    // Use actual texture dimensions for proper aspect ratio preservation
-    int topBorderHeight = (topHeight_ > 0) ? topHeight_ : inwardDistance_;
-    int bottomBorderHeight = (bottomHeight_ > 0) ? bottomHeight_ : inwardDistance_;
-    int leftBorderWidth = (leftWidth_ > 0) ? leftWidth_ : inwardDistance_;
-    int rightBorderWidth = (rightWidth_ > 0) ? rightWidth_ : inwardDistance_;
+    // Apply ScalingUtils scaling for UI elements
+    float uiScale = ScalingUtils::getScalingFactor(ScalingUtils::ElementType::UI);
 
     // Final positions when animation is complete (borders framing the porthole):
+    
     // Top border: positioned just above the porthole
-    topRect = { 0, portholeY - topBorderHeight, windowW, topBorderHeight };
+    if (borderTop_) {
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderTop_, nullptr, nullptr, &originalWidth, &originalHeight);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        topRect = { 0, portholeY - scaledHeight, LOGICAL_WIDTH, scaledHeight };
+    }
 
     // Bottom border: positioned just below the porthole
-    bottomRect = { 0, portholeY + portholeSize, windowW, bottomBorderHeight };
+    if (borderBottom_) {
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderBottom_, nullptr, nullptr, &originalWidth, &originalHeight);
+        int scaledHeight = static_cast<int>(originalHeight * uiScale);
+        bottomRect = { 0, portholeY + portholeSize, LOGICAL_WIDTH, scaledHeight };
+    }
 
     // Left border: positioned just left of the porthole, covering full height
-    leftRect = { portholeX - leftBorderWidth, 0, leftBorderWidth, windowH };
+    if (borderLeft_) {
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderLeft_, nullptr, nullptr, &originalWidth, &originalHeight);
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        leftRect = { portholeX - scaledWidth, 0, scaledWidth, LOGICAL_HEIGHT };
+    }
 
     // Right border: positioned just right of the porthole, covering full height
-    rightRect = { portholeX + portholeSize, 0, rightBorderWidth, windowH };
+    if (borderRight_) {
+        int originalWidth, originalHeight;
+        SDL_QueryTexture(borderRight_, nullptr, nullptr, &originalWidth, &originalHeight);
+        int scaledWidth = static_cast<int>(originalWidth * uiScale);
+        rightRect = { portholeX + portholeSize, 0, scaledWidth, LOGICAL_HEIGHT };
+    }
 }
