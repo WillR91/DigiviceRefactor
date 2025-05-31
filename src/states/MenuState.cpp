@@ -121,7 +121,7 @@ MenuState::MenuState(Game* game, const std::vector<std::string>& options) :
           // Add menu to screen
         screen_->addChild(menuList_);
           // Create border transition system with inward distance for central square framing
-        borderTransition_ = std::make_unique<BorderTransition>(game_ptr, 0.8f, 93);
+        borderTransition_ = std::make_unique<BorderTransition>(game_ptr, 0.8f, 150);
         if (borderTransition_) {
             SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "MenuState: Created border transition system");
         }

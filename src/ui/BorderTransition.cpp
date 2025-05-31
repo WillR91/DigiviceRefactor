@@ -117,59 +117,69 @@ void BorderTransition::update(float deltaTime) {
 
 void BorderTransition::render(PCDisplay& display) {
     if (currentState_ == AnimationState::BORDERS_OUT) {
-        return; // Nothing to render
+        return; // No rendering when borders are off-screen
     }
 
-    // Calculate animation progress (0.0 to 1.0)
-    float progress = 0.0f;
-    if (animationDuration_ > 0.001f) {
-        progress = std::min(1.0f, animationTimer_ / animationDuration_);
-    } else {
-        progress = 1.0f;
+    int windowW = 0, windowH = 0;
+    if (game_ && game_->get_display()) {
+        game_->get_display()->getWindowSize(windowW, windowH);
     }
+    if (windowW <= 0) windowW = GameConstants::WINDOW_WIDTH;
+    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;
 
-    // Apply easing for smooth animation
+    // Calculate animation progress with easing
+    float progress = (animationDuration_ > 0.0f) ? (animationTimer_ / animationDuration_) : 1.0f;
+    progress = std::min(progress, 1.0f);
     float easedProgress = easeInOutCubic(progress);
 
-    // Calculate border positions
-    SDL_Rect topRect, bottomRect, leftRect, rightRect;
-    calculateBorderPositions(topRect, bottomRect, leftRect, rightRect);
+    // Calculate the central porthole dimensions (square viewport in center of screen)
+    int portholeSize = std::min(windowW, windowH) - (2 * inwardDistance_);
+    int portholeX = (windowW - portholeSize) / 2;
+    int portholeY = (windowH - portholeSize) / 2;
 
-    // Apply animation offset based on progress
-    int windowW = 0, windowH = 0;
-    display.getWindowSize(windowW, windowH);
-    if (windowW <= 0) windowW = GameConstants::WINDOW_WIDTH;
-    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;    // Top border slides down from off-screen to inward position
-    int topStartY = -topHeight_;
-    int topEndY = inwardDistance_;
-    topRect.y = static_cast<int>(topStartY + (topEndY - topStartY) * easedProgress);
-
-    // Bottom border slides up from off-screen to inward position
-    int bottomStartY = windowH;
-    int bottomEndY = windowH - bottomHeight_ - inwardDistance_;
-    bottomRect.y = static_cast<int>(bottomStartY + (bottomEndY - bottomStartY) * easedProgress);
-
-    // Left border slides right from off-screen to inward position
-    int leftStartX = -leftWidth_;
-    int leftEndX = inwardDistance_;
-    leftRect.x = static_cast<int>(leftStartX + (leftEndX - leftStartX) * easedProgress);
-
-    // Right border slides left from off-screen to inward position
-    int rightStartX = windowW;
-    int rightEndX = windowW - rightWidth_ - inwardDistance_;
-    rightRect.x = static_cast<int>(rightStartX + (rightEndX - rightStartX) * easedProgress);
-
-    // Render borders
-    if (borderTop_ && topRect.y > -topHeight_) {
+    // Use actual texture dimensions for proper aspect ratio preservation
+    int topBorderHeight = (topHeight_ > 0) ? topHeight_ : inwardDistance_;
+    int bottomBorderHeight = (bottomHeight_ > 0) ? bottomHeight_ : inwardDistance_;
+    int leftBorderWidth = (leftWidth_ > 0) ? leftWidth_ : inwardDistance_;
+    int rightBorderWidth = (rightWidth_ > 0) ? rightWidth_ : inwardDistance_;
+    
+    // TOP BORDER: Slides down from off-screen to porthole top
+    if (borderTop_) {
+        int topStartY = -topBorderHeight;  // Start completely off-screen
+        int topEndY = portholeY - topBorderHeight;  // End just above porthole
+        int currentTopY = static_cast<int>(topStartY + (topEndY - topStartY) * easedProgress);
+        
+        SDL_Rect topRect = { 0, currentTopY, windowW, topBorderHeight };
         display.drawTexture(borderTop_, nullptr, &topRect);
     }
-    if (borderBottom_ && bottomRect.y < windowH) {
+
+    // BOTTOM BORDER: Slides up from off-screen to porthole bottom
+    if (borderBottom_) {
+        int bottomStartY = windowH;  // Start completely off-screen
+        int bottomEndY = portholeY + portholeSize;  // End just below porthole
+        int currentBottomY = static_cast<int>(bottomStartY + (bottomEndY - bottomStartY) * easedProgress);
+        
+        SDL_Rect bottomRect = { 0, currentBottomY, windowW, bottomBorderHeight };
         display.drawTexture(borderBottom_, nullptr, &bottomRect);
     }
-    if (borderLeft_ && leftRect.x > -leftWidth_) {
+
+    // LEFT BORDER: Slides right from off-screen to porthole left
+    if (borderLeft_) {
+        int leftStartX = -leftBorderWidth;  // Start completely off-screen
+        int leftEndX = portholeX - leftBorderWidth;  // End just left of porthole
+        int currentLeftX = static_cast<int>(leftStartX + (leftEndX - leftStartX) * easedProgress);
+        
+        SDL_Rect leftRect = { currentLeftX, 0, leftBorderWidth, windowH };
         display.drawTexture(borderLeft_, nullptr, &leftRect);
     }
-    if (borderRight_ && rightRect.x < windowW) {
+
+    // RIGHT BORDER: Slides left from off-screen to porthole right
+    if (borderRight_) {
+        int rightStartX = windowW;  // Start completely off-screen
+        int rightEndX = portholeX + portholeSize;  // End just right of porthole
+        int currentRightX = static_cast<int>(rightStartX + (rightEndX - rightStartX) * easedProgress);
+        
+        SDL_Rect rightRect = { currentRightX, 0, rightBorderWidth, windowH };
         display.drawTexture(borderRight_, nullptr, &rightRect);
     }
 }
@@ -204,15 +214,29 @@ void BorderTransition::calculateBorderPositions(SDL_Rect& topRect, SDL_Rect& bot
         game_->get_display()->getWindowSize(windowW, windowH);
     }
     if (windowW <= 0) windowW = GameConstants::WINDOW_WIDTH;
-    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;    // Top border spans full width, positioned inward from top edge
-    topRect = { 0, inwardDistance_, windowW, topHeight_ };
+    if (windowH <= 0) windowH = GameConstants::WINDOW_HEIGHT;
 
-    // Bottom border spans full width, positioned inward from bottom edge  
-    bottomRect = { 0, windowH - bottomHeight_ - inwardDistance_, windowW, bottomHeight_ };
+    // Calculate the central porthole dimensions (square viewport in center of screen)
+    int portholeSize = std::min(windowW, windowH) - (2 * inwardDistance_);
+    int portholeX = (windowW - portholeSize) / 2;
+    int portholeY = (windowH - portholeSize) / 2;
 
-    // Left border spans full height, positioned inward from left edge
-    leftRect = { inwardDistance_, 0, leftWidth_, windowH };
+    // Use actual texture dimensions for proper aspect ratio preservation
+    int topBorderHeight = (topHeight_ > 0) ? topHeight_ : inwardDistance_;
+    int bottomBorderHeight = (bottomHeight_ > 0) ? bottomHeight_ : inwardDistance_;
+    int leftBorderWidth = (leftWidth_ > 0) ? leftWidth_ : inwardDistance_;
+    int rightBorderWidth = (rightWidth_ > 0) ? rightWidth_ : inwardDistance_;
 
-    // Right border spans full height, positioned inward from right edge
-    rightRect = { windowW - rightWidth_ - inwardDistance_, 0, rightWidth_, windowH };
+    // Final positions when animation is complete (borders framing the porthole):
+    // Top border: positioned just above the porthole
+    topRect = { 0, portholeY - topBorderHeight, windowW, topBorderHeight };
+
+    // Bottom border: positioned just below the porthole
+    bottomRect = { 0, portholeY + portholeSize, windowW, bottomBorderHeight };
+
+    // Left border: positioned just left of the porthole, covering full height
+    leftRect = { portholeX - leftBorderWidth, 0, leftBorderWidth, windowH };
+
+    // Right border: positioned just right of the porthole, covering full height
+    rightRect = { portholeX + portholeSize, 0, rightBorderWidth, windowH };
 }
